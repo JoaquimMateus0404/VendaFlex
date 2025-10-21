@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace VendaFlex.Data
 {
-    class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : DbContext
     {
         private readonly int? _currentUserId;
 

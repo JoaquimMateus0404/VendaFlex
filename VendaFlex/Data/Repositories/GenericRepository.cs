@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
-namespace CommerceHub.Data.Repositories
+namespace VendaFlex.Data.Repositories
 {
     /// <summary>
     /// Implementação genérica de repositório para operações CRUD básicas.

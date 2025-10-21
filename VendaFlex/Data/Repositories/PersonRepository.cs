@@ -1,10 +1,7 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using CommerceHub.Data.Entities;
+using VendaFlex.Data.Entities;
 
-namespace CommerceHub.Data.Repositories
+namespace VendaFlex.Data.Repositories
 {
     /// <summary>
     /// Repositório para operações relacionadas a pessoas (clientes, fornecedores, etc.).
