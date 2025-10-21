@@ -1,29 +1,21 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
+ï»¿using System.Linq.Expressions;
 
-namespace CommerceHub.Data.Repositories
+namespace VendaFlex.Data.Repositories
 {
-    /// <summary>
-    /// Interface genérica para operações básicas de repositório.
-    /// </summary>
-    /// <typeparam name="T">Tipo da entidade.</typeparam>
     public interface IRepository<T> where T : class
     {
         /// <summary>
-        /// Obtém uma entidade pelo ID.
+        /// Obtï¿½m uma entidade pelo ID.
         /// </summary>
         Task<T> GetByIdAsync(int id);
 
         /// <summary>
-        /// Obtém todas as entidades.
+        /// Obtï¿½m todas as entidades.
         /// </summary>
         Task<IEnumerable<T>> GetAllAsync();
 
         /// <summary>
-        /// Busca entidades por expressão lambda.
+        /// Busca entidades por expressï¿½o lambda.
         /// </summary>
         Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
 
@@ -43,7 +35,7 @@ namespace CommerceHub.Data.Repositories
         Task<bool> DeleteAsync(int id);
 
         /// <summary>
-        /// Obtém entidades paginadas.
+        /// Obtï¿½m entidades paginadas.
         /// </summary>
         Task<IEnumerable<T>> GetPagedAsync(int page, int pageSize);
     }

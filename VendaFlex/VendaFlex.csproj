@@ -9,10 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Data\Repositories\IRepository.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="15.0.1" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
@@ -40,8 +36,6 @@
     <Folder Include="Core\Services\" />
     <Folder Include="Data\Entities\" />
     <Folder Include="Data\Configurations\" />
-    <Folder Include="Data\Repositories\" />
-    <Folder Include="Infrastructure\" />
     <Folder Include="ViewModels\" />
     <Folder Include="UI\Components\" />
     <Folder Include="UI\Views\" />
