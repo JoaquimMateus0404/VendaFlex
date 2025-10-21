@@ -9,6 +9,7 @@ using VendaFlex.Core.Interfaces;
 using VendaFlex.Core.Services;
 using VendaFlex.Data.Entities;
 using VendaFlex.Data.Repositories;
+using VendaFlex.Infrastructure.Sync;
 
 namespace VendaFlex.Infrastructure
 {
@@ -64,9 +65,23 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<IPriceHistoryService, PriceHistoryService>();
             //services.AddScoped<IReceiptPrintService, ReceiptPrintService>();
 
-            // Infra: status dos bancos e sync
+            // ===== SERVIÇOS DE SINCRONIZAÇÃO (NOVO SISTEMA) =====
+            
+            // Serviço avançado de sincronização (recomendado)
+            services.AddSingleton<IAdvancedSyncService, AdvancedSyncService>();
+            
+            // Status dos bancos de dados
             services.AddSingleton<IDatabaseStatusService, DatabaseStatusService>();
-            services.AddSingleton<IDatabaseSyncService, DatabaseSyncService>();
+            
+            // Serviço legado de sincronização (mantido para compatibilidade)
+            // Agora delega para AdvancedSyncService quando disponível
+            services.AddSingleton<IDatabaseSyncService>(serviceProvider =>
+            {
+                var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+                var provider = serviceProvider.GetRequiredService<DatabaseProvider>();
+                var advancedSync = serviceProvider.GetService<IAdvancedSyncService>();
+                return new DatabaseSyncService(configuration, provider, advancedSync);
+            });
 
             // Infra: armazenamento de ficheiros
            // services.AddSingleton<IFileStorageService, Infrastructure.Services.FileStorageService>();

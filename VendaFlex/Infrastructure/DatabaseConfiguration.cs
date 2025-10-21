@@ -7,6 +7,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using VendaFlex.Infrastructure.Sync;
 
 namespace VendaFlex.Infrastructure
 {
@@ -167,7 +168,8 @@ namespace VendaFlex.Infrastructure
     }
 
     /// <summary>
-    /// Serviço de sincronização entre SQL Server e SQLite
+    /// Serviço de sincronização entre SQL Server e SQLite (Implementação legada)
+    /// RECOMENDAÇÃO: Usar IAdvancedSyncService para novas implementações
     /// </summary>
     public interface IDatabaseSyncService
     {
@@ -176,22 +178,37 @@ namespace VendaFlex.Infrastructure
         Task<bool> HasPendingChangesAsync();
     }
 
+    /// <summary>
+    /// Implementação legada do serviço de sincronização.
+    /// Esta classe é mantida para compatibilidade, mas delega para AdvancedSyncService.
+    /// </summary>
     public class DatabaseSyncService : IDatabaseSyncService
     {
         private readonly IConfiguration _configuration;
         private readonly DatabaseProvider _currentProvider;
+        private readonly IAdvancedSyncService? _advancedSyncService;
 
-        public DatabaseSyncService(IConfiguration configuration, DatabaseProvider currentProvider)
+        public DatabaseSyncService(
+            IConfiguration configuration,
+            DatabaseProvider currentProvider,
+            IAdvancedSyncService? advancedSyncService = null)
         {
             _configuration = configuration;
             _currentProvider = currentProvider;
+            _advancedSyncService = advancedSyncService;
         }
 
         public async Task<bool> HasPendingChangesAsync()
         {
+            // Se temos o serviço avançado disponível, usá-lo
+            if (_advancedSyncService != null)
+            {
+                return await _advancedSyncService.HasPendingChangesAsync();
+            }
+
+            // Implementação legada
             if (_currentProvider == DatabaseProvider.Sqlite)
             {
-                // Verificar se há alterações no SQLite que precisam ser sincronizadas
                 var sqliteDbPath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "VendaFlex",
@@ -206,7 +223,7 @@ namespace VendaFlex.Infrastructure
 
                 using var context = new ApplicationDbContext(optionsBuilder.Options);
 
-                // Verificar registros com flag de sincronização pendente (exemplo)
+                // Verificar registros recentes
                 var pendingInvoices = await context.Invoices
                     .Where(i => i.CreatedAt > DateTime.UtcNow.AddDays(-7))
                     .CountAsync();
@@ -219,6 +236,18 @@ namespace VendaFlex.Infrastructure
 
         public async Task SyncToSqlServerAsync()
         {
+            // Se temos o serviço avançado, delegar para ele
+            if (_advancedSyncService != null)
+            {
+                var result = await _advancedSyncService.SyncToServerAsync();
+                if (!result.Success)
+                {
+                    throw new InvalidOperationException($"Sincronização falhou: {result.Message}");
+                }
+                return;
+            }
+
+            // Implementação legada (simplificada)
             if (_currentProvider != DatabaseProvider.Sqlite)
                 return;
 
@@ -226,7 +255,6 @@ namespace VendaFlex.Infrastructure
             if (!dbConfig.CanConnectToSqlServer())
                 throw new InvalidOperationException("Não foi possível conectar ao SQL Server");
 
-            // Implementar lógica de sincronização do SQLite para SQL Server
             var sqliteDbPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "VendaFlex",
@@ -243,7 +271,7 @@ namespace VendaFlex.Infrastructure
             using var sqliteContext = new ApplicationDbContext(sqliteOptionsBuilder.Options);
             using var sqlServerContext = new ApplicationDbContext(sqlServerOptionsBuilder.Options);
 
-            // Sincronizar dados (exemplo com Invoices)
+            // Sincronizar faturas recentes
             var pendingInvoices = await sqliteContext.Invoices
                 .Include(i => i.InvoiceProducts)
                 .Include(i => i.Payments)
@@ -252,7 +280,6 @@ namespace VendaFlex.Infrastructure
 
             foreach (var invoice in pendingInvoices)
             {
-                // Verificar se já existe no SQL Server
                 var existingInvoice = await sqlServerContext.Invoices
                     .FirstOrDefaultAsync(i => i.InvoiceId == invoice.InvoiceId);
 
@@ -271,10 +298,21 @@ namespace VendaFlex.Infrastructure
 
         public async Task SyncToSqliteAsync()
         {
+            // Se temos o serviço avançado, delegar para ele
+            if (_advancedSyncService != null)
+            {
+                var result = await _advancedSyncService.SyncToClientAsync();
+                if (!result.Success)
+                {
+                    throw new InvalidOperationException($"Sincronização falhou: {result.Message}");
+                }
+                return;
+            }
+
+            // Implementação legada
             if (_currentProvider != DatabaseProvider.SqlServer)
                 return;
 
-            // Implementar lógica de sincronização do SQL Server para SQLite
             var sqliteDbPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "VendaFlex",
@@ -294,7 +332,7 @@ namespace VendaFlex.Infrastructure
             // Garantir que o banco SQLite está criado
             await sqliteContext.Database.EnsureCreatedAsync();
 
-            // Sincronizar dados essenciais para trabalho offline
+            // Sincronizar produtos ativos
             var recentProducts = await sqlServerContext.Products
                 .Include(p => p.Category)
                 .Include(p => p.Stock)
