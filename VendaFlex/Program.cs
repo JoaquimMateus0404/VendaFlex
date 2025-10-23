@@ -3,7 +3,6 @@ using System.IO;
 using System.Windows;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using VendaFlex.Data;
@@ -41,20 +40,27 @@ namespace VendaFlex
                 Log.Information("Diretório de dados: {AppDataPath}", appDataPath);
                 Log.Information("===========================================");
 
-                // Criar e configurar o host
-                var host = CreateHostBuilder(args, appDataPath).Build();
+                // Criar configuração
+                var configuration = BuildConfiguration(appDataPath);
+
+                // Expandir variáveis de ambiente nas connection strings
+                ExpandEnvironmentVariables(configuration, appDataPath);
+
+                // Criar ServiceProvider
+                var services = new ServiceCollection();
+                ConfigureServices(services, configuration);
+                var serviceProvider = services.BuildServiceProvider();
+
+                Log.Information("Serviços registrados com sucesso");
 
                 // Inicializar banco de dados
-                InitializeDatabase(host.Services).GetAwaiter().GetResult();
-
-                // Executar sincronização inicial se configurado
-                PerformInitialSync(host.Services).GetAwaiter().GetResult();
+                InitializeDatabase(serviceProvider).GetAwaiter().GetResult();
 
                 // Iniciar a aplicação WPF
                 var app = new App();
 
                 // Configurar o ServiceProvider no App antes de inicializar
-                app.ServiceProvider = host.Services;
+                app.ServiceProvider = serviceProvider;
 
                 Log.Information("Aplicação WPF inicializada com sucesso");
 
@@ -104,69 +110,55 @@ namespace VendaFlex
                 .CreateLogger();
         }
 
-        private static IHostBuilder CreateHostBuilder(string[] args, string appDataPath)
+        private static IConfiguration BuildConfiguration(string appDataPath)
         {
-            return Host.CreateDefaultBuilder(args)
-                .UseSerilog()
-                .ConfigureAppConfiguration((context, config) =>
-                {
-                    // Limpar configurações padrão
-                    config.Sources.Clear();
+            var configBuilder = new ConfigurationBuilder();
 
-                    // Adicionar appsettings.json do diretório da aplicação
-                    var appSettingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
-                    if (File.Exists(appSettingsPath))
-                    {
-                        config.AddJsonFile(appSettingsPath, optional: false, reloadOnChange: true);
-                        Log.Information("Carregado appsettings.json: {Path}", appSettingsPath);
-                    }
-                    else
-                    {
-                        Log.Warning("appsettings.json não encontrado em: {Path}", appSettingsPath);
-                    }
+            // Adicionar appsettings.json do diretório da aplicação
+            var appSettingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
+            if (File.Exists(appSettingsPath))
+            {
+                configBuilder.AddJsonFile(appSettingsPath, optional: false, reloadOnChange: true);
+                Log.Information("Carregado appsettings.json: {Path}", appSettingsPath);
+            }
+            else
+            {
+                Log.Warning("appsettings.json não encontrado em: {Path}", appSettingsPath);
+            }
 
-                    // Adicionar configurações específicas do ambiente (se existir)
-                    var environment = Environment.GetEnvironmentVariable("VENDAFLEX_ENVIRONMENT") ?? "Production";
-                    var envSettingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"appsettings.{environment}.json");
-                    if (File.Exists(envSettingsPath))
-                    {
-                        config.AddJsonFile(envSettingsPath, optional: true, reloadOnChange: true);
-                        Log.Information("Carregado appsettings.{Environment}.json", environment);
-                    }
+            // Adicionar configurações específicas do ambiente (se existir)
+            var environment = Environment.GetEnvironmentVariable("VENDAFLEX_ENVIRONMENT") ?? "Production";
+            var envSettingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"appsettings.{environment}.json");
+            if (File.Exists(envSettingsPath))
+            {
+                configBuilder.AddJsonFile(envSettingsPath, optional: true, reloadOnChange: true);
+                Log.Information("Carregado appsettings.{Environment}.json", environment);
+            }
 
-                    // Adicionar variáveis de ambiente
-                    config.AddEnvironmentVariables(prefix: "VENDAFLEX_");
+            // Adicionar variáveis de ambiente
+            configBuilder.AddEnvironmentVariables(prefix: "VENDAFLEX_");
 
-                    // Expandir variáveis de ambiente nas connection strings
-                    var tempConfig = config.Build();
-                    ExpandEnvironmentVariables(tempConfig, appDataPath);
-                })
-                .ConfigureServices((context, services) =>
-                {
-                    // Registrar configuração
-                    services.AddSingleton(context.Configuration);
+            return configBuilder.Build();
+        }
 
-                    // Registrar todos os serviços do VendaFlex
-                    services.AddVendaFlex(context.Configuration);
+        private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+        {
+            // Registrar configuração
+            services.AddSingleton(configuration);
 
-                    Log.Information("Serviços registrados com sucesso");
-                });
+            // Adicionar logging com Serilog
+            services.AddLogging(builder =>
+            {
+                builder.ClearProviders();
+                builder.AddSerilog();
+            });
+
+            // Registrar todos os serviços do VendaFlex
+            services.AddVendaFlex(configuration);
         }
 
         private static void ExpandEnvironmentVariables(IConfiguration configuration, string appDataPath)
         {
-            // Expandir %LOCALAPPDATA% nas connection strings
-            var sqliteConn = configuration.GetConnectionString("Sqlite");
-            if (!string.IsNullOrWhiteSpace(sqliteConn) && sqliteConn.Contains("%LOCALAPPDATA%"))
-            {
-                var expanded = sqliteConn.Replace(
-                    "%LOCALAPPDATA%",
-                    Path.Combine(appDataPath)
-                );
-                configuration["ConnectionStrings:Sqlite"] = expanded;
-                Log.Information("Connection string SQLite expandida: {Conn}", expanded);
-            }
-
             // Expandir outras configurações que usam %LOCALAPPDATA%
             ExpandConfigValue(configuration, "FileStorage:RootPath", appDataPath);
             ExpandConfigValue(configuration, "Backup:BackupPath", appDataPath);
@@ -186,16 +178,10 @@ namespace VendaFlex
         {
             using var scope = services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-            var statusService = scope.ServiceProvider.GetRequiredService<IDatabaseStatusService>();
 
             try
             {
-                Log.Information("Inicializando banco de dados...");
-
-                // Verificar qual provider está ativo
-                var provider = scope.ServiceProvider.GetRequiredService<DatabaseProvider>();
-                Log.Information("Provider de banco de dados ativo: {Provider}", provider);
+                Log.Information("Inicializando banco de dados SQL Server...");
 
                 // Obter migrações
                 var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
@@ -211,28 +197,6 @@ namespace VendaFlex
                     Log.Information("Migrações aplicadas com sucesso");
                 }
 
-                // Atualizar status do banco
-                if (provider == DatabaseProvider.SqlServer)
-                {
-                    statusService.UpdateSqlServerStatus(
-                        configured: true,
-                        connected: true,
-                        applied: appliedMigrations.Count(),
-                        pending: 0
-                    );
-                }
-                else
-                {
-                    var sqliteConn = configuration.GetConnectionString("Sqlite") ?? "";
-                    var dbPath = ExtractDbPath(sqliteConn);
-                    statusService.UpdateSqliteStatus(
-                        available: true,
-                        applied: appliedMigrations.Count(),
-                        pending: 0,
-                        path: dbPath
-                    );
-                }
-
                 // Verificar se precisa de seed inicial
                 await SeedInitialDataIfNeeded(context);
 
@@ -241,18 +205,6 @@ namespace VendaFlex
             catch (Exception ex)
             {
                 Log.Error(ex, "Erro ao inicializar banco de dados");
-
-                // Atualizar status com erro
-                var provider = scope.ServiceProvider.GetRequiredService<DatabaseProvider>();
-                if (provider == DatabaseProvider.SqlServer)
-                {
-                    statusService.UpdateSqlServerStatus(false, false, 0, 0, ex.Message);
-                }
-                else
-                {
-                    statusService.UpdateSqliteStatus(false, 0, 0, "", ex.Message);
-                }
-
                 throw;
             }
         }
@@ -329,58 +281,6 @@ namespace VendaFlex
                 Log.Information("Usuário administrador criado com sucesso (Username: admin, Senha: Admin@123)");
                 Log.Warning("IMPORTANTE: Altere a senha padrão após o primeiro login!");
             }
-        }
-
-        private static async Task PerformInitialSync(IServiceProvider services)
-        {
-            using var scope = services.CreateScope();
-            var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-            var syncService = scope.ServiceProvider.GetRequiredService<IDatabaseSyncService>();
-
-            var syncOnStartup = configuration.GetValue<bool>("Sync:SyncOnStartup", true);
-            if (!syncOnStartup)
-            {
-                Log.Information("Sincronização automática desabilitada");
-                return;
-            }
-
-            try
-            {
-                Log.Information("Verificando necessidade de sincronização...");
-
-                var hasPendingChanges = await syncService.HasPendingChangesAsync();
-                if (hasPendingChanges)
-                {
-                    Log.Information("Sincronizando dados pendentes...");
-                    await syncService.SyncToSqlServerAsync();
-                    Log.Information("Sincronização concluída com sucesso");
-                }
-                else
-                {
-                    Log.Information("Nenhuma sincronização necessária");
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warning(ex, "Erro ao realizar sincronização inicial (continuando normalmente)");
-            }
-        }
-
-        private static string ExtractDbPath(string connectionString)
-        {
-            const string dataSourcePrefix = "Data Source=";
-            var index = connectionString.IndexOf(dataSourcePrefix, StringComparison.OrdinalIgnoreCase);
-            if (index >= 0)
-            {
-                var path = connectionString.Substring(index + dataSourcePrefix.Length);
-                var endIndex = path.IndexOf(';');
-                if (endIndex > 0)
-                {
-                    path = path.Substring(0, endIndex);
-                }
-                return path.Trim();
-            }
-            return connectionString;
         }
     }
 }

@@ -190,6 +190,24 @@ namespace VendaFlex.Data
 
             // Seed Persons (Clientes e Fornecedores)
             modelBuilder.Entity<Person>().HasData(
+
+                 new Person
+                 {
+                     PersonId = 1,
+                     Name = "Duarte Gauss",
+                     Type = PersonType.Supplier,
+                     Email = "carlos.silva@example.com",
+                     PhoneNumber = "+244900111111",
+                     Address = "Rua A, 100",
+                     City = "Luanda",
+                     Country = "Angola",
+                     CreditLimit = 100000m,
+                     CurrentBalance = 0m,
+                     IsActive = true,
+                     CreatedAt = seedTimestamp,
+                     CreatedByUserId = 4
+                 },
+
                 // Clientes
                 new Person
                 {
@@ -239,6 +257,9 @@ namespace VendaFlex.Data
                     CreatedAt = seedTimestamp,
                     CreatedByUserId = 4
                 },
+
+
+
                 // Fornecedores
                 new Person
                 {
@@ -284,6 +305,20 @@ namespace VendaFlex.Data
                     IsActive = true,
                     CreatedAt = seedTimestamp,
                     CreatedByUserId = 4
+                }
+            );
+
+            //User 
+            modelBuilder.Entity<User>().HasData(
+                new User
+                {
+                    UserId = 4,
+                    PersonId = 1,
+                    Username = "admin",
+                    PasswordHash = "8C6976E5B5410415BDE908BD4DEE15DFB167A9C873FC4BB8A81F6F2AB448A918", // Admin@123 em SHA256
+                    Status = VendaFlex.Data.Entities.LoginStatus.Active,
+                    LastLoginIp = string.Empty,
+                    CreatedAt = DateTime.UtcNow
                 }
             );
 

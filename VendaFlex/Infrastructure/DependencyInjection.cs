@@ -1,15 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using VendaFlex.Core.Interfaces;
 using VendaFlex.Core.Services;
 using VendaFlex.Data.Entities;
 using VendaFlex.Data.Repositories;
-using VendaFlex.Infrastructure.Sync;
 
 namespace VendaFlex.Infrastructure
 {
@@ -64,27 +58,7 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<ICompanyConfigService, CompanyConfigService>();
             services.AddScoped<IPriceHistoryService, PriceHistoryService>();
             //services.AddScoped<IReceiptPrintService, ReceiptPrintService>();
-
-            // ===== SERVIÇOS DE SINCRONIZAÇÃO (NOVO SISTEMA) =====
-            
-            // Serviço avançado de sincronização (recomendado)
-            services.AddSingleton<IAdvancedSyncService, AdvancedSyncService>();
-            
-            // Status dos bancos de dados
-            services.AddSingleton<IDatabaseStatusService, DatabaseStatusService>();
-            
-            // Serviço legado de sincronização (mantido para compatibilidade)
-            // Agora delega para AdvancedSyncService quando disponível
-            services.AddSingleton<IDatabaseSyncService>(serviceProvider =>
-            {
-                var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-                var provider = serviceProvider.GetRequiredService<DatabaseProvider>();
-                var advancedSync = serviceProvider.GetService<IAdvancedSyncService>();
-                return new DatabaseSyncService(configuration, provider, advancedSync);
-            });
-
-            // Infra: armazenamento de ficheiros
-           // services.AddSingleton<IFileStorageService, Infrastructure.Services.FileStorageService>();
+            //services.AddSingleton<IFileStorageService, Infrastructure.Services.FileStorageService>();
 
             return services;
         }
