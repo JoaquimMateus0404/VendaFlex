@@ -198,7 +198,7 @@ namespace VendaFlex
                 }
 
                 // Verificar se precisa de seed inicial
-                await SeedInitialDataIfNeeded(context);
+               // await SeedInitialDataIfNeeded(context);
 
                 Log.Information("Banco de dados inicializado com sucesso");
             }
