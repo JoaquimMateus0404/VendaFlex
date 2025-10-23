@@ -8,6 +8,8 @@ using VendaFlex.Infrastructure.Navigation;
 using VendaFlex.Infrastructure.Database;
 using VendaFlex.UI.Views.Setup;
 using VendaFlex.ViewModels.Setup;
+using VendaFlex.Infrastructure.Interfaces;
+using VendaFlex.Infrastructure.Services;
 
 namespace VendaFlex.Infrastructure
 {
@@ -67,7 +69,7 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<ICompanyConfigService, CompanyConfigService>();
             services.AddScoped<IPriceHistoryService, PriceHistoryService>();
             //services.AddScoped<IReceiptPrintService, ReceiptPrintService>();
-            //services.AddSingleton<IFileStorageService, Infrastructure.Services.FileStorageService>();
+            services.AddSingleton<IFileStorageService, FileStorageService>();
 
             // Registrar Views e ViewModels usados pela navegação
             services.AddTransient<InitialSetupView>();

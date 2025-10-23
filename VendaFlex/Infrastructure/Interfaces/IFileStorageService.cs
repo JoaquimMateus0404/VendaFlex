@@ -1,6 +1,10 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
-namespace VendaFlex.Core.Interfaces
+namespace VendaFlex.Infrastructure.Interfaces
 {
     /// <summary>
     /// Serviço para gerenciar armazenamento de ficheiros (logos, uploads, etc.)

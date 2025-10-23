@@ -47,7 +47,6 @@
     <Folder Include="Core\Interfaces\" />
     <Folder Include="Core\Services\" />
     <Folder Include="Data\Configurations\" />
-    <Folder Include="UI\Components\" />
   </ItemGroup>
 
 </Project>

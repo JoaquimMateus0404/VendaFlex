@@ -15,7 +15,7 @@
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
 
                 <!-- Estilos globais da aplicação -->
-                <ResourceDictionary Source="Styles/GlobalStyles.xaml" />
+                <!--<ResourceDictionary Source="Styles/GlobalStyles.xaml" />-->
 
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

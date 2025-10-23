@@ -1,0 +1,111 @@
+<UserControl x:Class="VendaFlex.UI.Views.Components.StatsCard"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d" 
+             d:DesignHeight="140" d:DesignWidth="280">
+    
+    <Border Background="{StaticResource SurfaceBrush}"
+            BorderBrush="{StaticResource BorderLightBrush}"
+            BorderThickness="1"
+            CornerRadius="16"
+            Padding="24"
+            Cursor="Hand">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="BorderBrush" Value="{StaticResource BorderHoverBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+        
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header with Icon -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="TitleText"
+                         Grid.Column="0"
+                         Text="Total Sales"
+                         FontSize="13"
+                         Foreground="{StaticResource TextSecondaryBrush}"
+                         VerticalAlignment="Center"/>
+
+                <Border Grid.Column="1"
+                        x:Name="IconContainer"
+                        Width="40" Height="40"
+                        CornerRadius="10"
+                        Background="{StaticResource PrimaryBrush}"
+                        Opacity="0.15">
+                    <materialDesign:PackIcon x:Name="CardIcon"
+                                           Kind="TrendingUp"
+                                           Width="22" Height="22"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                </Border>
+            </Grid>
+
+            <!-- Value -->
+            <TextBlock x:Name="ValueText"
+                     Grid.Row="1"
+                     Text="0"
+                     FontSize="32"
+                     FontWeight="Bold"
+                     Foreground="{StaticResource TextPrimaryBrush}"
+                     VerticalAlignment="Center"
+                     Margin="0,12,0,12"/>
+
+            <!-- Footer with Trend -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border x:Name="TrendBadge"
+                        Grid.Column="0"
+                        Background="{StaticResource SuccessBrush}"
+                        CornerRadius="8"
+                        Padding="8,4"
+                        Margin="0,0,12,0"
+                        Visibility="Collapsed">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon x:Name="TrendIcon"
+                                               Kind="TrendingUp"
+                                               Width="14" Height="14"
+                                               Foreground="White"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,4,0"/>
+                        <TextBlock x:Name="TrendText"
+                                 Text="+12.5%"
+                                 FontSize="11"
+                                 FontWeight="SemiBold"
+                                 Foreground="White"
+                                 VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock x:Name="SubtitleText"
+                         Grid.Column="1"
+                         Text="vs. last month"
+                         FontSize="11"
+                         Foreground="{StaticResource TextTertiaryBrush}"
+                         VerticalAlignment="Center"/>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>
