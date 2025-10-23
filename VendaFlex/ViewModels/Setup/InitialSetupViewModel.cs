@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace VendaFlex.ViewModels.Setup
 {
-    internal class InitialSetupViewModel
+    public class InitialSetupViewModel
     {
     }
 }

@@ -9,6 +9,10 @@
       Title="InitialSetupView">
 
     <Grid>
-        
+        <TextBlock Text="Initial Setup View"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="24"
+                   FontWeight="Bold"/>
     </Grid>
 </Page>
