@@ -47,9 +47,8 @@
     <Folder Include="Core\Interfaces\" />
     <Folder Include="Core\Services\" />
     <Folder Include="Data\Configurations\" />
-    <Folder Include="ViewModels\" />
+    <Folder Include="Styles\" />
     <Folder Include="UI\Components\" />
-    <Folder Include="UI\Views\" />
   </ItemGroup>
 
 </Project>

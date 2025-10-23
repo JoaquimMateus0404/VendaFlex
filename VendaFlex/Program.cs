@@ -153,6 +153,9 @@ namespace VendaFlex
                 builder.AddSerilog();
             });
 
+            // Registrar ViewModels
+            services.AddTransient<VendaFlex.ViewModels.Main.SplashViewModel>();
+
             // Registrar todos os serviços do VendaFlex
             services.AddVendaFlex(configuration);
         }

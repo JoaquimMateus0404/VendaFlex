@@ -4,6 +4,8 @@ using VendaFlex.Core.Interfaces;
 using VendaFlex.Core.Services;
 using VendaFlex.Data.Entities;
 using VendaFlex.Data.Repositories;
+using VendaFlex.Infrastructure.Navigation;
+using VendaFlex.Infrastructure.Database;
 
 namespace VendaFlex.Infrastructure
 {
@@ -19,6 +21,11 @@ namespace VendaFlex.Infrastructure
             {
                 cfg.AddProfile<AutoMapperProfile>();
             });
+
+            // Serviços de infraestrutura
+            services.AddSingleton<INavigationService, NavigationService>();
+            services.AddScoped<IDatabaseStatusService, DatabaseStatusService>();
+            services.AddScoped<IDatabaseSyncService, DatabaseSyncService>();
 
             // Repositórios específicos
             services.AddScoped<IRepository<User>, UserRepository>();
