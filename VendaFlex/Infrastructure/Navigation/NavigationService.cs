@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using VendaFlex.UI.Views.Setup;
 
 namespace VendaFlex.Infrastructure.Navigation
 {
@@ -52,27 +53,21 @@ namespace VendaFlex.Infrastructure.Navigation
         public void NavigateToSetup()
         {
             _logger.LogInformation("Navegando para tela de Setup");
-            
             try
             {
-                // TODO: Criar SetupView e SetupViewModel
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    MessageBox.Show(
-                        "SetupView ainda não implementada.\n\nEsta funcionalidade será adicionada em breve.",
-                        "Em Desenvolvimento",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information
-                    );
+                    var setupWindow = _serviceProvider.GetRequiredService<InitialSetupView>();
+                    setupWindow.Show();
                 });
-                
-                _logger.LogWarning("SetupView ainda não implementada");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Erro ao navegar para Setup");
                 throw;
             }
+
+
         }
 
         public void NavigateToMain()
