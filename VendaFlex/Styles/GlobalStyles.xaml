@@ -2,10 +2,77 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ============================================ -->
+    <!-- PALETA DE CORES (SEMANTICA) -->
+    <!-- Chaves: Color.* e Brush.* para uso consistente em toda a aplicação -->
+    <!-- ============================================ -->
+
+    <!-- Cores primárias e secundárias -->
+    <Color x:Key="ColorPrimary">#FF3B82F6</Color>        <!-- Azul principal (usado no logo e elementos de destaque) -->
+    <Color x:Key="ColorPrimaryDark">#FF1E40AF</Color>    <!-- Azul escuro -->
+    <Color x:Key="ColorPrimaryLight">#FF60A5FA</Color>   <!-- Azul claro -->
+
+    <Color x:Key="ColorSecondary">#FF8B5CF6</Color>      <!-- Roxo secundário -->
+    <Color x:Key="ColorSecondaryDark">#FF6D28D9</Color>
+
+    <!-- Acento / Destaque (combina com Indigo + Purple) -->
+    <Color x:Key="ColorAccent">#FFA3E635</Color>         <!-- Verde-lima suave -->
+
+    <!-- Feedback colors -->
+    <Color x:Key="ColorSuccess">#FF10B981</Color>
+    <Color x:Key="ColorWarning">#FFF59E0B</Color>
+    <Color x:Key="ColorError">#FFEF4444</Color>
+    <Color x:Key="ColorInfo">#FF0284C7</Color>
+
+    <!-- Neutros e background -->
+    <Color x:Key="ColorBackgroundDeep">#FF0A0E27</Color> <!-- usado no ModernGradient -->
+    <Color x:Key="ColorBackground">#FF0F1724</Color>
+    <Color x:Key="ColorSurface">#FF111827</Color>
+    <Color x:Key="ColorCard">#FF0F1724</Color>
+
+    <Color x:Key="ColorBorder">#FF475569</Color>
+    <Color x:Key="ColorDivider">#FF334155</Color>
+
+    <!-- Texto -->
+    <Color x:Key="ColorTextPrimary">#FFFFFFFF</Color>
+    <Color x:Key="ColorTextSecondary">#FF94A3B8</Color>
+    <Color x:Key="ColorDisabled">#FF64748B</Color>
+
+    <!-- ============================================ -->
+    <!-- BRUSHES (convenience) -->
+    <!-- ============================================ -->
+
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource ColorPrimary}" />
+    <SolidColorBrush x:Key="PrimaryDarkBrush" Color="{StaticResource ColorPrimaryDark}" />
+    <SolidColorBrush x:Key="PrimaryLightBrush" Color="{StaticResource ColorPrimaryLight}" />
+
+    <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource ColorSecondary}" />
+    <SolidColorBrush x:Key="SecondaryDarkBrush" Color="{StaticResource ColorSecondaryDark}" />
+
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource ColorAccent}" />
+
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource ColorSuccess}" />
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource ColorWarning}" />
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ColorError}" />
+    <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource ColorInfo}" />
+
+    <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource ColorBackground}" />
+    <SolidColorBrush x:Key="BackgroundDeepBrush" Color="{StaticResource ColorBackgroundDeep}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource ColorSurface}" />
+    <SolidColorBrush x:Key="CardBrush" Color="{StaticResource ColorCard}" />
+
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource ColorBorder}" />
+    <SolidColorBrush x:Key="DividerBrush" Color="{StaticResource ColorDivider}" />
+
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource ColorTextPrimary}" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource ColorTextSecondary}" />
+    <SolidColorBrush x:Key="DisabledBrush" Color="{StaticResource ColorDisabled}" />
+
+
+    <!-- ============================================ -->
     <!-- GRADIENTES -->
     <!-- ============================================ -->
     
-    <!-- Gradiente Moderno - Fundo Escuro -->
+    <!-- Gradiente Moderno - Fundo Escuro (mantido para compatibilidade com Splash) -->
     <LinearGradientBrush x:Key="ModernGradient" StartPoint="0,0" EndPoint="1,1">
         <GradientStop Color="#0A0E27" Offset="0"/>
         <GradientStop Color="#1A1B3F" Offset="0.5"/>
