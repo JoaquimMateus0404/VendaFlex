@@ -2,7 +2,9 @@ using System;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using VendaFlex.UI.Views.Authentication;
 using VendaFlex.UI.Views.Setup;
+using VendaFlex.ViewModels.Authentication;
 using VendaFlex.ViewModels.Setup;
 
 namespace VendaFlex.Infrastructure.Navigation
@@ -31,18 +33,7 @@ namespace VendaFlex.Infrastructure.Navigation
 
             try
             {
-                // TODO: Criar LoginView e LoginViewModel
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    MessageBox.Show(
-                        "LoginView ainda não implementada.\n\nEsta funcionalidade será adicionada em breve.",
-                        "Em Desenvolvimento",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information
-                    );
-                });
-
-                _logger.LogWarning("LoginView ainda não implementada");
+                NavigateToPage < LoginView, LoginViewModel>("VendaFlex - Login", 1000, 700, closeCurrent: true);
             }
             catch (Exception ex)
             {

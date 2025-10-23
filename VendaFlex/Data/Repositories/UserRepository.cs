@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using VendaFlex.Data.Entities;
@@ -7,77 +8,345 @@ using VendaFlex.Data.Entities;
 namespace VendaFlex.Data.Repositories
 {
     /// <summary>
-    /// Repositório para operações relacionadas a usuários do sistema.
+    /// Repositï¿½rio para operaï¿½ï¿½es de acesso a dados de usuï¿½rios.
+    /// Responsï¿½vel apenas por interagir com o banco de dados, sem lï¿½gica de negï¿½cio.
     /// </summary>
-    public class UserRepository : IRepository<User>
+    public class UserRepository
     {
         private readonly ApplicationDbContext _context;
 
         public UserRepository(ApplicationDbContext context)
         {
-            _context = context;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        public async Task<User> GetByIdAsync(int id)
+        #region Basic CRUD
+
+        /// <summary>
+        /// Busca um usuï¿½rio por ID.
+        /// </summary>
+        /// <param name="id">ID do usuï¿½rio</param>
+        /// <returns>Usuï¿½rio encontrado ou null</returns>
+        public async Task<User?> GetByIdAsync(int id)
         {
-            return await _context.Users.FindAsync(id);
+            return await _context.Users
+                .Include(u => u.Person)
+                .FirstOrDefaultAsync(u => u.UserId == id);
         }
 
+        /// <summary>
+        /// Busca um usuï¿½rio por ID com tracking desabilitado (melhor performance para leitura).
+        /// </summary>
+        /// <param name="id">ID do usuï¿½rio</param>
+        /// <returns>Usuï¿½rio encontrado ou null</returns>
+        public async Task<User?> GetByIdAsNoTrackingAsync(int id)
+        {
+            return await _context.Users
+                .Include(u => u.Person)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserId == id);
+        }
+
+        /// <summary>
+        /// Retorna todos os usuï¿½rios do sistema.
+        /// </summary>
+        /// <returns>Lista de usuï¿½rios</returns>
         public async Task<IEnumerable<User>> GetAllAsync()
         {
-            return await _context.Users.ToListAsync();
+            return await _context.Users
+                .Include(u => u.Person)
+                .AsNoTracking()
+                .ToListAsync();
         }
 
-        public async Task<IEnumerable<User>> FindAsync(System.Linq.Expressions.Expression<System.Func<User, bool>> predicate)
+        /// <summary>
+        /// Busca usuï¿½rios usando um predicado customizado.
+        /// </summary>
+        /// <param name="predicate">Expressï¿½o lambda para filtro</param>
+        /// <returns>Lista de usuï¿½rios que atendem ao predicado</returns>
+        public async Task<IEnumerable<User>> FindAsync(Expression<Func<User, bool>> predicate)
         {
-            return await _context.Users.Where(predicate).ToListAsync();
+            return await _context.Users
+                .Include(u => u.Person)
+                .Where(predicate)
+                .AsNoTracking()
+                .ToListAsync();
         }
 
+        /// <summary>
+        /// Adiciona um novo usuï¿½rio ao banco de dados.
+        /// </summary>
+        /// <param name="entity">Usuï¿½rio a ser adicionado</param>
+        /// <returns>Usuï¿½rio adicionado com ID gerado</returns>
         public async Task<User> AddAsync(User entity)
         {
-            _context.Users.Add(entity);
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+
+            await _context.Users.AddAsync(entity);
             await _context.SaveChangesAsync();
             return entity;
         }
 
+        /// <summary>
+        /// Atualiza um usuï¿½rio existente.
+        /// </summary>
+        /// <param name="entity">Usuï¿½rio com dados atualizados</param>
+        /// <returns>Usuï¿½rio atualizado</returns>
         public async Task<User> UpdateAsync(User entity)
         {
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+
             _context.Users.Update(entity);
             await _context.SaveChangesAsync();
             return entity;
         }
 
+        /// <summary>
+        /// Remove um usuï¿½rio do banco de dados.
+        /// </summary>
+        /// <param name="id">ID do usuï¿½rio a ser removido</param>
+        /// <returns>True se removido com sucesso, False se nï¿½o encontrado</returns>
         public async Task<bool> DeleteAsync(int id)
         {
             var user = await _context.Users.FindAsync(id);
-            if (user == null) return false;
+            if (user == null)
+                return false;
+
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
             return true;
         }
 
+        #endregion
+
+        #region Pagination
+
+        /// <summary>
+        /// Retorna usuï¿½rios paginados.
+        /// </summary>
+        /// <param name="page">Nï¿½mero da pï¿½gina (inicia em 1)</param>
+        /// <param name="pageSize">Quantidade de itens por pï¿½gina</param>
+        /// <returns>Lista de usuï¿½rios da pï¿½gina solicitada</returns>
         public async Task<IEnumerable<User>> GetPagedAsync(int page, int pageSize)
         {
+            if (page < 1)
+                throw new ArgumentException("Pï¿½gina deve ser maior ou igual a 1.", nameof(page));
+
+            if (pageSize < 1)
+                throw new ArgumentException("Tamanho da pï¿½gina deve ser maior que 0.", nameof(pageSize));
+
             return await _context.Users
+                .Include(u => u.Person)
+                .OrderBy(u => u.UserId)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
+                .AsNoTracking()
                 .ToListAsync();
         }
 
         /// <summary>
-        /// Busca usuário por nome de usuário.
+        /// Retorna o total de usuï¿½rios cadastrados. 
         /// </summary>
-        public async Task<User> GetByUsernameAsync(string username)
+        /// <returns>Quantidade total de usuï¿½rios</returns>
+        public async Task<int> GetTotalCountAsync()
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+            return await _context.Users.CountAsync();
         }
 
         /// <summary>
-        /// Autentica usuário pelo nome e senha (hash).
+        /// Retorna o total de usuï¿½rios que atendem a um predicado.
         /// </summary>
-        public async Task<User> AuthenticateAsync(string username, string passwordHash)
+        /// <param name="predicate">Expressï¿½o lambda para filtro</param>
+        /// <returns>Quantidade de usuï¿½rios que atendem ao predicado</returns>
+        public async Task<int> GetCountAsync(Expression<Func<User, bool>> predicate)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Username == username && u.PasswordHash == passwordHash);
+            return await _context.Users.CountAsync(predicate);
         }
+
+        #endregion
+
+        #region Authentication Queries
+
+        /// <summary>
+        /// Busca usuï¿½rio por nome de usuï¿½rio.
+        /// </summary>
+        /// <param name="username">Nome de usuï¿½rio</param>
+        /// <returns>Usuï¿½rio encontrado ou null</returns>
+        public async Task<User?> GetByUsernameAsync(string username)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+                return null;
+
+            return await _context.Users
+                .Include(u => u.Person)
+                .FirstOrDefaultAsync(u => u.Username == username);
+        }
+
+        /// <summary>
+        /// Verifica se um username jï¿½ estï¿½ em uso.
+        /// </summary>
+        /// <param name="username">Nome de usuï¿½rio</param>
+        /// <param name="excludeUserId">ID do usuï¿½rio a excluir da verificaï¿½ï¿½o (ï¿½til em updates)</param>
+        /// <returns>True se o username jï¿½ existe</returns>
+        public async Task<bool> UsernameExistsAsync(string username, int? excludeUserId = null)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+                return false;
+
+            var query = _context.Users.Where(u => u.Username == username);
+
+            if (excludeUserId.HasValue)
+                query = query.Where(u => u.UserId != excludeUserId.Value);
+
+            return await query.AnyAsync();
+        }
+
+        /// <summary>
+        /// Verifica se existe pelo menos um usuï¿½rio com privilï¿½gios de admin.
+        /// </summary>
+        /// <returns>True se existir usuï¿½rio admin</returns>
+        public async Task<bool> HasAdminsAsync()
+        {
+            
+            return await _context.UserPrivileges
+                .AnyAsync(up => up.Privilege != null && up.Privilege.Code == "ADMIN");
+        }
+
+        /// <summary>
+        /// Busca usuï¿½rio por email (atravï¿½s de Person).
+        /// </summary>
+        /// <param name="email">Email do usuï¿½rio</param>
+        /// <returns>Usuï¿½rio encontrado ou null</returns>
+        public async Task<User?> GetByEmailAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return null;
+
+            return await _context.Users
+                .Include(u => u.Person)
+                .FirstOrDefaultAsync(u => u.Person != null && u.Person.Email == email);
+        }
+
+        #endregion
+
+        #region Status Queries
+
+        /// <summary>
+        /// Retorna usuï¿½rios ativos.
+        /// </summary>
+        /// <returns>Lista de usuï¿½rios com status Active</returns>
+        public async Task<IEnumerable<User>> GetActiveUsersAsync()
+        {
+            return await _context.Users
+                .Include(u => u.Person)
+                .Where(u => u.Status == LoginStatus.Active)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Retorna usuï¿½rios bloqueados.
+        /// </summary>
+        /// <returns>Lista de usuï¿½rios com LockedUntil vï¿½lido</returns>
+        public async Task<IEnumerable<User>> GetLockedUsersAsync()
+        {
+            var now = DateTime.UtcNow;
+            return await _context.Users
+                .Include(u => u.Person)
+                .Where(u => u.LockedUntil.HasValue && u.LockedUntil.Value > now)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Retorna usuï¿½rios por status especï¿½fico.
+        /// </summary>
+        /// <param name="status">Status do login</param>
+        /// <returns>Lista de usuï¿½rios com o status especificado</returns>
+        public async Task<IEnumerable<User>> GetByStatusAsync(LoginStatus status)
+        {
+            return await _context.Users
+                .Include(u => u.Person)
+                .Where(u => u.Status == status)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        #endregion
+
+        #region Advanced Queries
+
+        /// <summary>
+        /// Busca usuï¿½rios com privilï¿½gios especï¿½ficos.
+        /// </summary>
+        /// <returns>Lista de usuï¿½rios com seus privilï¿½gios carregados</returns>
+        public async Task<IEnumerable<User>> GetUsersWithPrivilegesAsync()
+        {
+            return await _context.Users
+                .Include(u => u.Person)
+                .Include(u => u.UserPrivileges)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Verifica se existe pelo menos um usuï¿½rio ativo no sistema.
+        /// </summary>
+        /// <returns>True se existir usuï¿½rio ativo</returns>
+        public async Task<bool> HasActiveUsersAsync()
+        {
+            return await _context.Users
+                .AnyAsync(u => u.Status == LoginStatus.Active);
+        }
+
+        /// <summary>
+        /// Retorna usuï¿½rios que falharam login recentemente.
+        /// </summary>
+        /// <param name="minFailedAttempts">Nï¿½mero mï¿½nimo de tentativas falhadas</param>
+        /// <returns>Lista de usuï¿½rios com tentativas falhadas</returns>
+        public async Task<IEnumerable<User>> GetUsersWithFailedAttemptsAsync(int minFailedAttempts = 3)
+        {
+            return await _context.Users
+                .Include(u => u.Person)
+                .Where(u => u.FailedLoginAttempts >= minFailedAttempts)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        #endregion
+
+        #region Batch Operations
+
+        /// <summary>
+        /// Adiciona mï¿½ltiplos usuï¿½rios em uma ï¿½nica transaï¿½ï¿½o.
+        /// </summary>
+        /// <param name="users">Lista de usuï¿½rios a serem adicionados</param>
+        /// <returns>Task completado</returns>
+        public async Task AddRangeAsync(IEnumerable<User> users)
+        {
+            if (users == null || !users.Any())
+                throw new ArgumentException("Lista de usuï¿½rios nï¿½o pode ser vazia.", nameof(users));
+
+            await _context.Users.AddRangeAsync(users);
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Atualiza mï¿½ltiplos usuï¿½rios em uma ï¿½nica transaï¿½ï¿½o.
+        /// </summary>
+        /// <param name="users">Lista de usuï¿½rios a serem atualizados</param>
+        /// <returns>Task completado</returns>
+        public async Task UpdateRangeAsync(IEnumerable<User> users)
+        {
+            if (users == null || !users.Any())
+                throw new ArgumentException("Lista de usuï¿½rios nï¿½o pode ser vazia.", nameof(users));
+
+            _context.Users.UpdateRange(users);
+            await _context.SaveChangesAsync();
+        }
+
+        #endregion
     }
 }

@@ -10,6 +10,8 @@ using VendaFlex.UI.Views.Setup;
 using VendaFlex.ViewModels.Setup;
 using VendaFlex.Infrastructure.Interfaces;
 using VendaFlex.Infrastructure.Services;
+using VendaFlex.UI.Views.Authentication;
+using VendaFlex.ViewModels.Authentication;
 
 namespace VendaFlex.Infrastructure
 {
@@ -74,6 +76,9 @@ namespace VendaFlex.Infrastructure
             // Registrar Views e ViewModels usados pela navegação
             services.AddTransient<InitialSetupView>();
             services.AddTransient<InitialSetupViewModel>();
+
+            services.AddTransient<LoginView>();
+            services.AddTransient<LoginViewModel>();
 
             return services;
         }
