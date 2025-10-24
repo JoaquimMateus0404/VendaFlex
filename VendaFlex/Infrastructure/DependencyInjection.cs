@@ -1,17 +1,20 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using FluentValidation;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using VendaFlex.Core.DTOs;
+using VendaFlex.Core.DTOs.Validators;
 using VendaFlex.Core.Interfaces;
 using VendaFlex.Core.Services;
 using VendaFlex.Data.Entities;
 using VendaFlex.Data.Repositories;
-using VendaFlex.Infrastructure.Navigation;
 using VendaFlex.Infrastructure.Database;
-using VendaFlex.UI.Views.Setup;
-using VendaFlex.ViewModels.Setup;
 using VendaFlex.Infrastructure.Interfaces;
+using VendaFlex.Infrastructure.Navigation;
 using VendaFlex.Infrastructure.Services;
 using VendaFlex.UI.Views.Authentication;
+using VendaFlex.UI.Views.Setup;
 using VendaFlex.ViewModels.Authentication;
+using VendaFlex.ViewModels.Setup;
 
 namespace VendaFlex.Infrastructure
 {
@@ -32,46 +35,42 @@ namespace VendaFlex.Infrastructure
             services.AddSingleton<INavigationService, NavigationService>();
             services.AddScoped<IDatabaseStatusService, DatabaseStatusService>();
             services.AddScoped<IDatabaseSyncService, DatabaseSyncService>();
+            services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
+            //services.AddScoped<IReceiptPrintService, ReceiptPrintService>();
+            services.AddSingleton<IFileStorageService, FileStorageService>();
 
-            // Repositórios específicos
-            services.AddScoped<IRepository<User>, UserRepository>();
-            services.AddScoped<IRepository<Person>, PersonRepository>();
-            services.AddScoped<IRepository<Product>, ProductRepository>();
-            services.AddScoped<IRepository<Category>, CategoryRepository>();
-            services.AddScoped<IRepository<Stock>, StockRepository>();
-            services.AddScoped<IRepository<Invoice>, InvoiceRepository>();
-            services.AddScoped<IRepository<Payment>, PaymentRepository>();
-            services.AddScoped<IRepository<Expense>, ExpenseRepository>();
-            services.AddScoped<IRepository<ExpenseType>, ExpenseTypeRepository>();
-            services.AddScoped<IRepository<AuditLog>, AuditLogRepository>();
-            services.AddScoped<IRepository<Privilege>, PrivilegeRepository>();
-            services.AddScoped<IRepository<UserPrivilege>, UserPrivilegeRepository>();
+            // Repositórios
+            services.AddScoped<UserRepository>();
+            services.AddScoped<PersonRepository>();
+            services.AddScoped<CompanyConfigRepository>();
+            services.AddScoped<PrivilegeRepository>();
+            services.AddScoped<UserPrivilegeRepository>();
+
+            // Serviços principais
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IPersonService, PersonService>();
+            services.AddScoped<ICompanyConfigService, CompanyConfigService>();
+            services.AddScoped<IPrivilegeService, PrivilegeService>();
+            services.AddScoped<IUserPrivilegeService, UserPrivilegeService>();
+
+            // Validadores
+            services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
+            services.AddScoped<IValidator<string>, PasswordValidator>();
+            services.AddScoped<IValidator<PersonDto>, PersonDtoValidator>();
+            services.AddScoped<IValidator<CompanyConfigDto>, CompanyConfigDtoValidator>();
+            services.AddScoped<PersonBusinessValidator>();
+            services.AddScoped<IValidator<PrivilegeDto>, PrivilegeDtoValidator>();
+            services.AddScoped<IValidator<UserPrivilegeDto>, UserPrivilegeDtoValidator>();
+
+
+
 
             // Genéricos
             services.AddScoped<IRepository<InvoiceProduct>, GenericRepository<InvoiceProduct>>();
             services.AddScoped<IRepository<PaymentType>, GenericRepository<PaymentType>>();
             services.AddScoped<IRepository<StockMovement>, GenericRepository<StockMovement>>();
             services.AddScoped<IRepository<Expiration>, GenericRepository<Expiration>>();
-            services.AddScoped<IRepository<CompanyConfig>, GenericRepository<CompanyConfig>>();
             services.AddScoped<IRepository<PriceHistory>, GenericRepository<PriceHistory>>();
-
-            // Serviços de domínio
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IPersonService, PersonService>();
-            services.AddScoped<IProductService, ProductService>();
-            services.AddScoped<ICategoryService, CategoryService>();
-            services.AddScoped<IStockService, StockService>();
-            services.AddScoped<IInvoiceService, InvoiceService>();
-            services.AddScoped<IPaymentService, PaymentService>();
-            services.AddScoped<IExpenseService, ExpenseService>();
-            services.AddScoped<IAuditLogService, AuditLogService>();
-            services.AddScoped<IReportService, ReportService>();
-            services.AddScoped<IPrivilegeService, PrivilegeService>();
-            services.AddScoped<IUserPrivilegeService, UserPrivilegeService>();
-            services.AddScoped<ICompanyConfigService, CompanyConfigService>();
-            services.AddScoped<IPriceHistoryService, PriceHistoryService>();
-            //services.AddScoped<IReceiptPrintService, ReceiptPrintService>();
-            services.AddSingleton<IFileStorageService, FileStorageService>();
 
             // Registrar Views e ViewModels usados pela navegação
             services.AddTransient<InitialSetupView>();
@@ -80,6 +79,8 @@ namespace VendaFlex.Infrastructure
             services.AddTransient<LoginView>();
             services.AddTransient<LoginViewModel>();
 
+
+            //
             return services;
         }
     }

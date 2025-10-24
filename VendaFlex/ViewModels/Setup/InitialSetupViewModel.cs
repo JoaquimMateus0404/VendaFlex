@@ -1,7 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.ObjectModel;
 using System.Windows.Input;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
+using VendaFlex.Data.Entities;
 using VendaFlex.Infrastructure.Interfaces;
 using VendaFlex.Infrastructure.Navigation;
 using VendaFlex.ViewModels.Base;
@@ -9,6 +10,11 @@ using VendaFlex.ViewModels.Commands;
 
 namespace VendaFlex.ViewModels.Setup
 {
+    /// <summary>
+    /// ViewModel para configuração inicial do sistema.
+    /// Gerencia wizard de 3 etapas: Empresa, Pessoa e Usuário.
+    /// CORRIGIDO: Usa OperationResult e trata valores nulos corretamente.
+    /// </summary>
     public class InitialSetupViewModel : BaseViewModel
     {
         private readonly ICompanyConfigService _companyService;
@@ -37,9 +43,13 @@ namespace VendaFlex.ViewModels.Setup
             _privilegeService = privilegeService;
             _userPrivilegeService = userPrivilegeService;
 
+            // Inicializar comandos
             NextCommand = new RelayCommand(_ => NextStep(), _ => CanProceed);
             PreviousCommand = new RelayCommand(_ => PreviousStep(), _ => CanGoBack);
+            _saveCommand = new AsyncCommand(SaveAsync, CanSave, onStateChanged: OnCommandStateChanged);
+            ToggleThemeCommand = new RelayCommand(_ => ToggleTheme());
 
+            // Inicializar DTOs com valores padrão
             Company = new CompanyConfigDto
             {
                 Currency = "AOA",
@@ -52,29 +62,41 @@ namespace VendaFlex.ViewModels.Setup
                 DefaultTaxRate = 0
             };
 
-            AdminPerson = new PersonDto { Type = 3, IsActive = true };
-            AdminUser = new UserDto { Status = 1 };
+            AdminPerson = new PersonDto
+            {
+                Type = (int)PersonType.Employee,
+                IsActive = true
+            };
 
-            _saveCommand = new AsyncCommand(SaveAsync, CanSave, onStateChanged: OnCommandStateChanged);
-            ToggleThemeCommand = new RelayCommand(_ => ToggleTheme());
+            AdminUser = new UserDto
+            {
+                Status = (int)LoginStatus.Active
+            };
 
-            // Inicializar propriedades de visibilidade
+            // Atualizar visibilidade dos steps
             UpdateStepVisibility();
 
-            // Carregar privilégios ativos (não bloquear o construtor)
+            // Carregar privilégios
             _ = LoadPrivilegesAsync();
         }
+
+        #region Properties
 
         public CompanyConfigDto Company { get; set; }
         public PersonDto AdminPerson { get; set; }
         public UserDto AdminUser { get; set; }
 
-        // Privileges selection
-        public System.Collections.ObjectModel.ObservableCollection<PrivilegeSelectionItem> AvailablePrivileges { get; } = new System.Collections.ObjectModel.ObservableCollection<PrivilegeSelectionItem>();
+        // Senhas (não fazem parte do DTO)
+        public string AdminPassword { get; set; } = string.Empty;
+        public string AdminConfirmPassword { get; set; } = string.Empty;
+
+        // Privilégios disponíveis
+        public ObservableCollection<PrivilegeSelectionItem> AvailablePrivileges { get; } = new();
 
         public class PrivilegeSelectionItem : System.ComponentModel.INotifyPropertyChanged
         {
             public PrivilegeDto Privilege { get; }
+
             private bool _isSelected;
             public bool IsSelected
             {
@@ -91,28 +113,10 @@ namespace VendaFlex.ViewModels.Setup
             public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
         }
 
-        public async Task LoadPrivilegesAsync()
-        {
-            try
-            {
-                var list = await _privilegeService.GetActiveAsync();
-                AvailablePrivileges.Clear();
-                foreach (var p in list)
-                {
-                    AvailablePrivileges.Add(new PrivilegeSelectionItem(p));
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Erro ao carregar privilégios: {ex.Message}");
-            }
-        }
+        #endregion
 
-        // Senhas bindadas via code-behind
-        public string AdminPassword { get; set; } = string.Empty;
-        public string AdminConfirmPassword { get; set; } = string.Empty;
+        #region Validation Feedback Properties
 
-        // Propriedades para feedback de validação de senha
         private string _passwordValidationMessage = string.Empty;
         public string PasswordValidationMessage
         {
@@ -127,7 +131,6 @@ namespace VendaFlex.ViewModels.Setup
             set => Set(ref _passwordIsValid, value);
         }
 
-        // Propriedades para feedback de validação de username
         private string _usernameValidationMessage = string.Empty;
         public string UsernameValidationMessage
         {
@@ -142,7 +145,6 @@ namespace VendaFlex.ViewModels.Setup
             set => Set(ref _usernameIsValid, value);
         }
 
-        // Propriedade para mensagens de erro gerais
         private string _errorMessage = string.Empty;
         public string ErrorMessage
         {
@@ -150,7 +152,17 @@ namespace VendaFlex.ViewModels.Setup
             set => Set(ref _errorMessage, value);
         }
 
-        // Navegação entre etapas
+        private string _successMessage = string.Empty;
+        public string SuccessMessage
+        {
+            get => _successMessage;
+            set => Set(ref _successMessage, value);
+        }
+
+        #endregion
+
+        #region Navigation Properties
+
         private int _currentStep = 1;
         public int CurrentStep
         {
@@ -167,7 +179,6 @@ namespace VendaFlex.ViewModels.Setup
             }
         }
 
-        // Propriedades de visibilidade dos steps
         private bool _isStep1Visible = true;
         public bool IsStep1Visible
         {
@@ -189,12 +200,10 @@ namespace VendaFlex.ViewModels.Setup
             set => Set(ref _isStep3Visible, value);
         }
 
-        // Propriedades de controle de navegação
         public bool CanGoBack => CurrentStep > 1;
         public bool IsNotLastStep => CurrentStep < 3;
         public bool IsLastStep => CurrentStep == 3;
 
-        // Propriedade para habilitar/desabilitar botão Próximo
         private bool _canProceed = false;
         public bool CanProceed
         {
@@ -215,12 +224,55 @@ namespace VendaFlex.ViewModels.Setup
             }
         }
 
+        #endregion
+
+        #region Commands
+
         public ICommand SaveCommand => _saveCommand;
         public ICommand ToggleThemeCommand { get; }
         public ICommand NextCommand { get; }
         public ICommand PreviousCommand { get; }
 
-        // Métodos de validação
+        #endregion
+
+        #region Initialization
+
+        /// <summary>
+        /// Carrega privilégios ativos do sistema.
+        /// </summary>
+        private async Task LoadPrivilegesAsync()
+        {
+            try
+            {
+                // ✅ USAR SERVICE COM OPERATIONRESULT
+                var result = await _privilegeService.GetActiveAsync();
+
+                if (result is { Success: true, Data: not null })
+                {
+                    AvailablePrivileges.Clear();
+                    foreach (var privilege in result.Data)
+                    {
+                        AvailablePrivileges.Add(new PrivilegeSelectionItem(privilege));
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"Erro ao carregar privilégios: {result.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao carregar privilégios: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region Validation Methods
+
+        /// <summary>
+        /// Valida dados da etapa de Empresa.
+        /// </summary>
         public void ValidateCompanyStep()
         {
             CanProceed = !string.IsNullOrWhiteSpace(Company.CompanyName) &&
@@ -228,21 +280,23 @@ namespace VendaFlex.ViewModels.Setup
                         !string.IsNullOrWhiteSpace(Company.Email);
         }
 
+        /// <summary>
+        /// Valida dados da etapa de Pessoa.
+        /// </summary>
         public void ValidatePersonStep()
         {
             CanProceed = !string.IsNullOrWhiteSpace(AdminPerson.Name) &&
                         !string.IsNullOrWhiteSpace(AdminPerson.Email);
         }
 
+        /// <summary>
+        /// Valida dados da etapa de Usuário.
+        /// </summary>
         public void ValidateUserStep()
         {
-            // Validar username
             ValidateUsername();
-
-            // Validar senhas
             ValidatePasswords();
 
-            // CanProceed só é true se tudo estiver válido
             CanProceed = UsernameIsValid &&
                         PasswordIsValid &&
                         !string.IsNullOrWhiteSpace(AdminPassword) &&
@@ -250,7 +304,7 @@ namespace VendaFlex.ViewModels.Setup
         }
 
         /// <summary>
-        /// Valida o nome de usuário e atualiza feedback
+        /// Valida o nome de usuário.
         /// </summary>
         private void ValidateUsername()
         {
@@ -261,7 +315,7 @@ namespace VendaFlex.ViewModels.Setup
                 return;
             }
 
-            if (!IsUsernameValid(AdminUser.Username))
+            if (!User.ValidateUsername(AdminUser.Username))
             {
                 UsernameIsValid = false;
 
@@ -280,7 +334,7 @@ namespace VendaFlex.ViewModels.Setup
         }
 
         /// <summary>
-        /// Valida as senhas e atualiza feedback
+        /// Valida as senhas.
         /// </summary>
         private void ValidatePasswords()
         {
@@ -291,7 +345,7 @@ namespace VendaFlex.ViewModels.Setup
                 return;
             }
 
-            if (!IsPasswordValid(AdminPassword))
+            if (!User.ValidatePasswordStrength(AdminPassword))
             {
                 PasswordIsValid = false;
                 PasswordValidationMessage = GetPasswordValidationError(AdminPassword);
@@ -310,7 +364,7 @@ namespace VendaFlex.ViewModels.Setup
         }
 
         /// <summary>
-        /// Retorna mensagem de erro específica para a senha
+        /// Retorna mensagem de erro específica para a senha.
         /// </summary>
         private string GetPasswordValidationError(string password)
         {
@@ -329,49 +383,9 @@ namespace VendaFlex.ViewModels.Setup
             return "Senha inválida";
         }
 
-        /// <summary>
-        /// Valida se a senha atende aos requisitos mínimos de segurança
-        /// Consistente com User.ValidatePasswordStrength()
-        /// </summary>
-        private bool IsPasswordValid(string password)
-        {
-            if (string.IsNullOrWhiteSpace(password))
-                return false;
+        #endregion
 
-            // Mínimo 8 caracteres
-            if (password.Length < 8)
-                return false;
-
-            // Pelo menos uma letra maiúscula
-            if (!password.Any(char.IsUpper))
-                return false;
-
-            // Pelo menos uma letra minúscula
-            if (!password.Any(char.IsLower))
-                return false;
-
-            // Pelo menos um número
-            if (!password.Any(char.IsDigit))
-                return false;
-
-            return true;
-        }
-
-        /// <summary>
-        /// Valida se o nome de usuário atende aos requisitos
-        /// Consistente com User.ValidateUsername()
-        /// </summary>
-        private bool IsUsernameValid(string username)
-        {
-            if (string.IsNullOrWhiteSpace(username))
-                return false;
-
-            if (username.Length < 3 || username.Length > 100)
-                return false;
-
-            // Apenas letras, números, pontos, hífens e underscores
-            return username.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '_');
-        }
+        #region Navigation Methods
 
         private void UpdateStepVisibility()
         {
@@ -380,24 +394,13 @@ namespace VendaFlex.ViewModels.Setup
             IsStep3Visible = CurrentStep == 3;
         }
 
-        public void ReevaluateCanSave() => _saveCommand.RaiseCanExecuteChanged();
-
-        private bool CanSave()
-        {
-            return !IsBusy
-                && !string.IsNullOrWhiteSpace(Company.CompanyName)
-                && !string.IsNullOrWhiteSpace(AdminPerson.Name)
-                && !string.IsNullOrWhiteSpace(AdminUser.Username)
-                && !string.IsNullOrWhiteSpace(AdminPassword)
-                && AdminPassword == AdminConfirmPassword;
-        }
-
         public void NextStep()
         {
             if (CurrentStep < 3 && CanProceed)
             {
                 CurrentStep++;
-                CanProceed = false; // Reset para a próxima validação
+                CanProceed = false; // Reset para próxima validação
+                ErrorMessage = string.Empty;
             }
         }
 
@@ -406,8 +409,9 @@ namespace VendaFlex.ViewModels.Setup
             if (CurrentStep > 1)
             {
                 CurrentStep--;
+                ErrorMessage = string.Empty;
 
-                // Revalidar o step anterior
+                // Revalidar step anterior
                 switch (CurrentStep)
                 {
                     case 1:
@@ -420,9 +424,12 @@ namespace VendaFlex.ViewModels.Setup
             }
         }
 
+        #endregion
+
+        #region Logo Management
+
         /// <summary>
-        /// Salva a logo da empresa a partir de um caminho de origem.
-        /// A View deve chamar este método após o utilizador selecionar o ficheiro.
+        /// Salva o logo da empresa a partir de um caminho.
         /// </summary>
         public async Task<bool> SaveLogoFromPathAsync(string sourcePath)
         {
@@ -432,6 +439,7 @@ namespace VendaFlex.ViewModels.Setup
             try
             {
                 IsBusy = true;
+                ErrorMessage = string.Empty;
 
                 // Remover logo anterior se existir
                 if (!string.IsNullOrWhiteSpace(Company.LogoUrl) && System.IO.File.Exists(Company.LogoUrl))
@@ -439,10 +447,10 @@ namespace VendaFlex.ViewModels.Setup
                     await _fileStorageService.DeleteFileAsync(Company.LogoUrl);
                 }
 
-                // Salvar novo ficheiro via serviço
+                // Salvar novo arquivo
                 var savedPath = await _fileStorageService.SaveLogoAsync(sourcePath);
 
-                // Atualizar DTO com o caminho definitivo
+                // Atualizar DTO
                 Company.LogoUrl = savedPath;
                 OnPropertyChanged(nameof(Company));
 
@@ -450,9 +458,9 @@ namespace VendaFlex.ViewModels.Setup
             }
             catch (Exception ex)
             {
+                ErrorMessage = $"Erro ao salvar logo: {ex.Message}";
                 System.Diagnostics.Debug.WriteLine($"Erro ao salvar logo: {ex.Message}");
-                // A View deve tratar e mostrar mensagem ao utilizador
-                throw;
+                return false;
             }
             finally
             {
@@ -461,7 +469,7 @@ namespace VendaFlex.ViewModels.Setup
         }
 
         /// <summary>
-        /// Remove a logo da empresa
+        /// Remove o logo da empresa.
         /// </summary>
         public async Task RemoveLogoAsync()
         {
@@ -480,99 +488,98 @@ namespace VendaFlex.ViewModels.Setup
             }
         }
 
+        #endregion
+
+        #region Save Operation
+
+        public void ReevaluateCanSave() => _saveCommand.RaiseCanExecuteChanged();
+
+        private bool CanSave()
+        {
+            return !IsBusy
+                && !string.IsNullOrWhiteSpace(Company.CompanyName)
+                && !string.IsNullOrWhiteSpace(AdminPerson.Name)
+                && !string.IsNullOrWhiteSpace(AdminUser.Username)
+                && !string.IsNullOrWhiteSpace(AdminPassword)
+                && AdminPassword == AdminConfirmPassword
+                && User.ValidatePasswordStrength(AdminPassword)
+                && User.ValidateUsername(AdminUser.Username);
+        }
+
+        /// <summary>
+        /// Salva toda a configuração inicial.
+        /// ✅ CORRIGIDO: Usa OperationResult corretamente.
+        /// </summary>
         private async Task SaveAsync()
         {
             try
             {
                 IsBusy = true;
+                ErrorMessage = string.Empty;
+                SuccessMessage = string.Empty;
 
-                // Validação final antes de salvar
-                if (!IsPasswordValid(AdminPassword))
+                // 1) Salvar configuração da empresa
+                var companyResult = await _companyService.UpdateAsync(Company);
+
+                if (!companyResult.Success)
                 {
-                    throw new InvalidOperationException(
-                        "A senha não atende aos requisitos mínimos:\n" +
-                        "- Mínimo 8 caracteres\n" +
-                        "- Pelo menos uma letra maiúscula\n" +
-                        "- Pelo menos uma letra minúscula\n" +
-                        "- Pelo menos um número");
+                    ErrorMessage = companyResult.Message ?? "Erro ao salvar configuração da empresa.";
+
+                    if (companyResult.Errors?.Any() == true)
+                        ErrorMessage += "\n• " + string.Join("\n• ", companyResult.Errors);
+
+                    return;
                 }
 
-                if (!IsUsernameValid(AdminUser.Username))
+                // 2) Criar pessoa (funcionário)
+                AdminPerson.Type = (int)PersonType.Employee;
+                var personResult = await _personService.CreateAsync(AdminPerson);
+
+                // ✅ VERIFICAÇÃO SEGURA
+                if (!personResult.Success || personResult.Data == null)
                 {
-                    throw new InvalidOperationException(
-                        "O nome de usuário deve ter entre 3 e 100 caracteres e " +
-                        "conter apenas letras, números, pontos, hífens e underscores.");
+                    ErrorMessage = personResult.Message ?? "Erro ao criar pessoa.";
+
+                    if (personResult.Errors?.Any() == true)
+                        ErrorMessage += "\n• " + string.Join("\n• ", personResult.Errors);
+
+                    return;
                 }
 
-                if (AdminPassword != AdminConfirmPassword)
+                var createdPerson = personResult.Data;
+
+                // 3) Registrar usuário vinculado à pessoa
+                AdminUser.PersonId = createdPerson.PersonId;
+                var userResult = await _userService.RegisterAsync(AdminUser, AdminPassword);
+
+                // ✅ VERIFICAÇÃO SEGURA COM PATTERN MATCHING
+                if (userResult is not { Success: true, Data: not null })
                 {
-                    throw new InvalidOperationException("As senhas não coincidem.");
+                    ErrorMessage = userResult.Message ?? "Erro ao registrar usuário.";
+
+                    if (userResult.Errors?.Any() == true)
+                        ErrorMessage += "\n• " + string.Join("\n• ", userResult.Errors);
+
+                    return;
                 }
 
-                // 1) Upsert da CompanyConfig
-                var savedCompany = await _companyService.UpdateAsync(Company);
+                var createdUser = userResult.Data;
 
-                // 2) Criar Person (Employee)
-                AdminPerson.Type = 3; // Employee
-                var savedPerson = await _personService.CreateAsync(AdminPerson);
+                // 4) Associar privilégios selecionados
+                await AssociatePrivilegesAsync(createdUser.UserId);
 
-                // 3) Registrar User vinculado à Person
-                AdminUser.PersonId = savedPerson.PersonId;
-                var savedUser = await _userService.RegisterAsync(AdminUser, AdminPassword);
+                // 5) Sucesso - navegar para login
+                SuccessMessage = "Configuração inicial concluída com sucesso!";
 
-                // 3.1) Associar privilégios selecionados
-                try
-                {
-                    foreach (var item in AvailablePrivileges.Where(p => p.IsSelected))
-                    {
-                        var dto = new Core.DTOs.UserPrivilegeDto
-                        {
-                            UserId = savedUser.UserId,
-                            PrivilegeId = item.Privilege.PrivilegeId,
-                            GrantedAt = DateTime.UtcNow
-                        };
-                        await _userPrivilegeService.GrantAsync(dto);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Erro ao associar privilégios: {ex.Message}");
-                    // não bloqueia o fluxo principal de criação do utilizador
-                }
+                // Aguardar um pouco para usuário ver mensagem de sucesso
+                await Task.Delay(1500);
 
-                // 4) Navegar para Login após configuração completa
                 _navigationService.NavigateToLogin();
-            }
-            catch (ArgumentException ex)
-            {
-                // Erros de validação de senha/username vindos do UserService
-                System.Diagnostics.Debug.WriteLine($"Erro de validação: {ex.Message}");
-
-                // Mostrar mensagem ao usuário através de uma propriedade
-                ErrorMessage = ex.Message;
-                OnPropertyChanged(nameof(ErrorMessage));
-
-                throw; // Re-throw para que a View possa capturar e mostrar
-            }
-            catch (InvalidOperationException ex)
-            {
-                // Username duplicado ou outras regras de negócio
-                System.Diagnostics.Debug.WriteLine($"Erro de operação: {ex.Message}");
-
-                ErrorMessage = ex.Message;
-                OnPropertyChanged(nameof(ErrorMessage));
-
-                throw;
             }
             catch (Exception ex)
             {
-                // Outros erros inesperados
+                ErrorMessage = $"Erro inesperado: {ex.Message}";
                 System.Diagnostics.Debug.WriteLine($"Erro ao salvar configuração: {ex.Message}");
-
-                ErrorMessage = "Ocorreu um erro ao salvar a configuração. Por favor, tente novamente.";
-                OnPropertyChanged(nameof(ErrorMessage));
-
-                throw;
             }
             finally
             {
@@ -580,10 +587,49 @@ namespace VendaFlex.ViewModels.Setup
             }
         }
 
+        /// <summary>
+        /// Associa privilégios selecionados ao usuário.
+        /// </summary>
+        private async Task AssociatePrivilegesAsync(int userId)
+        {
+            try
+            {
+                var selectedPrivileges = AvailablePrivileges.Where(p => p.IsSelected).ToList();
+
+                foreach (var item in selectedPrivileges)
+                {
+                    var dto = new UserPrivilegeDto
+                    {
+                        UserId = userId,
+                        PrivilegeId = item.Privilege.PrivilegeId,
+                        GrantedAt = DateTime.UtcNow
+                    };
+
+                    // ✅ USAR SERVICE COM OPERATIONRESULT
+                    var result = await _userPrivilegeService.GrantAsync(dto);
+
+                    if (!result.Success)
+                    {
+                        System.Diagnostics.Debug.WriteLine(
+                            $"Erro ao associar privilégio {item.Privilege.PrivilegeName}: {result.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao associar privilégios: {ex.Message}");
+                // Não bloqueia o fluxo principal
+            }
+        }
+
         private void OnCommandStateChanged(bool executing)
         {
             IsBusy = executing;
         }
+
+        #endregion
+
+        #region Theme Toggle
 
         private void ToggleTheme()
         {
@@ -595,6 +641,7 @@ namespace VendaFlex.ViewModels.Setup
 
             System.Windows.ResourceDictionary? darkRd = null;
             System.Windows.ResourceDictionary? lightRd = null;
+
             foreach (var md in app.Resources.MergedDictionaries)
             {
                 if (md.Source == darkUri) darkRd = md;
@@ -603,21 +650,23 @@ namespace VendaFlex.ViewModels.Setup
 
             if (darkRd != null)
             {
-                // currently dark -> switch to light
+                // Trocar de dark para light
                 app.Resources.MergedDictionaries.Remove(darkRd);
                 app.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = lightUri });
             }
             else if (lightRd != null)
             {
-                // currently light -> switch to dark
+                // Trocar de light para dark
                 app.Resources.MergedDictionaries.Remove(lightRd);
                 app.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = darkUri });
             }
             else
             {
-                // default -> add dark
+                // Adicionar dark como padrão
                 app.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = darkUri });
             }
         }
+
+        #endregion
     }
 }

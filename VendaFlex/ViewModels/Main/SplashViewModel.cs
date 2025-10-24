@@ -146,7 +146,7 @@ namespace VendaFlex.ViewModels.Main
                 await Task.Delay(300);
 
                 StatusMessage = "Verificando usuários Admin...";
-                var admins = await _userService.GetAdminsAsync();
+                var admins = await _userService.HasAdminsAsync();
                 ProgressText = "Verificando usuários cadastrados...";
                 await Task.Delay(300);
 
