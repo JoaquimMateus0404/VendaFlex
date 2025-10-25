@@ -78,7 +78,7 @@ namespace VendaFlex.ViewModels.Main
 
             try
             {
-                await MostrarStatusAsync("=== Iniciando VendaFlex ===", delay: 300);
+                await MostrarStatusAsync("Iniciando VendaFlex", delay: 2000);
 
                 await VerificarBancosAsync();
                 await SincronizarDadosAsync();
@@ -108,7 +108,7 @@ namespace VendaFlex.ViewModels.Main
         private async Task VerificarBancosAsync()
         {
             StatusMessage = "Verificando bancos de dados...";
-            await MostrarStatusAsync("Verificando status dos bancos de dados...", 300);
+            await MostrarStatusAsync("Verificando status dos bancos de dados...", 2000);
 
             await _dbStatus.RefreshStatusAsync();
             ProgressText = BuildStatusText();
@@ -118,16 +118,16 @@ namespace VendaFlex.ViewModels.Main
         private async Task SincronizarDadosAsync()
         {
             StatusMessage = "Sincronizando dados...";
-            await MostrarStatusAsync("Verificando sincronização de dados...", 300);
+            await MostrarStatusAsync("Verificando sincronização de dados...", 2000);
 
             if (await _syncService.HasPendingChangesAsync())
             {
-                await MostrarStatusAsync("Enviando alterações locais para o servidor...", 300);
+                await MostrarStatusAsync("Enviando alterações locais para o servidor...", 2000);
                 await _syncService.SyncToSqlServerAsync();
             }
             else
             {
-                await MostrarStatusAsync("Nenhuma alteração pendente. Sincronizando SQLite...", 300);
+                await MostrarStatusAsync("Nenhuma alteração pendente. Sincronizando SQLite...", 2000);
                 await _syncService.SyncToSqliteAsync();
             }
         }
@@ -135,30 +135,36 @@ namespace VendaFlex.ViewModels.Main
         private async Task VerificarConfiguracoesAsync()
         {
             StatusMessage = "Verificando configuração...";
-            await MostrarStatusAsync("Carregando configuração da empresa...", 250);
+            await MostrarStatusAsync("Carregando configuração da empresa...", 2000);
 
             var isConfig = await _companyConfigService.IsConfiguredAsync();
 
             StatusMessage = "Verificando usuários Admin...";
+            await MostrarStatusAsync("Verificando existência de usuários Administradores...", 2000);    
             var hasAdmins = await _userService.HasAdminsAsync();
+
+
+            bool precisaSetup = !isConfig || !hasAdmins;
 
             Application.Current.Dispatcher.Invoke(() =>
             {
-                IsLoading = false;
+                StatusMessage = precisaSetup
+                    ? "Configuração inicial necessária"
+                    : "Sistema configurado";
 
-                if (!isConfig || !hasAdmins)
-                {
-                    StatusMessage = "Configuração inicial necessária";
-                    ProgressText = "Navegando para Setup...";
-                    _navigationService.NavigateToSetup();
-                }
-                else
-                {
-                    StatusMessage = "Sistema configurado";
-                    ProgressText = "Navegando para Login...";
-                    _navigationService.NavigateToLogin();
-                }
+                ProgressText = precisaSetup
+                    ? "Navegando para Setup..."
+                    : "Navegando para Login...";
             });
+
+            // Garante que o binding atualiza antes de navegar
+            await Task.Delay(3000);
+
+            if (precisaSetup)
+                _navigationService.NavigateToSetup();
+            else
+                _navigationService.NavigateToLogin();
+
         }
 
         #endregion
