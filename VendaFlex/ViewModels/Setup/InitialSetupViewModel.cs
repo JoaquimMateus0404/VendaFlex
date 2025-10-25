@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows.Input;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
@@ -524,9 +525,16 @@ namespace VendaFlex.ViewModels.Setup
                 if (!companyResult.Success)
                 {
                     ErrorMessage = companyResult.Message ?? "Erro ao salvar configuração da empresa.";
+                    Debug.WriteLine("=========================Company Erros========================================");
+                    Debug.WriteLine(companyResult.Message +  "Erro ao salvar configuração da empresa.");
+                    Debug.WriteLine("=================================================================");
 
                     if (companyResult.Errors?.Any() == true)
                         ErrorMessage += "\n• " + string.Join("\n• ", companyResult.Errors);
+
+                    Debug.WriteLine("=================================================================");
+                    Debug.WriteLine(ErrorMessage);
+                    Debug.WriteLine("=================================================================");
 
                     return;
                 }
@@ -611,7 +619,7 @@ namespace VendaFlex.ViewModels.Setup
                     if (!result.Success)
                     {
                         System.Diagnostics.Debug.WriteLine(
-                            $"Erro ao associar privilégio {item.Privilege.PrivilegeName}: {result.Message}");
+                            $"Erro ao associar privilégio {item.Privilege.Name}: {result.Message}");
                     }
                 }
             }

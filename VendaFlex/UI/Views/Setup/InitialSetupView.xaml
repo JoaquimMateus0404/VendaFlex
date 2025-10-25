@@ -17,14 +17,15 @@
                 <ResourceDictionary Source="/Styles/GlobalStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
-            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-
         </ResourceDictionary>
 
     </Page.Resources>
 
     <Grid Background="{StaticResource ModernGradient}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="673*"/>
+            <ColumnDefinition Width="607*"/>
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -33,7 +34,7 @@
 
         <!-- Header -->
         <Border Grid.Row="0" Background="#1F293740" BorderBrush="#374151" BorderThickness="0,0,0,1" 
-                Padding="40,24">
+                Padding="40,24" Grid.ColumnSpan="2">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -164,11 +165,12 @@
                         </TextBlock>
                     </Border>
                 </StackPanel>
+
             </Grid>
         </Border>
 
         <!-- Content Area -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,32,0,0">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,32,0,0" Grid.ColumnSpan="2" Margin="0,104,0,0" Grid.RowSpan="2">
             <Grid Margin="80,0">
                 <!-- Step 1: Company Configuration -->
                 <Border x:Name="Step1Content" Style="{StaticResource GlassCard}" MaxWidth="800"
@@ -708,7 +710,7 @@
 
         <!-- Footer with Navigation Buttons -->
         <Border Grid.Row="2" Background="#1F293740" BorderBrush="#374151" 
-                BorderThickness="0,1,0,0" Padding="40,20">
+                BorderThickness="0,1,0,0" Padding="40,20" Grid.ColumnSpan="2">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -755,7 +757,7 @@
         <!-- Loading Overlay -->
         <Grid Grid.RowSpan="3" 
               Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" 
-              Panel.ZIndex="1000">
+              Panel.ZIndex="1000" Grid.ColumnSpan="2">
             <Grid.Background>
                 <SolidColorBrush Color="#000000" Opacity="0.85"/>
             </Grid.Background>

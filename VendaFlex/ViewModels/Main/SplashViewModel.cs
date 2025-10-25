@@ -142,7 +142,7 @@ namespace VendaFlex.ViewModels.Main
 
                 // Verificar se a empresa está configurada
                 ProgressText = "Carregando configuração da empresa...";
-                var config = await _companyConfigService.GetAsync();
+                var IsConfig = await _companyConfigService.IsConfiguredAsync();
                 await Task.Delay(300);
 
                 StatusMessage = "Verificando usuários Admin...";
@@ -161,7 +161,7 @@ namespace VendaFlex.ViewModels.Main
                 {
                     IsLoading = false;
 
-                    if (config == null)
+                    if (!IsConfig)
                     {
                         StatusMessage = "Configuração inicial necessária";
                         ProgressText = "Configuração da empresa não encontrada";

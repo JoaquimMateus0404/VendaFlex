@@ -37,6 +37,11 @@ namespace VendaFlex.Core.Services
 
         #region CRUD Operations
 
+        /// <summary>
+        /// Busca um privilégio de usuário por ID.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public async Task<OperationResult<UserPrivilegeDto>> GetByIdAsync(int id)
         {
             try
@@ -58,6 +63,10 @@ namespace VendaFlex.Core.Services
             }
         }
 
+        /// <summary>
+        /// Retorna todos os privilégios de usuários.
+        /// </summary>
+        /// <returns></returns>
         public async Task<OperationResult<IEnumerable<UserPrivilegeDto>>> GetAllAsync()
         {
             try
@@ -79,6 +88,11 @@ namespace VendaFlex.Core.Services
 
         #region Query Operations
 
+        /// <summary>
+        /// Retorna todos os privilégios de um usuário específico.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
         public async Task<OperationResult<IEnumerable<UserPrivilegeDto>>> GetByUserAsync(int userId)
         {
             try
@@ -99,6 +113,11 @@ namespace VendaFlex.Core.Services
             }
         }
 
+        /// <summary>
+        /// busca todos os usuários que possuem um privilégio específico.
+        /// </summary>
+        /// <param name="privilegeId"></param>
+        /// <returns></returns>
         public async Task<OperationResult<IEnumerable<UserPrivilegeDto>>> GetByPrivilegeAsync(int privilegeId)
         {
             try
@@ -382,6 +401,9 @@ namespace VendaFlex.Core.Services
                     new[] { ex.Message });
             }
         }
+
+       
+
 
         #endregion
     }
