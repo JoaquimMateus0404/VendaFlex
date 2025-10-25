@@ -1,5 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Windows.Input;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
@@ -112,6 +111,62 @@ namespace VendaFlex.ViewModels.Setup
 
             public PrivilegeSelectionItem(PrivilegeDto p) => Privilege = p;
             public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+        }
+
+        #endregion
+
+        #region Validation Errors (por campo)
+
+        // Erros da Empresa
+        private string _companyNameError = string.Empty;
+        public string CompanyNameError
+        {
+            get => _companyNameError;
+            set => Set(ref _companyNameError, value);
+        }
+
+        private string _taxIdError = string.Empty;
+        public string TaxIdError
+        {
+            get => _taxIdError;
+            set => Set(ref _taxIdError, value);
+        }
+
+        private string _emailError = string.Empty;
+        public string EmailError
+        {
+            get => _emailError;
+            set => Set(ref _emailError, value);
+        }
+
+        public string _invoiceFormatError = string.Empty;
+        public string InvoiceFormatError
+        {
+            get => _invoiceFormatError;
+            set => Set(ref _invoiceFormatError, value);
+        }
+
+        // Erros da Pessoa
+        private string _personNameError = string.Empty;
+        public string PersonNameError
+        {
+            get => _personNameError;
+            set => Set(ref _personNameError, value);
+        }
+
+        private string _personEmailError = string.Empty;
+        public string PersonEmailError
+        {
+            get => _personEmailError;
+            set => Set(ref _personEmailError, value);
+        }
+
+        // Erros do Usuário
+        private string _usernameError = string.Empty;
+        public string UsernameError
+        {
+            get => _usernameError;
+            set => Set(ref _usernameError, value);
         }
 
         #endregion
@@ -525,16 +580,9 @@ namespace VendaFlex.ViewModels.Setup
                 if (!companyResult.Success)
                 {
                     ErrorMessage = companyResult.Message ?? "Erro ao salvar configuração da empresa.";
-                    Debug.WriteLine("=========================Company Erros========================================");
-                    Debug.WriteLine(companyResult.Message +  "Erro ao salvar configuração da empresa.");
-                    Debug.WriteLine("=================================================================");
 
                     if (companyResult.Errors?.Any() == true)
                         ErrorMessage += "\n• " + string.Join("\n• ", companyResult.Errors);
-
-                    Debug.WriteLine("=================================================================");
-                    Debug.WriteLine(ErrorMessage);
-                    Debug.WriteLine("=================================================================");
 
                     return;
                 }

@@ -6,6 +6,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:VendaFlex.UI.Views.Setup"
       xmlns:conv="clr-namespace:VendaFlex.Infrastructure.Converters"
+      xmlns:helpers="clr-namespace:VendaFlex.Infrastructure.Helpers"
       mc:Ignorable="d" 
       d:DesignHeight="900" d:DesignWidth="1280"
       Loaded="Page_Loaded">
@@ -171,541 +172,589 @@
 
         <!-- Content Area -->
         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,32,0,0" Grid.ColumnSpan="2" Margin="0,104,0,0" Grid.RowSpan="2">
-            <Grid Margin="80,0">
-                <!-- Step 1: Company Configuration -->
-                <Border x:Name="Step1Content" Style="{StaticResource GlassCard}" MaxWidth="800"
-                        Visibility="{Binding IsStep1Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <StackPanel>
-                        <!-- Header -->
-                        <Grid Margin="0,0,0,32">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <!-- BANNER DE ERRO - FORMA MAIS SIMPLES -->
+                <Border Background="#7F1F1F40" 
+                        BorderBrush="#EF4444" 
+                        BorderThickness="1" 
+                        CornerRadius="8" 
+                        Padding="16,12" 
+                        Margin="80,0,80,16">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ErrorMessage, Converter={StaticResource StringToBooleanConverter}}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
 
-                            <Border Width="56" Height="56" CornerRadius="14" Background="#3B82F620" 
-                                    VerticalAlignment="Center" Margin="0,0,20,0">
-                                <materialDesign:PackIcon Kind="OfficeBuilding" Width="32" Height="32" 
-                                                       Foreground="#3B82F6" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="AlertCircle" 
+                                            Width="24" Height="24" 
+                                            Foreground="#EF4444" 
+                                            VerticalAlignment="Center" 
+                                            Margin="0,0,12,0"/>
+                        <TextBlock Text="{Binding ErrorMessage}" 
+                                FontSize="13" 
+                                Foreground="#FECACA" 
+                                TextWrapping="Wrap"
+                                VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
 
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="Configuração da Empresa" Style="{StaticResource SectionTitle}"/>
-                                <TextBlock Text="Preencha os dados principais da sua empresa" FontSize="14" Foreground="#6B7280"/>
-                            </StackPanel>
-                        </Grid>
 
-                        <!-- Logo Upload -->
-                        <Border Background="#111827" CornerRadius="12" Padding="24" Margin="0,0,0,28"
-                                BorderBrush="#374151" BorderThickness="1">
-                            <Grid>
+                <Grid Margin="80,0">
+                    <!-- Step 1: Company Configuration -->
+                    <Border x:Name="Step1Content" Style="{StaticResource GlassCard}" MaxWidth="800"
+                            Visibility="{Binding IsStep1Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <!-- Header -->
+                            <Grid Margin="0,0,0,32">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <Border x:Name="LogoPreview" Width="100" Height="100" CornerRadius="12" 
-                                        Background="#1F2937" BorderBrush="#374151" BorderThickness="2"
-                                        Margin="0,0,24,0">
-                                    <Grid>
-                                        <Image x:Name="LogoImage" Stretch="UniformToFill" Visibility="Collapsed"/>
-                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <materialDesign:PackIcon Kind="ImagePlus" Width="36" Height="36" 
-                                                                   Foreground="#6B7280"/>
-                                            <TextBlock Text="Logo" FontSize="11" Foreground="#6B7280" 
-                                                     HorizontalAlignment="Center" Margin="0,8,0,0"/>
-                                        </StackPanel>
-                                    </Grid>
+                                <Border Width="56" Height="56" CornerRadius="14" Background="#3B82F620" 
+                                        VerticalAlignment="Center" Margin="0,0,20,0">
+                                    <materialDesign:PackIcon Kind="OfficeBuilding" Width="32" Height="32" 
+                                                           Foreground="#3B82F6" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
 
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <TextBlock Text="Logo da Empresa" FontSize="15" FontWeight="SemiBold" 
-                                             Foreground="#E5E7EB" Margin="0,0,0,8"/>
-                                    <TextBlock Text="Formatos aceitos: JPG, PNG (máx. 2MB)" FontSize="12" 
-                                             Foreground="#6B7280" Margin="0,0,0,16"/>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button Content="Escolher arquivo" Style="{StaticResource SecondaryButton}" 
-                                                Height="38" Padding="16,0" Click="UploadLogo_Click" Margin="0,0,12,0"/>
-                                        <Button x:Name="RemoveLogoButton" Content="Remover" Style="{StaticResource SecondaryButton}" 
-                                                Height="38" Padding="16,0" Click="RemoveLogo_Click" 
-                                                Visibility="Collapsed" Foreground="#EF4444"/>
-                                    </StackPanel>
+                                    <TextBlock Text="Configuração da Empresa" Style="{StaticResource SectionTitle}"/>
+                                    <TextBlock Text="Preencha os dados principais da sua empresa" FontSize="14" Foreground="#6B7280"/>
                                 </StackPanel>
                             </Grid>
-                        </Border>
 
-                        <!-- Form Fields -->
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition/>
-                                <ColumnDefinition Width="20"/>
-                                <ColumnDefinition/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
+                            <!-- Logo Upload -->
+                            <Border Background="#111827" CornerRadius="12" Padding="24" Margin="0,0,0,28"
+                                    BorderBrush="#374151" BorderThickness="1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                            <!-- Row 0: Company Name (Full Width) -->
-                            <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
-                                <TextBlock Text="Nome da Empresa *" Style="{StaticResource ModernLabel}"/>
-                                <TextBox x:Name="CompanyNameTextBox" Style="{StaticResource ModernTextBox}"
-                                       Tag="Ex: Minha Empresa Lda"
-                                       Text="{Binding Company.CompanyName, UpdateSourceTrigger=PropertyChanged}"                                     
-                                       TextChanged="ValidateCompanyFields"/>
-                            </StackPanel>
+                                    <Border x:Name="LogoPreview" Width="100" Height="100" CornerRadius="12" 
+                                            Background="#1F2937" BorderBrush="#374151" BorderThickness="2"
+                                            Margin="0,0,24,0">
+                                        <Grid>
+                                            <Image x:Name="LogoImage" Stretch="UniformToFill" Visibility="Collapsed"/>
+                                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <materialDesign:PackIcon Kind="ImagePlus" Width="36" Height="36" 
+                                                                       Foreground="#6B7280"/>
+                                                <TextBlock Text="Logo" FontSize="11" Foreground="#6B7280" 
+                                                         HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
 
-                            <!-- Row 1: Industry + Tax Regime -->
-                            <StackPanel Grid.Row="1" Grid.Column="0">
-                                <TextBlock Text="Setor/Indústria" Style="{StaticResource ModernLabel}"/>
-                                <TextBox Style="{StaticResource ModernTextBox}"
-                                       Tag="Ex: Comércio, Tecnologia..."
-                                       Text="{Binding Company.IndustryType, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Row="1" Grid.Column="2">
-                                <TextBlock Text="Regime Fiscal" Style="{StaticResource ModernLabel}"/>
-                                <TextBox Style="{StaticResource ModernTextBox}"
-                                       Tag="Ex: Geral, Simplificado..."
-                                       Text="{Binding Company.TaxRegime, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-
-                            <!-- Row 2: TaxId + Email -->
-                            <StackPanel Grid.Row="2" Grid.Column="0">
-                                <TextBlock Text="NIF/CNPJ" Style="{StaticResource ModernLabel}"/>
-                                <TextBox x:Name="TaxIdTextBox" Style="{StaticResource ModernTextBox}"
-                                       Tag="Ex: 000000000"
-                                       Text="{Binding Company.TaxId, UpdateSourceTrigger=PropertyChanged}"
-                                       TextChanged="ValidateCompanyFields"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Row="2" Grid.Column="2">
-                                <TextBlock Text="Email *" Style="{StaticResource ModernLabel}"/>
-                                <TextBox x:Name="EmailTextBox" Style="{StaticResource ModernTextBox}"
-                                       Tag="contato@empresa.ao"
-                                       Text="{Binding Company.Email, UpdateSourceTrigger=PropertyChanged}"
-                                       TextChanged="ValidateCompanyFields"/>
-                            </StackPanel>
-
-                            <!-- Row 3: Phone + Website -->
-                            <StackPanel Grid.Row="3" Grid.Column="0">
-                                <TextBlock Text="Telefone" Style="{StaticResource ModernLabel}"/>
-                                <TextBox Style="{StaticResource ModernTextBox}"
-                                       Tag="+244 900 000 000"
-                                       Text="{Binding Company.PhoneNumber, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Row="3" Grid.Column="2">
-                                <TextBlock Text="Website" Style="{StaticResource ModernLabel}"/>
-                                <TextBox Style="{StaticResource ModernTextBox}"
-                                       Tag="www.empresa.ao"
-                                       Text="{Binding Company.Website, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-
-                            <!-- Row 4: Address (Full Width) -->
-                            <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
-                                <TextBlock Text="Endereço" Style="{StaticResource ModernLabel}"/>
-                                <TextBox Style="{StaticResource ModernTextBox}"
-                                       Tag="Rua, Avenida, Número..."
-                                       Text="{Binding Company.Address, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-
-                            <!-- Row 5: City + Postal Code + Country -->
-                            <StackPanel Grid.Row="5" Grid.Column="0">
-                                <TextBlock Text="Cidade" Style="{StaticResource ModernLabel}"/>
-                                <TextBox Style="{StaticResource ModernTextBox}"
-                                       Tag="Luanda"
-                                       Text="{Binding Company.City, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Row="5" Grid.Column="2">
-                                <TextBlock Text="País" Style="{StaticResource ModernLabel}"/>
-                                <TextBox Style="{StaticResource ModernTextBox}"
-                                       Tag="Angola"
-                                       Text="{Binding Company.Country, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-
-                            <!-- Row 6: Currency + Tax Rate -->
-                            <StackPanel Grid.Row="6" Grid.Column="0">
-                                <TextBlock Text="Moeda *" Style="{StaticResource ModernLabel}"/>
-                                <ComboBox Style="{StaticResource ModernComboBox}"
-                                        SelectedValuePath="Tag"
-                                        SelectedValue="{Binding Company.Currency}">
-                                    <ComboBoxItem Content="AOA - Kwanza Angolano" Tag="AOA" IsSelected="True"/>
-                                    <ComboBoxItem Content="USD - Dólar Americano" Tag="USD"/>
-                                    <ComboBoxItem Content="EUR - Euro" Tag="EUR"/>
-                                    <ComboBoxItem Content="BRL - Real Brasileiro" Tag="BRL"/>
-                                </ComboBox>
-                            </StackPanel>
-
-                            <StackPanel Grid.Row="6" Grid.Column="2">
-                                <TextBlock Text="Taxa de Imposto Padrão (%)" Style="{StaticResource ModernLabel}"/>
-                                <TextBox Style="{StaticResource ModernTextBox}"
-                                       Tag="14"
-                                       Text="{Binding Company.DefaultTaxRate, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Checkboxes -->
-                        <Border Background="#111827" CornerRadius="12" Padding="20" Margin="0,8,0,0"
-                                BorderBrush="#374151" BorderThickness="1">
-                            <StackPanel>
-                                <CheckBox Content="Incluir dados do cliente nas faturas" 
-                                        IsChecked="{Binding Company.IncludeCustomerData}"
-                                        Foreground="#E5E7EB" Margin="0,0,0,12"
-                                        Style="{DynamicResource MaterialDesignCheckBox}"/>
-                                <CheckBox Content="Permitir faturas anônimas (vendas rápidas)" 
-                                        IsChecked="{Binding Company.AllowAnonymousInvoice}"
-                                        Foreground="#E5E7EB" Margin="0,0,0,12"
-                                        Style="{DynamicResource MaterialDesignCheckBox}"/>
-                                <CheckBox Content="Empresa ativa" 
-                                        IsChecked="{Binding Company.IsActive}"
-                                        Foreground="#E5E7EB"
-                                        Style="{DynamicResource MaterialDesignCheckBox}"/>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </Border>
-
-                <!-- Step 2: Person Configuration -->
-                <Border x:Name="Step2Content" Style="{StaticResource GlassCard}" MaxWidth="800"
-                        Visibility="{Binding IsStep2Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <StackPanel>
-                        <!-- Header -->
-                        <Grid Margin="0,0,0,32">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <Border Width="56" Height="56" CornerRadius="14" Background="#8B5CF620" 
-                                    VerticalAlignment="Center" Margin="0,0,20,0">
-                                <materialDesign:PackIcon Kind="AccountCircle" Width="32" Height="32" 
-                                                       Foreground="#8B5CF6" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="Logo da Empresa" FontSize="15" FontWeight="SemiBold" 
+                                                 Foreground="#E5E7EB" Margin="0,0,0,8"/>
+                                        <TextBlock Text="Formatos aceitos: JPG, PNG (máx. 2MB)" FontSize="12" 
+                                                 Foreground="#6B7280" Margin="0,0,0,16"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Escolher arquivo" Style="{StaticResource SecondaryButton}" 
+                                                    Height="38" Padding="16,0" Click="UploadLogo_Click" Margin="0,0,12,0"/>
+                                            <Button x:Name="RemoveLogoButton" Content="Remover" Style="{StaticResource SecondaryButton}" 
+                                                    Height="38" Padding="16,0" Click="RemoveLogo_Click" 
+                                                    Visibility="Collapsed" Foreground="#EF4444"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
                             </Border>
 
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Style="{StaticResource SectionTitle}">
-                                    <TextBlock.Text>Dados do Administrador</TextBlock.Text>
-                                    <TextBlock.Foreground>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                            <GradientStop Color="#A78BFA" Offset="0"/>
-                                            <GradientStop Color="#F472B6" Offset="1"/>
-                                        </LinearGradientBrush>
-                                    </TextBlock.Foreground>
-                                </TextBlock>
-                                <TextBlock Text="Informações pessoais do primeiro usuário do sistema" FontSize="14" Foreground="#6B7280"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Form Fields -->
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition/>
-                                <ColumnDefinition Width="20"/>
-                                <ColumnDefinition/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <!-- Row 0: Full Name (Full Width) -->
-                            <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
-                                <TextBlock Text="Nome Completo *" Style="{StaticResource ModernLabel}"/>
-                                <TextBox x:Name="PersonNameTextBox" Style="{StaticResource ModernTextBox}"
-                                       Tag="Ex: João Manuel da Silva"
-                                       Text="{Binding AdminPerson.Name, UpdateSourceTrigger=PropertyChanged}"
-                                       TextChanged="ValidatePersonFields"/>
-                            </StackPanel>
-
-                            <!-- Row 1: Type + TaxId -->
-                            <StackPanel Grid.Row="1" Grid.Column="0">
-                                <TextBlock Text="Tipo de Pessoa" Style="{StaticResource ModernLabel}"/>
-                                <ComboBox Style="{StaticResource ModernComboBox}"
-                                        SelectedValuePath="Tag"
-                                        SelectedValue="{Binding AdminPerson.Type}"
-                                        IsEnabled="False">
-                                    <ComboBoxItem Content="Funcionário" Tag="3" IsSelected="True"/>
-                                </ComboBox>
-                            </StackPanel>
-
-                            <StackPanel Grid.Row="1" Grid.Column="2">
-                                <TextBlock Text="NIF/BI" Style="{StaticResource ModernLabel}"/>
-                                <TextBox Style="{StaticResource ModernTextBox}"
-                                       Tag="Ex: 000000000LA000"
-                                       Text="{Binding AdminPerson.TaxId, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-
-                            <!-- Row 2: Email + Phone -->
-                            <StackPanel Grid.Row="2" Grid.Column="0">
-                                <TextBlock Text="Email" Style="{StaticResource ModernLabel}"/>
-                                <TextBox x:Name="PersonEmailTextBox" Style="{StaticResource ModernTextBox}"
-                                       Tag="admin@empresa.ao"
-                                       Text="{Binding AdminPerson.Email, UpdateSourceTrigger=PropertyChanged}"
-                                       TextChanged="ValidatePersonFields"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Row="2" Grid.Column="2">
-                                <TextBlock Text="Telefone" Style="{StaticResource ModernLabel}"/>
-                                <TextBox Style="{StaticResource ModernTextBox}"
-                                       Tag="+244 900 000 000"
-                                       Text="{Binding AdminPerson.PhoneNumber, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-
-                            <!-- Row 3: Mobile + Website -->
-                            <StackPanel Grid.Row="3" Grid.Column="0">
-                                <TextBlock Text="Telemóvel" Style="{StaticResource ModernLabel}"/>
-                                <TextBox Style="{StaticResource ModernTextBox}"
-                                       Tag="+244 900 000 000"
-                                       Text="{Binding AdminPerson.MobileNumber, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Row="3" Grid.Column="2">
-                                <TextBlock Text="Website" Style="{StaticResource ModernLabel}"/>
-                                <TextBox Style="{StaticResource ModernTextBox}"
-                                       Tag="www.exemplo.ao"
-                                       Text="{Binding AdminPerson.Website, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-
-                            <!-- Row 4: Address (Full Width) -->
-                            <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
-                                <TextBlock Text="Endereço" Style="{StaticResource ModernLabel}"/>
-                                <TextBox Style="{StaticResource ModernTextBox}"
-                                       Tag="Rua, Avenida, Número..."
-                                       Text="{Binding AdminPerson.Address, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-
-                            <!-- Row 5: City + Country -->
-                            <StackPanel Grid.Row="5" Grid.Column="0">
-                                <TextBlock Text="Cidade" Style="{StaticResource ModernLabel}"/>
-                                <TextBox Style="{StaticResource ModernTextBox}"
-                                       Tag="Luanda"
-                                       Text="{Binding AdminPerson.City, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Row="5" Grid.Column="2">
-                                <TextBlock Text="País" Style="{StaticResource ModernLabel}"/>
-                                <TextBox Style="{StaticResource ModernTextBox}"
-                                       Tag="Angola"
-                                       Text="{Binding AdminPerson.Country, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-                        </Grid>
-                    </StackPanel>
-                </Border>
-
-                <!-- Step 3: User Configuration -->
-                <Border x:Name="Step3Content" Style="{StaticResource GlassCard}" MaxWidth="800"
-                        Visibility="{Binding IsStep3Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <StackPanel>
-                        <!-- Header -->
-                        <Grid Margin="0,0,0,32">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <Border Width="56" Height="56" CornerRadius="14" Background="#10B98120" 
-                                    VerticalAlignment="Center" Margin="0,0,20,0">
-                                <materialDesign:PackIcon Kind="ShieldAccount" Width="32" Height="32" 
-                                                       Foreground="#10B981" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Style="{StaticResource SectionTitle}">
-                                    <TextBlock.Text>Credenciais de Acesso</TextBlock.Text>
-                                    <TextBlock.Foreground>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                            <GradientStop Color="#10B981" Offset="0"/>
-                                            <GradientStop Color="#3B82F6" Offset="1"/>
-                                        </LinearGradientBrush>
-                                    </TextBlock.Foreground>
-                                </TextBlock>
-                                <TextBlock Text="Configure o nome de usuário e senha para acesso ao sistema" FontSize="14" Foreground="#6B7280"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Form Fields -->
-                        <StackPanel>
-                            <!-- Username -->
-                            <TextBlock Text="Nome de Usuário *" Style="{StaticResource ModernLabel}"/>
-                            <TextBox x:Name="UsernameTextBox" Style="{StaticResource ModernTextBox}"
-                                   Tag="Ex: admin ou duarte.gauss"
-                                   Text="{Binding AdminUser.Username, UpdateSourceTrigger=PropertyChanged}"
-                                   TextChanged="ValidateUserFields"/>
-
-                            <!-- Password -->
+                            <!-- Form Fields -->
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition/>
                                     <ColumnDefinition Width="20"/>
                                     <ColumnDefinition/>
                                 </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Palavra-passe *" Style="{StaticResource ModernLabel}"/>
-                                    <PasswordBox x:Name="AdminPasswordBox" Style="{StaticResource ModernPasswordBox}"
-                                               Tag="Mínimo 6 caracteres"
-                                               PasswordChanged="AdminPasswordBox_OnPasswordChanged"/>
+                                <!-- Row 0: Company Name (Full Width) -->
+                                <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
+                                    <TextBlock Text="Nome da Empresa *" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox x:Name="CompanyNameTextBox" Style="{StaticResource ModernTextBox}"
+                                           Tag="Ex: Minha Empresa Lda"
+                                           Text="{Binding Company.CompanyName, UpdateSourceTrigger=PropertyChanged}"  
+                                           helpers:ValidationHelper.ValidationError="{Binding CompanyNameError}"
+                                           TextChanged="ValidateCompanyFields"/>
                                 </StackPanel>
 
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Confirmar Palavra-passe *" Style="{StaticResource ModernLabel}"/>
-                                    <PasswordBox x:Name="AdminConfirmPasswordBox" Style="{StaticResource ModernPasswordBox}"
-                                               Tag="Digite a senha novamente"
-                                               PasswordChanged="AdminConfirmPasswordBox_OnPasswordChanged"/>
+                                <!-- Row 0: Company Name (Full Width) -->
+                                <StackPanel Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3">
+                                    <TextBlock Text="InvoiceFormat*" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox x:Name="InvoiceFormatTextBox" Style="{StaticResource ModernTextBox}"
+            Tag="Ex: Minha Empresa Lda"
+            Text="{Binding Company.InvoiceFormat, UpdateSourceTrigger=PropertyChanged}"  
+            helpers:ValidationHelper.ValidationError="{Binding InvoiceFormatError}"
+            TextChanged="ValidateCompanyFields"/>
+                                </StackPanel>
+
+                                <!-- Row 1: Industry + Tax Regime -->
+                                <StackPanel Grid.Row="1" Grid.Column="0">
+                                    <TextBlock Text="Setor/Indústria" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox Style="{StaticResource ModernTextBox}"
+                                           Tag="Ex: Comércio, Tecnologia..."
+                                           Text="{Binding Company.IndustryType, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="2">
+                                    <TextBlock Text="Regime Fiscal" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox Style="{StaticResource ModernTextBox}"
+                                           Tag="Ex: Geral, Simplificado..."
+                                           Text="{Binding Company.TaxRegime, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+
+                                <!-- Row 2: TaxId + Email -->
+                                <StackPanel Grid.Row="2" Grid.Column="0">
+                                    <TextBlock Text="NIF/CNPJ" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox x:Name="TaxIdTextBox" Style="{StaticResource ModernTextBox}"
+                                           Tag="Ex: 000000000"
+                                           Text="{Binding Company.TaxId, UpdateSourceTrigger=PropertyChanged}"
+                                           TextChanged="ValidateCompanyFields"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="2">
+                                    <TextBlock Text="Email *" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox x:Name="EmailTextBox" Style="{StaticResource ModernTextBox}"
+                                           Tag="contato@empresa.ao"
+                                           Text="{Binding Company.Email, UpdateSourceTrigger=PropertyChanged}"
+                                           helpers:ValidationHelper.ValidationError="{Binding EmailError}"
+                                           TextChanged="ValidateCompanyFields"/>
+                                </StackPanel>
+
+                                <!-- Row 3: Phone + Website -->
+                                <StackPanel Grid.Row="3" Grid.Column="0">
+                                    <TextBlock Text="Telefone" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox Style="{StaticResource ModernTextBox}"
+                                           Tag="+244 900 000 000"
+                                           Text="{Binding Company.PhoneNumber, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="3" Grid.Column="2">
+                                    <TextBlock Text="Website" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox Style="{StaticResource ModernTextBox}"
+                                           Tag="www.empresa.ao"
+                                           Text="{Binding Company.Website, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+
+                                <!-- Row 4: Address (Full Width) -->
+                                <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
+                                    <TextBlock Text="Endereço" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox Style="{StaticResource ModernTextBox}"
+                                           Tag="Rua, Avenida, Número..."
+                                           Text="{Binding Company.Address, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+
+                                <!-- Row 5: City + Postal Code + Country -->
+                                <StackPanel Grid.Row="5" Grid.Column="0">
+                                    <TextBlock Text="Cidade" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox Style="{StaticResource ModernTextBox}"
+                                           Tag="Luanda"
+                                           Text="{Binding Company.City, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="5" Grid.Column="2">
+                                    <TextBlock Text="País" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox Style="{StaticResource ModernTextBox}"
+                                           Tag="Angola"
+                                           Text="{Binding Company.Country, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+
+                                <!-- Row 6: Currency + Tax Rate -->
+                                <StackPanel Grid.Row="6" Grid.Column="0">
+                                    <TextBlock Text="Moeda *" Style="{StaticResource ModernLabel}"/>
+                                    <ComboBox Style="{StaticResource ModernComboBox}"
+                                            SelectedValuePath="Tag"
+                                            SelectedValue="{Binding Company.Currency}">
+                                        <ComboBoxItem Content="AOA - Kwanza Angolano" Tag="AOA" IsSelected="True"/>
+                                        <ComboBoxItem Content="USD - Dólar Americano" Tag="USD"/>
+                                        <ComboBoxItem Content="EUR - Euro" Tag="EUR"/>
+                                        <ComboBoxItem Content="BRL - Real Brasileiro" Tag="BRL"/>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="6" Grid.Column="2">
+                                    <TextBlock Text="Taxa de Imposto Padrão (%)" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox Style="{StaticResource ModernTextBox}"
+                                           Tag="14"
+                                           Text="{Binding Company.DefaultTaxRate, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Password Strength Indicator -->
-                            <Border x:Name="PasswordStrengthIndicator" 
-                                    Background="#111827" 
-                                    CornerRadius="12" 
-                                    Padding="20" 
-                                    Margin="0,0,0,20"
-                                    BorderBrush="#374151"
-                                    BorderThickness="1"
-                                    Visibility="Collapsed">
-                                <StackPanel>
-                                    <Grid Margin="0,0,0,12">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <materialDesign:PackIcon Grid.Column="0" 
-                                                               Kind="ShieldCheck" 
-                                                               Width="20" Height="20" 
-                                                               Foreground="#6B7280" 
-                                                               VerticalAlignment="Center" 
-                                                               Margin="0,0,12,0"/>
-
-                                        <TextBlock Grid.Column="1" 
-                                                 Text="Força da Senha:" 
-                                                 FontSize="13" 
-                                                 Foreground="#9CA3AF" 
-                                                 VerticalAlignment="Center"/>
-
-                                        <TextBlock x:Name="PasswordStrengthText" 
-                                                 Grid.Column="2" 
-                                                 Text="Fraca" 
-                                                 FontSize="13" 
-                                                 FontWeight="Bold" 
-                                                 Foreground="#EF4444" 
-                                                 VerticalAlignment="Center"/>
-                                    </Grid>
-
-                                    <Border Height="6" 
-                                            CornerRadius="3" 
-                                            Background="#1F2937">
-                                        <Border x:Name="PasswordStrengthBar" 
-                                              Height="6" 
-                                              CornerRadius="3" 
-                                              Background="#EF4444" 
-                                              HorizontalAlignment="Left" 
-                                              Width="0"/>
-                                    </Border>
-
-                                    <!-- Password Requirements -->
-                                    <StackPanel Margin="0,16,0,0">
-                                        <TextBlock Text="Requisitos da senha:" FontSize="12" Foreground="#9CA3AF" 
-                                                 FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                            <materialDesign:PackIcon x:Name="LengthIcon" Kind="Circle" Width="12" Height="12" 
-                                                                   Foreground="#374151" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                            <TextBlock x:Name="LengthText" Text="Mínimo 8 caracteres" FontSize="11" Foreground="#6B7280"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                            <materialDesign:PackIcon x:Name="UpperIcon" Kind="Circle" Width="12" Height="12" 
-                                                                   Foreground="#374151" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                            <TextBlock x:Name="UpperText" Text="Pelo menos uma letra maiúscula" FontSize="11" Foreground="#6B7280"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                            <materialDesign:PackIcon x:Name="NumberIcon" Kind="Circle" Width="12" Height="12" 
-                                                                   Foreground="#374151" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                            <TextBlock x:Name="NumberText" Text="Pelo menos um número" FontSize="11" Foreground="#6B7280"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon x:Name="SpecialIcon" Kind="Circle" Width="12" Height="12" 
-                                                                   Foreground="#374151" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                            <TextBlock x:Name="SpecialText" Text="Pelo menos um caractere especial" FontSize="11" Foreground="#6B7280"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Privileges Card -->
-                            <Border Background="#111827" CornerRadius="12" Padding="24" 
-                                    BorderBrush="#374151" BorderThickness="1" Margin="0,0,0,16">
-                                <StackPanel>
-                                    <TextBlock Text="🔐 Privilégios do Utilizador" FontSize="15" FontWeight="SemiBold" 
-                                                Foreground="#E5E7EB" Margin="0,0,0,12"/>
-                                    <TextBlock Text="Selecione os privilégios que este usuário terá." FontSize="12" Foreground="#9CA3AF" Margin="0,0,0,12"/>
-
-                                    <ScrollViewer MaxHeight="180">
-                                        <ItemsControl ItemsSource="{Binding AvailablePrivileges}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <CheckBox Content="{Binding Privilege.Name}"
-                                                                IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                                                Foreground="#E5E7EB"
-                                                                Margin="0,4,0,4"/>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </ScrollViewer>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Summary Card -->
-                            <Border Background="#111827" CornerRadius="12" Padding="24" 
+                            <!-- Checkboxes -->
+                            <Border Background="#111827" CornerRadius="12" Padding="20" Margin="0,8,0,0"
                                     BorderBrush="#374151" BorderThickness="1">
                                 <StackPanel>
-                                    <TextBlock Text="📋 Resumo da Configuração" FontSize="15" FontWeight="SemiBold" 
-                                             Foreground="#E5E7EB" Margin="0,0,0,16"/>
-
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-
-                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Empresa:" FontSize="12" 
-                                                 Foreground="#9CA3AF" Margin="0,0,12,8"/>
-                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Company.CompanyName}" 
-                                                 FontSize="12" Foreground="#E5E7EB" FontWeight="SemiBold" Margin="0,0,0,8"/>
-
-                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Administrador:" FontSize="12" 
-                                                 Foreground="#9CA3AF" Margin="0,0,12,8"/>
-                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AdminPerson.Name}" 
-                                                 FontSize="12" Foreground="#E5E7EB" FontWeight="SemiBold" Margin="0,0,0,8"/>
-
-                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Usuário:" FontSize="12" 
-                                                 Foreground="#9CA3AF" Margin="0,0,12,0"/>
-                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding AdminUser.Username}" 
-                                                 FontSize="12" Foreground="#E5E7EB" FontWeight="SemiBold"/>
-                                    </Grid>
+                                    <CheckBox Content="Incluir dados do cliente nas faturas" 
+                                            IsChecked="{Binding Company.IncludeCustomerData}"
+                                            Foreground="#E5E7EB" Margin="0,0,0,12"
+                                            Style="{DynamicResource MaterialDesignCheckBox}"/>
+                                    <CheckBox Content="Permitir faturas anônimas (vendas rápidas)" 
+                                            IsChecked="{Binding Company.AllowAnonymousInvoice}"
+                                            Foreground="#E5E7EB" Margin="0,0,0,12"
+                                            Style="{DynamicResource MaterialDesignCheckBox}"/>
+                                    <CheckBox Content="Empresa ativa" 
+                                            IsChecked="{Binding Company.IsActive}"
+                                            Foreground="#E5E7EB"
+                                            Style="{DynamicResource MaterialDesignCheckBox}"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
-                    </StackPanel>
-                </Border>
-            </Grid>
+                    </Border>
+
+                    <!-- Step 2: Person Configuration -->
+                    <Border x:Name="Step2Content" Style="{StaticResource GlassCard}" MaxWidth="800"
+                            Visibility="{Binding IsStep2Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <!-- Header -->
+                            <Grid Margin="0,0,0,32">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Width="56" Height="56" CornerRadius="14" Background="#8B5CF620" 
+                                        VerticalAlignment="Center" Margin="0,0,20,0">
+                                    <materialDesign:PackIcon Kind="AccountCircle" Width="32" Height="32" 
+                                                           Foreground="#8B5CF6" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Style="{StaticResource SectionTitle}">
+                                        <TextBlock.Text>Dados do Administrador</TextBlock.Text>
+                                        <TextBlock.Foreground>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                <GradientStop Color="#A78BFA" Offset="0"/>
+                                                <GradientStop Color="#F472B6" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </TextBlock.Foreground>
+                                    </TextBlock>
+                                    <TextBlock Text="Informações pessoais do primeiro usuário do sistema" FontSize="14" Foreground="#6B7280"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Form Fields -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Row 0: Full Name (Full Width) -->
+                                <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
+                                    <TextBlock Text="Nome Completo *" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox x:Name="PersonNameTextBox" Style="{StaticResource ModernTextBox}"
+                                           Tag="Ex: João Manuel da Silva"
+                                           Text="{Binding AdminPerson.Name, UpdateSourceTrigger=PropertyChanged}"
+                                           TextChanged="ValidatePersonFields"/>
+                                </StackPanel>
+
+                                <!-- Row 1: Type + TaxId -->
+                                <StackPanel Grid.Row="1" Grid.Column="0">
+                                    <TextBlock Text="Tipo de Pessoa" Style="{StaticResource ModernLabel}"/>
+                                    <ComboBox Style="{StaticResource ModernComboBox}"
+                                            SelectedValuePath="Tag"
+                                            SelectedValue="{Binding AdminPerson.Type}"
+                                            IsEnabled="False">
+                                        <ComboBoxItem Content="Funcionário" Tag="3" IsSelected="True"/>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="2">
+                                    <TextBlock Text="NIF/BI" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox Style="{StaticResource ModernTextBox}"
+                                           Tag="Ex: 000000000LA000"
+                                           Text="{Binding AdminPerson.TaxId, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+
+                                <!-- Row 2: Email + Phone -->
+                                <StackPanel Grid.Row="2" Grid.Column="0">
+                                    <TextBlock Text="Email" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox x:Name="PersonEmailTextBox" Style="{StaticResource ModernTextBox}"
+                                           Tag="admin@empresa.ao"
+                                           Text="{Binding AdminPerson.Email, UpdateSourceTrigger=PropertyChanged}"
+                                           TextChanged="ValidatePersonFields"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="2">
+                                    <TextBlock Text="Telefone" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox Style="{StaticResource ModernTextBox}"
+                                           Tag="+244 900 000 000"
+                                           Text="{Binding AdminPerson.PhoneNumber, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+
+                                <!-- Row 3: Mobile + Website -->
+                                <StackPanel Grid.Row="3" Grid.Column="0">
+                                    <TextBlock Text="Telemóvel" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox Style="{StaticResource ModernTextBox}"
+                                           Tag="+244 900 000 000"
+                                           Text="{Binding AdminPerson.MobileNumber, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="3" Grid.Column="2">
+                                    <TextBlock Text="Website" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox Style="{StaticResource ModernTextBox}"
+                                           Tag="www.exemplo.ao"
+                                           Text="{Binding AdminPerson.Website, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+
+                                <!-- Row 4: Address (Full Width) -->
+                                <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
+                                    <TextBlock Text="Endereço" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox Style="{StaticResource ModernTextBox}"
+                                           Tag="Rua, Avenida, Número..."
+                                           Text="{Binding AdminPerson.Address, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+
+                                <!-- Row 5: City + Country -->
+                                <StackPanel Grid.Row="5" Grid.Column="0">
+                                    <TextBlock Text="Cidade" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox Style="{StaticResource ModernTextBox}"
+                                           Tag="Luanda"
+                                           Text="{Binding AdminPerson.City, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="5" Grid.Column="2">
+                                    <TextBlock Text="País" Style="{StaticResource ModernLabel}"/>
+                                    <TextBox Style="{StaticResource ModernTextBox}"
+                                           Tag="Angola"
+                                           Text="{Binding AdminPerson.Country, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Step 3: User Configuration -->
+                    <Border x:Name="Step3Content" Style="{StaticResource GlassCard}" MaxWidth="800"
+                            Visibility="{Binding IsStep3Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <!-- Header -->
+                            <Grid Margin="0,0,0,32">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Width="56" Height="56" CornerRadius="14" Background="#10B98120" 
+                                        VerticalAlignment="Center" Margin="0,0,20,0">
+                                    <materialDesign:PackIcon Kind="ShieldAccount" Width="32" Height="32" 
+                                                           Foreground="#10B981" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Style="{StaticResource SectionTitle}">
+                                        <TextBlock.Text>Credenciais de Acesso</TextBlock.Text>
+                                        <TextBlock.Foreground>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                <GradientStop Color="#10B981" Offset="0"/>
+                                                <GradientStop Color="#3B82F6" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </TextBlock.Foreground>
+                                    </TextBlock>
+                                    <TextBlock Text="Configure o nome de usuário e senha para acesso ao sistema" FontSize="14" Foreground="#6B7280"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Form Fields -->
+                            <StackPanel>
+                                <!-- Username -->
+                                <TextBlock Text="Nome de Usuário *" Style="{StaticResource ModernLabel}"/>
+                                <TextBox x:Name="UsernameTextBox" Style="{StaticResource ModernTextBox}"
+                                       Tag="Ex: admin ou duarte.gauss"
+                                       Text="{Binding AdminUser.Username, UpdateSourceTrigger=PropertyChanged}"
+                                       TextChanged="ValidateUserFields"/>
+
+                                <!-- Password -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition Width="20"/>
+                                        <ColumnDefinition/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Palavra-passe *" Style="{StaticResource ModernLabel}"/>
+                                        <PasswordBox x:Name="AdminPasswordBox" Style="{StaticResource ModernPasswordBox}"
+                                                   Tag="Mínimo 6 caracteres"
+                                                   PasswordChanged="AdminPasswordBox_OnPasswordChanged"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Confirmar Palavra-passe *" Style="{StaticResource ModernLabel}"/>
+                                        <PasswordBox x:Name="AdminConfirmPasswordBox" Style="{StaticResource ModernPasswordBox}"
+                                                   Tag="Digite a senha novamente"
+                                                   PasswordChanged="AdminConfirmPasswordBox_OnPasswordChanged"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Password Strength Indicator -->
+                                <Border x:Name="PasswordStrengthIndicator" 
+                                        Background="#111827" 
+                                        CornerRadius="12" 
+                                        Padding="20" 
+                                        Margin="0,0,0,20"
+                                        BorderBrush="#374151"
+                                        BorderThickness="1"
+                                        Visibility="Collapsed">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <materialDesign:PackIcon Grid.Column="0" 
+                                                                   Kind="ShieldCheck" 
+                                                                   Width="20" Height="20" 
+                                                                   Foreground="#6B7280" 
+                                                                   VerticalAlignment="Center" 
+                                                                   Margin="0,0,12,0"/>
+
+                                            <TextBlock Grid.Column="1" 
+                                                     Text="Força da Senha:" 
+                                                     FontSize="13" 
+                                                     Foreground="#9CA3AF" 
+                                                     VerticalAlignment="Center"/>
+
+                                            <TextBlock x:Name="PasswordStrengthText" 
+                                                     Grid.Column="2" 
+                                                     Text="Fraca" 
+                                                     FontSize="13" 
+                                                     FontWeight="Bold" 
+                                                     Foreground="#EF4444" 
+                                                     VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <Border Height="6" 
+                                                CornerRadius="3" 
+                                                Background="#1F2937">
+                                            <Border x:Name="PasswordStrengthBar" 
+                                                  Height="6" 
+                                                  CornerRadius="3" 
+                                                  Background="#EF4444" 
+                                                  HorizontalAlignment="Left" 
+                                                  Width="0"/>
+                                        </Border>
+
+                                        <!-- Password Requirements -->
+                                        <StackPanel Margin="0,16,0,0">
+                                            <TextBlock Text="Requisitos da senha:" FontSize="12" Foreground="#9CA3AF" 
+                                                     FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                <materialDesign:PackIcon x:Name="LengthIcon" Kind="Circle" Width="12" Height="12" 
+                                                                       Foreground="#374151" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <TextBlock x:Name="LengthText" Text="Mínimo 8 caracteres" FontSize="11" Foreground="#6B7280"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                <materialDesign:PackIcon x:Name="UpperIcon" Kind="Circle" Width="12" Height="12" 
+                                                                       Foreground="#374151" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <TextBlock x:Name="UpperText" Text="Pelo menos uma letra maiúscula" FontSize="11" Foreground="#6B7280"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                <materialDesign:PackIcon x:Name="NumberIcon" Kind="Circle" Width="12" Height="12" 
+                                                                       Foreground="#374151" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <TextBlock x:Name="NumberText" Text="Pelo menos um número" FontSize="11" Foreground="#6B7280"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon x:Name="SpecialIcon" Kind="Circle" Width="12" Height="12" 
+                                                                       Foreground="#374151" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <TextBlock x:Name="SpecialText" Text="Pelo menos um caractere especial" FontSize="11" Foreground="#6B7280"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Privileges Card -->
+                                <Border Background="#111827" CornerRadius="12" Padding="24" 
+                                        BorderBrush="#374151" BorderThickness="1" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="🔐 Privilégios do Utilizador" FontSize="15" FontWeight="SemiBold" 
+                                                    Foreground="#E5E7EB" Margin="0,0,0,12"/>
+                                        <TextBlock Text="Selecione os privilégios que este usuário terá." FontSize="12" Foreground="#9CA3AF" Margin="0,0,0,12"/>
+
+                                        <ScrollViewer MaxHeight="180">
+                                            <ItemsControl ItemsSource="{Binding AvailablePrivileges}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <CheckBox Content="{Binding Privilege.Name}"
+                                                                    IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                    Foreground="#E5E7EB"
+                                                                    Margin="0,4,0,4"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Summary Card -->
+                                <Border Background="#111827" CornerRadius="12" Padding="24" 
+                                        BorderBrush="#374151" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="📋 Resumo da Configuração" FontSize="15" FontWeight="SemiBold" 
+                                                 Foreground="#E5E7EB" Margin="0,0,0,16"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Empresa:" FontSize="12" 
+                                                     Foreground="#9CA3AF" Margin="0,0,12,8"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Company.CompanyName}" 
+                                                     FontSize="12" Foreground="#E5E7EB" FontWeight="SemiBold" Margin="0,0,0,8"/>
+
+                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Administrador:" FontSize="12" 
+                                                     Foreground="#9CA3AF" Margin="0,0,12,8"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AdminPerson.Name}" 
+                                                     FontSize="12" Foreground="#E5E7EB" FontWeight="SemiBold" Margin="0,0,0,8"/>
+
+                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Usuário:" FontSize="12" 
+                                                     Foreground="#9CA3AF" Margin="0,0,12,0"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding AdminUser.Username}" 
+                                                     FontSize="12" Foreground="#E5E7EB" FontWeight="SemiBold"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
         </ScrollViewer>
 
         <!-- Footer with Navigation Buttons -->

@@ -3,17 +3,380 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
       xmlns:local="clr-namespace:VendaFlex.UI.Views.Authentication"
+      xmlns:conv="clr-namespace:VendaFlex.Infrastructure.Converters"
       mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
-      Title="LoginView">
+      d:DesignHeight="900" 
+      d:DesignWidth="1440"
+      Title="Login - CommerceHub"
+      Loaded="Page_Loaded"
+      KeyDown="Page_KeyDown">
 
-    <Grid Background="{DynamicResource MaterialDesignShadowBrush}">
-        <TextBlock
-            Text="Login View"
-            Foreground="{DynamicResource MaterialDesignLightSeparatorBackground}"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            FontSize="24"/>
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Global styles merged so the page recognizes styles defined in Styles/GlobalStyles.xaml -->
+                <ResourceDictionary Source="/Styles/GlobalStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+        </ResourceDictionary>
+
+    </Page.Resources>
+
+    <Page.Triggers>
+        <EventTrigger RoutedEvent="Page.Loaded">
+            <BeginStoryboard Storyboard="{StaticResource CardEntrance}"/>
+            <BeginStoryboard Storyboard="{StaticResource LogoAnimation}"/>
+            <BeginStoryboard Storyboard="{StaticResource FloatAnimation}"/>
+            <BeginStoryboard Storyboard="{StaticResource PulseAnimation}"/>
+            <BeginStoryboard Storyboard="{StaticResource RotateAnimation}"/>
+        </EventTrigger>
+    </Page.Triggers>
+
+    <Grid Background="#0F0F1E">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- LEFT PANEL - Decorative & Animated -->
+        <Grid Grid.Column="0" Background="{StaticResource ModernGradient}" IsHitTestVisible="False">
+            <!-- Animated Background Elements -->
+            <Canvas IsHitTestVisible="False" Opacity="0.15">
+                <Ellipse Width="400" Height="400" Canvas.Left="-80" Canvas.Top="-100" Opacity="0.4">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush>
+                            <GradientStop Color="#3B82F6" Offset="0"/>
+                            <GradientStop Color="Transparent" Offset="1"/>
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+                <Ellipse Width="350" Height="350" Canvas.Right="-60" Canvas.Bottom="-80" Opacity="0.3">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush>
+                            <GradientStop Color="#60A5FA" Offset="0"/>
+                            <GradientStop Color="Transparent" Offset="1"/>
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+            </Canvas>
+
+            <!-- Content -->
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="380">
+                <!-- Main Icon with Pulse -->
+                <Grid HorizontalAlignment="Center" Margin="0,0,0,40">
+                    <Ellipse x:Name="PulseCircle" Width="120" Height="120" Fill="#3B82F6" Opacity="0.3"/>
+                    <Viewbox Width="100" Height="100" HorizontalAlignment="Center" VerticalAlignment="Center" x:Name="LogoViewbox">
+                        <Viewbox.RenderTransform>
+                            <ScaleTransform ScaleX="0.85" ScaleY="0.85"/>
+                        </Viewbox.RenderTransform>
+                        <Grid>
+                            <Ellipse Width="100" Height="100" Fill="#3B82F6" Opacity="0.1"/>
+                            <materialDesign:PackIcon Kind="StorefrontOutline" 
+                                                   Width="60" Height="60"
+                                                   Foreground="#3B82F6"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                        </Grid>
+                    </Viewbox>
+                </Grid>
+
+                <!-- Title -->
+                <TextBlock Text="VendaFlex" FontSize="32" FontWeight="Bold"
+                         Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+
+                <!-- Subtitle -->
+                <TextBlock Text="Gestão Comercial Integrada" FontSize="14" 
+                         Foreground="#60A5FA" HorizontalAlignment="Center" 
+                         Margin="0,0,0,28" FontWeight="SemiBold"/>
+
+                <!-- Features List -->
+                <StackPanel>
+                    <!-- Feature 1 -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                        <materialDesign:PackIcon Kind="CheckCircleOutline" 
+                                               Width="24" Height="24" Foreground="#3B82F6"
+                                               VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Controle Total" Foreground="White" FontWeight="SemiBold" FontSize="13"/>
+                            <TextBlock Text="Gerencie suas operações com precisão" 
+                                     Foreground="#9CA3AF" FontSize="11" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Feature 2 -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                        <materialDesign:PackIcon Kind="TrendingUp" 
+                                               Width="24" Height="24" Foreground="#3B82F6"
+                                               VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Análises Avançadas" Foreground="White" FontWeight="SemiBold" FontSize="13"/>
+                            <TextBlock Text="Tome decisões baseadas em dados" 
+                                     Foreground="#9CA3AF" FontSize="11" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Feature 3 -->
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="ShieldCheckOutline" 
+                                               Width="24" Height="24" Foreground="#3B82F6"
+                                               VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Segurança Garantida" Foreground="White" FontWeight="SemiBold" FontSize="13"/>
+                            <TextBlock Text="Seus dados protegidos em tempo real" 
+                                     Foreground="#9CA3AF" FontSize="11" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Floating Icon -->
+                <Grid HorizontalAlignment="Center" Margin="0,36,0,0">
+                    <Viewbox Width="60" Height="60" x:Name="FloatingIconViewbox">
+                        <Viewbox.RenderTransform>
+                            <TranslateTransform Y="0"/>
+                        </Viewbox.RenderTransform>
+                        <Grid>
+                            <Ellipse Fill="Transparent" Stroke="#3B82F6" StrokeThickness="2" 
+                                  Width="60" Height="60" Opacity="0.2"/>
+                            <materialDesign:PackIcon Kind="Rocket" 
+                                                   Width="35" Height="35"
+                                                   Foreground="#60A5FA"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                        </Grid>
+                    </Viewbox>
+                </Grid>
+
+                <!-- Rotating Icon at bottom -->
+                <Grid HorizontalAlignment="Center" Margin="0,28,0,0">
+                    <Viewbox Width="40" Height="40" x:Name="RotatingIconViewbox">
+                        <Viewbox.RenderTransform>
+                            <RotateTransform CenterX="20" CenterY="20"/>
+                        </Viewbox.RenderTransform>
+                        <materialDesign:PackIcon Kind="Cog" 
+                                               Width="40" Height="40"
+                                               Foreground="#3B82F6" Opacity="0.6"/>
+                    </Viewbox>
+                </Grid>
+            </StackPanel>
+        </Grid>
+
+        <!-- RIGHT PANEL - Login Form -->
+        <Border Grid.Column="1" Background="#0F1419" x:Name="RightPanel" Opacity="0">
+            <Border.RenderTransform>
+                <TranslateTransform x:Name="RightPanelTransform" X="40"/>
+            </Border.RenderTransform>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="60">
+                    <!-- Logo Section -->
+                    <Grid Margin="0,0,0,40">
+                        <StackPanel HorizontalAlignment="Center">
+                            <!-- Logo Icon with Background -->
+                            <Viewbox Width="64" Height="64" Margin="0,0,0,16" HorizontalAlignment="Center">
+                                <Viewbox.RenderTransform>
+                                    <ScaleTransform x:Name="LogoScaleRight" ScaleX="0.85" ScaleY="0.85"/>
+                                </Viewbox.RenderTransform>
+                                <Grid>
+                                    <Ellipse Width="64" Height="64" Fill="#3B82F6" Opacity="0.15"/>
+                                    <materialDesign:PackIcon Kind="StorefrontOutline" 
+                                                               Width="36" Height="36"
+                                                               Foreground="#3B82F6"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"/>
+                                </Grid>
+                            </Viewbox>
+
+                            <!-- Title -->
+                            <TextBlock Text="ENTRAR" 
+                                         FontSize="26" 
+                                         FontWeight="Bold"
+                                         Foreground="White"
+                                         HorizontalAlignment="Center"
+                                         Margin="0,0,0,6"/>
+
+                            <TextBlock Text="Acesse sua conta para continuar" 
+                                         FontSize="12" 
+                                         Foreground="#9CA3AF"
+                                         HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Error Message -->
+                    <Border Background="#7F1D1D" 
+                                CornerRadius="6" 
+                                Padding="12,10"
+                                Margin="0,0,0,20">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ErrorMessage, Converter={StaticResource StringToBooleanConverter}}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Kind="AlertCircle" 
+                                                       Foreground="#FCA5A5"
+                                                       Width="18" Height="18"
+                                                       VerticalAlignment="Top"
+                                                       Margin="0,2,10,0"/>
+                            <TextBlock Grid.Column="1"
+                                         Text="{Binding ErrorMessage}" 
+                                         Foreground="#FCA5A5"
+                                         FontSize="13"
+                                         TextWrapping="Wrap"
+                                         VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Form Fields -->
+                    <StackPanel>
+                        <!-- Username Field -->
+                        <TextBlock Text="Nome de usuário" 
+                                     FontSize="12" 
+                                     Foreground="#9CA3AF"
+                                     Margin="0,0,0,8"/>
+                        <TextBox x:Name="UsernameTextBox" Style="{StaticResource ModernTextBox}"
+                                    Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                                    KeyDown="UsernameTextBox_KeyDown"/>
+
+                        <!-- Password Field -->
+                        <TextBlock Text="Senha" 
+                                     FontSize="12" 
+                                     Foreground="#9CA3AF"
+                                     Margin="0,0,0,8"/>
+                        <Grid Margin="0,0,0,12">
+                            <PasswordBox x:Name="PasswordBox"
+                                           Style="{StaticResource ModernPasswordBox}"
+                                           PasswordChanged="PasswordBox_PasswordChanged"
+                                           KeyDown="PasswordBox_KeyDown"
+                                           Visibility="{Binding ShowPassword, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+
+                            <TextBox x:Name="PasswordTextBox"
+                                       Style="{StaticResource ModernTextBox}"
+                                       Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}"
+                                       KeyDown="PasswordTextBox_KeyDown"
+                                       Visibility="{Binding ShowPassword, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                       Margin="0"/>
+
+                            <!-- Show/Hide Password Button -->
+                            <Button Style="{DynamicResource MaterialDesignIconButton}"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"
+                                      Padding="8"
+                                      Command="{Binding TogglePasswordVisibilityCommand}"
+                                      ToolTip="Mostrar/Ocultar senha">
+                                <materialDesign:PackIcon Kind="{Binding ShowPassword, Converter={StaticResource ShowPasswordIconConverter}}"
+                                                           Foreground="#6B7280"
+                                                           Width="20" Height="20"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- Remember Me & Forgot Password -->
+                        <Grid Margin="0,0,0,20">
+                            <CheckBox Style="{StaticResource ModernCheckBox}"
+                                        Content="Lembrar-me"
+                                        IsChecked="{Binding RememberMe}"
+                                        HorizontalAlignment="Left"/>
+
+                            <Button Style="{StaticResource LinkButton}"
+                                      Content="Esqueceu a senha?"
+                                      HorizontalAlignment="Right"
+                                      Command="{Binding ForgotPasswordCommand}"/>
+                        </Grid>
+
+                        <!-- Login Button -->
+                        <Button Style="{StaticResource PrimaryButton}"
+                                  Command="{Binding LoginCommand}"
+                                  IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}">
+                            <Grid>
+                                <!-- Normal State -->
+                                <TextBlock Text="ENTRAR" 
+                                             VerticalAlignment="Center"
+                                             FontWeight="SemiBold"
+                                             Visibility="{Binding IsLoading, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+
+                                <!-- Loading State -->
+                                <StackPanel Orientation="Horizontal" 
+                                              HorizontalAlignment="Center"
+                                              Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <materialDesign:PackIcon Kind="Loading" 
+                                                               Width="20" Height="20"
+                                                               Margin="0,0,10,0">
+                                        <materialDesign:PackIcon.RenderTransform>
+                                            <RotateTransform CenterX="10" CenterY="10"/>
+                                        </materialDesign:PackIcon.RenderTransform>
+                                        <materialDesign:PackIcon.Style>
+                                            <Style TargetType="materialDesign:PackIcon">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsLoading}" Value="True">
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard x:Name="LoadingStoryboard">
+                                                                <Storyboard RepeatBehavior="Forever">
+                                                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                                                         From="0" To="360" Duration="0:0:1"/>
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </DataTrigger.EnterActions>
+                                                        <DataTrigger.ExitActions>
+                                                            <RemoveStoryboard BeginStoryboardName="LoadingStoryboard"/>
+                                                        </DataTrigger.ExitActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </materialDesign:PackIcon.Style>
+                                    </materialDesign:PackIcon>
+                                    <TextBlock Text="AUTENTICANDO..." 
+                                                 VerticalAlignment="Center"
+                                                 FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Grid>
+                        </Button>
+
+                        <!-- Divider -->
+                        <Grid Margin="0,28,0,24">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Height="1" Background="#374151" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="OU" Foreground="#6B7280" Margin="12,0" FontSize="12"/>
+                            <Border Grid.Column="2" Height="1" Background="#374151" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- Additional Options -->
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="Primeiro acesso?" 
+                                         Foreground="#9CA3AF"
+                                         FontSize="13"
+                                         HorizontalAlignment="Center"
+                                         Margin="0,0,0,8"/>
+                            <Button Style="{StaticResource LinkButton}"
+                                      Content="Configure o sistema agora"
+                                      HorizontalAlignment="Center"
+                                      FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Footer -->
+                    <Grid Margin="0,40,0,0">
+                        <TextBlock Text="© 2025 CommerceHub. Todos os direitos reservados." 
+                                     Foreground="#6B7280"
+                                     FontSize="11"
+                                     HorizontalAlignment="Center"
+                                     TextAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
     </Grid>
 </Page>

@@ -97,6 +97,11 @@
         <GradientStop Color="#8B5CF6" Offset="1"/>
     </LinearGradientBrush>
 
+    <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#3B82F6" Offset="0"/>
+        <GradientStop Color="#1D4ED8" Offset="1"/>
+    </LinearGradientBrush>
+
     <!-- Gradiente Purple-Pink -->
     <LinearGradientBrush x:Key="PurplePinkGradient" StartPoint="0,0" EndPoint="1,0">
         <GradientStop Color="#A78BFA" Offset="0"/>
@@ -245,47 +250,47 @@
                 <ControlTemplate TargetType="ComboBox">
                     <Grid>
                         <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8">
+                         BorderBrush="{TemplateBinding BorderBrush}"
+                         BorderThickness="{TemplateBinding BorderThickness}"
+                         CornerRadius="8">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <ContentPresenter Grid.Column="0"
-                                                Content="{TemplateBinding SelectionBoxItem}"
-                                                ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                                Margin="{TemplateBinding Padding}"
-                                                VerticalAlignment="Center"/>
+                                         Content="{TemplateBinding SelectionBoxItem}"
+                                         ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                         Margin="{TemplateBinding Padding}"
+                                         VerticalAlignment="Center"/>
                                 <materialDesign:PackIcon Grid.Column="1" 
-                                                       Kind="ChevronDown" 
-                                                       Foreground="{StaticResource TextTertiaryBrush}"
-                                                       Width="20" Height="20"
-                                                       Margin="0,0,12,0"
-                                                       VerticalAlignment="Center"/>
+                                                Kind="ChevronDown" 
+                                                Foreground="{StaticResource TextTertiaryBrush}"
+                                                Width="20" Height="20"
+                                                Margin="0,0,12,0"
+                                                VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
 
                         <ToggleButton x:Name="ToggleButton"
-                                      Grid.ColumnSpan="2"
-                                      Background="Transparent"
-                                      BorderThickness="0"
-                                      Focusable="False"
-                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                               Grid.ColumnSpan="2"
+                               Background="Transparent"
+                               BorderThickness="0"
+                               Focusable="False"
+                               IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
 
                         <Popup x:Name="PART_Popup"
-                               IsOpen="{TemplateBinding IsDropDownOpen}"
-                               Placement="Bottom"
-                               PlacementTarget="{Binding ElementName=ToggleButton}"
-                               AllowsTransparency="True"
-                               StaysOpen="False">
+                        IsOpen="{TemplateBinding IsDropDownOpen}"
+                        Placement="Bottom"
+                        PlacementTarget="{Binding ElementName=ToggleButton}"
+                        AllowsTransparency="True"
+                        StaysOpen="False">
                             <Border Background="{StaticResource SurfaceVariantBrush}"
-                                    BorderBrush="{StaticResource BorderLightBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="8"
-                                    Margin="0,4,0,0"
-                                    Effect="{StaticResource MaterialShadowDepth2}">
+                             BorderBrush="{StaticResource BorderLightBrush}"
+                             BorderThickness="1"
+                             CornerRadius="8"
+                             Margin="0,4,0,0"
+                             Effect="{StaticResource MaterialShadowDepth2}">
                                 <ScrollViewer MaxHeight="200">
                                     <ItemsPresenter/>
                                 </ScrollViewer>
@@ -310,7 +315,7 @@
                         <Setter.Value>
                             <ControlTemplate TargetType="ComboBoxItem">
                                 <Border Background="{TemplateBinding Background}"
-                                        Padding="{TemplateBinding Padding}">
+                                 Padding="{TemplateBinding Padding}">
                                     <ContentPresenter/>
                                 </Border>
                             </ControlTemplate>
@@ -322,6 +327,12 @@
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="1"/>
+                            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                            <Setter Property="BorderBrush" Value="{StaticResource BorderLightBrush}"/>
                         </Trigger>
                     </Style.Triggers>
                 </Style>
@@ -466,7 +477,122 @@
         </Style.Triggers>
     </Style>
 
+
+    <!-- ============================================ -->
+    <!-- ESTILOS DE LINK BUTTON -->
+    <!-- ============================================ -->
+
+    <!-- Link Button Style -->
+    <Style x:Key="LinkButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="#3B82F6"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <TextBlock Text="{TemplateBinding Content}"
+                          Foreground="{TemplateBinding Foreground}"
+                          TextDecorations="None"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="#60A5FA"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+
+    <!-- Modern CheckBox Style -->
+    <Style x:Key="ModernCheckBox" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="#9CA3AF"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+
+
+    <!-- Card Entrance Animation -->
+    <Storyboard x:Key="CardEntrance">
+        <DoubleAnimation Storyboard.TargetName="RightPanel"
+                   Storyboard.TargetProperty="Opacity"
+                   From="0" To="1"
+                   Duration="0:0:0.8">
+            <DoubleAnimation.EasingFunction>
+                <CubicEase EasingMode="EaseOut"/>
+            </DoubleAnimation.EasingFunction>
+        </DoubleAnimation>
+        <DoubleAnimation Storyboard.TargetName="RightPanelTransform"
+                   Storyboard.TargetProperty="X"
+                   From="40" To="0"
+                   Duration="0:0:0.8">
+            <DoubleAnimation.EasingFunction>
+                <CubicEase EasingMode="EaseOut"/>
+            </DoubleAnimation.EasingFunction>
+        </DoubleAnimation>
+    </Storyboard>
+
+    <!-- Logo Animation -->
+    <Storyboard x:Key="LogoAnimation">
+        <DoubleAnimation Storyboard.TargetName="LogoViewbox"
+                   Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                   From="0.85" To="1"
+                   Duration="0:0:0.5"
+                   AutoReverse="False">
+            <DoubleAnimation.EasingFunction>
+                <ElasticEase EasingMode="EaseOut" Oscillations="1" Springiness="2.5"/>
+            </DoubleAnimation.EasingFunction>
+        </DoubleAnimation>
+        <DoubleAnimation Storyboard.TargetName="LogoViewbox"
+                   Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                   From="0.85" To="1"
+                   Duration="0:0:0.5"
+                   AutoReverse="False">
+            <DoubleAnimation.EasingFunction>
+                <ElasticEase EasingMode="EaseOut" Oscillations="1" Springiness="2.5"/>
+            </DoubleAnimation.EasingFunction>
+        </DoubleAnimation>
+    </Storyboard>
+
+    <!-- Icon Float Animation -->
+    <Storyboard x:Key="FloatAnimation" RepeatBehavior="Forever">
+        <DoubleAnimation Storyboard.TargetName="FloatingIconViewbox"
+                   Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                   From="0" To="-20"
+                   Duration="0:0:2"
+                   AutoReverse="True"/>
+    </Storyboard>
+
+    <!-- Pulse Animation -->
+    <Storyboard x:Key="PulseAnimation" RepeatBehavior="Forever">
+        <DoubleAnimation Storyboard.TargetName="PulseCircle"
+                   Storyboard.TargetProperty="Opacity"
+                   From="0.3" To="0.8"
+                   Duration="0:0:1.5"
+                   AutoReverse="True"/>
+    </Storyboard>
+
+    <!-- Rotate Animation -->
+    <Storyboard x:Key="RotateAnimation" RepeatBehavior="Forever">
+        <DoubleAnimation Storyboard.TargetName="RotatingIconViewbox"
+                   Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                   From="0" To="360"
+                   Duration="0:0:4"/>
+    </Storyboard>
+
+
+
+    <!-- Seu converter existente -->
     <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+    <conv:StringToBooleanConverter x:Key="StringToBooleanConverter"/>
+    <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+    <conv:ShowPasswordIconConverter x:Key="ShowPasswordIconConverter"/>
+
+    <!-- Converter nativo do WPF -->
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
 </ResourceDictionary>

@@ -33,6 +33,8 @@ namespace VendaFlex.Infrastructure
 
             // Serviços de infraestrutura
             services.AddSingleton<INavigationService, NavigationService>();
+            services.AddSingleton<ISessionService, SessionService>();
+            services.AddSingleton<ICredentialManager, WindowsCredentialManager>();
             services.AddScoped<IDatabaseStatusService, DatabaseStatusService>();
             services.AddScoped<IDatabaseSyncService, DatabaseSyncService>();
             services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
@@ -45,7 +47,7 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<CompanyConfigRepository>();
             services.AddScoped<PrivilegeRepository>();
             services.AddScoped<UserPrivilegeRepository>();
-
+            
             // Serviços principais
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IPersonService, PersonService>();
@@ -61,6 +63,7 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<PersonBusinessValidator>();
             services.AddScoped<IValidator<PrivilegeDto>, PrivilegeDtoValidator>();
             services.AddScoped<IValidator<UserPrivilegeDto>, UserPrivilegeDtoValidator>();
+
 
 
 
