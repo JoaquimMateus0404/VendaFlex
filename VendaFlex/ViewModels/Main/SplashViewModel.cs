@@ -112,7 +112,7 @@ namespace VendaFlex.ViewModels.Main
 
             await _dbStatus.RefreshStatusAsync();
             ProgressText = BuildStatusText();
-            await Task.Delay(300);
+            await Task.Delay(3000);
         }
 
         private async Task SincronizarDadosAsync()

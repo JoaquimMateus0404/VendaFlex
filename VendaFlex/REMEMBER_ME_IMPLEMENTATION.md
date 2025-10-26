@@ -2,7 +2,8 @@
 
 ## Resumo
 
-Foi implementado um sistema seguro de "Lembrar-me" que armazena o nome de usuário usando o **Windows Credential Manager**, garantindo criptografia nativa do sistema operacional.
+Foi implementado um sistema seguro de "Lembrar-me" que armazena o nome de usuário usando o 
+**Windows Credential Manager**, garantindo criptografia nativa do sistema operacional.
 
 ---
 

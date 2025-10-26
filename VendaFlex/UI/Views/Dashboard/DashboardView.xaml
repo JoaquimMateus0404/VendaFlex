@@ -190,7 +190,7 @@
                         </Button>
 
                         <!-- Vendas -->
-                        <Button Style="{StaticResource SidebarButtonStyle}" Click="OpenSales_Click">
+                        <Button Style="{StaticResource SidebarButtonStyle}">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="ShoppingCart" Width="24" Height="24" Margin="0,0,12,0"/>
                                 <TextBlock Text="Vendas" VerticalAlignment="Center"/>

@@ -73,7 +73,7 @@
                         </Viewbox.RenderTransform>
                         <Grid>
                             <Ellipse Width="100" Height="100" Fill="#3B82F6" Opacity="0.1"/>
-                            <materialDesign:PackIcon Kind="StorefrontOutline" 
+                            <materialDesign:PackIcon Kind="Domain" 
                                                    Width="60" Height="60"
                                                    Foreground="#3B82F6"
                                                    HorizontalAlignment="Center"
