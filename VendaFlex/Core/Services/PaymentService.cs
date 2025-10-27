@@ -1,4 +1,5 @@
 using AutoMapper;
+using FluentValidation;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
 using VendaFlex.Data.Entities;
@@ -11,36 +12,20 @@ namespace VendaFlex.Core.Services
     /// </summary>
     public class PaymentService : IPaymentService
     {
+        private readonly PaymentRepository _paymentRepository;
+        private readonly IValidator<PaymentDto> _paymentValidator;
         private readonly IMapper _mapper;
 
-        public Task<PaymentDto> CreateAsync(PaymentDto dto)
+        public PaymentService(
+            PaymentRepository paymentRepository,
+            IValidator<PaymentDto> paymentValidator,
+            IMapper mapper)
         {
-            throw new NotImplementedException();
+            _paymentRepository = paymentRepository;
+            _paymentValidator = paymentValidator;
+            _mapper = mapper;
         }
 
-        public Task<bool> DeleteAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
 
-        public Task<IEnumerable<PaymentDto>> GetAllAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<PaymentDto> GetByIdAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<PaymentTypeDto>> GetPaymentTypesAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<PaymentDto> UpdateAsync(PaymentDto dto)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

@@ -1,11 +1,12 @@
+using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Utils;
 using VendaFlex.Data.Entities;
 
 namespace VendaFlex.Core.Interfaces
 {
     /// <summary>
-    /// Serviço responsável por operações relacionadas a produtos.
-    /// Define métodos para consulta, validação, CRUD, buscas e consultas auxiliares.
+    /// Serviï¿½o responsï¿½vel por operaï¿½ï¿½es relacionadas a produtos.
+    /// Define mï¿½todos para consulta, validaï¿½ï¿½o, CRUD, buscas e consultas auxiliares.
     /// </summary>
     public interface IProductService
     {
@@ -14,165 +15,165 @@ namespace VendaFlex.Core.Interfaces
         /// </summary>
         /// <param name="id">Identificador do produto.</param>
         /// <returns>
-        /// Um <see cref="OperationResult{Product}"/> contendo o produto quando a operação for bem-sucedida;
-        /// em caso de falha (não encontrado, erro de negócio) contém informações de erro.
+        /// Um <see cref="OperationResult{ProductDto}"/> contendo o produto quando a operaï¿½ï¿½o for bem-sucedida;
+        /// em caso de falha (nï¿½o encontrado, erro de negï¿½cio) contï¿½m informaï¿½ï¿½es de erro.
         /// </returns>
-        Task<OperationResult<Product>> GetByIdAsync(int id);
+        Task<OperationResult<ProductDto>> GetByIdAsync(int id);
 
         /// <summary>
         /// Recupera todos os produtos.
         /// </summary>
         /// <returns>
-        /// Um <see cref="OperationResult{IEnumerable{Product}}"/> com a coleção de produtos ou informações de erro.
+        /// Um <see cref="OperationResult{IEnumerable{ProductDto}}"/> com a coleï¿½ï¿½o de produtos ou informaï¿½ï¿½es de erro.
         /// </returns>
-        Task<OperationResult<IEnumerable<Product>>> GetAllAsync();
+        Task<OperationResult<IEnumerable<ProductDto>>> GetAllAsync();
 
         /// <summary>
-        /// Recupera apenas os produtos com status ou sinalização de ativos.
+        /// Recupera apenas os produtos com status ou sinalizaï¿½ï¿½o de ativos.
         /// </summary>
         /// <returns>Lista de produtos ativos.</returns>
-        Task<OperationResult<IEnumerable<Product>>> GetActiveAsync();
+        Task<OperationResult<IEnumerable<ProductDto>>> GetActiveAsync();
 
         /// <summary>
-        /// Recupera produtos pertencentes a uma categoria específica.
+        /// Recupera produtos pertencentes a uma categoria especï¿½fica.
         /// </summary>
         /// <param name="categoryId">Identificador da categoria.</param>
-        /// <returns>Coleção de produtos da categoria.</returns>
-        Task<OperationResult<IEnumerable<Product>>> GetByCategoryIdAsync(int categoryId);
+        /// <returns>Coleï¿½ï¿½o de produtos da categoria.</returns>
+        Task<OperationResult<IEnumerable<ProductDto>>> GetByCategoryIdAsync(int categoryId);
 
         /// <summary>
-        /// Recupera produtos fornecidos por um fornecedor específico.
+        /// Recupera produtos fornecidos por um fornecedor especï¿½fico.
         /// </summary>
         /// <param name="supplierId">Identificador do fornecedor.</param>
-        /// <returns>Coleção de produtos do fornecedor.</returns>
-        Task<OperationResult<IEnumerable<Product>>> GetBySupplierIdAsync(int supplierId);
+        /// <returns>Coleï¿½ï¿½o de produtos do fornecedor.</returns>
+        Task<OperationResult<IEnumerable<ProductDto>>> GetBySupplierIdAsync(int supplierId);
 
         /// <summary>
-        /// Recupera um produto pelo seu código de barras.
+        /// Recupera um produto pelo seu cï¿½digo de barras.
         /// </summary>
-        /// <param name="barcode">Código de barras do produto.</param>
+        /// <param name="barcode">Cï¿½digo de barras do produto.</param>
         /// <returns>
-        /// Um <see cref="OperationResult{Product}"/> com o produto correspondente ou informações de erro se não encontrado.
+        /// Um <see cref="OperationResult{ProductDto}"/> com o produto correspondente ou informaï¿½ï¿½es de erro se nï¿½o encontrado.
         /// </returns>
-        Task<OperationResult<Product>> GetByBarcodeAsync(string barcode);
+        Task<OperationResult<ProductDto>> GetByBarcodeAsync(string barcode);
 
         /// <summary>
         /// Recupera um produto pelo seu SKU.
         /// </summary>
         /// <param name="sku">SKU do produto.</param>
         /// <returns>
-        /// Um <see cref="OperationResult{Product}"/> com o produto correspondente ou informações de erro se não encontrado.
+        /// Um <see cref="OperationResult{ProductDto}"/> com o produto correspondente ou informaï¿½ï¿½es de erro se nï¿½o encontrado.
         /// </returns>
-        Task<OperationResult<Product>> GetBySKUAsync(string sku);
+        Task<OperationResult<ProductDto>> GetBySKUAsync(string sku);
 
         /// <summary>
-        /// Recupera um produto pelo seu código único.
+        /// Recupera um produto pelo seu cï¿½digo ï¿½nico.
         /// </summary>
-        /// <param name="code">Código do produto.</param>
+        /// <param name="code">Cï¿½digo do produto.</param>
         /// <returns>
-        /// Um <see cref="OperationResult{Product}"/> com o produto correspondente ou informações de erro se não encontrado.
+        /// Um <see cref="OperationResult{ProductDto}"/> com o produto correspondente ou informaï¿½ï¿½es de erro se nï¿½o encontrado.
         /// </returns>
-        Task<OperationResult<Product>> GetByCodeAsync(string code);
+        Task<OperationResult<ProductDto>> GetByCodeAsync(string code);
 
         /// <summary>
-        /// Recupera produtos com estoque baixo, conforme regras de controle de estoque (por exemplo, abaixo do mínimo).
+        /// Recupera produtos com estoque baixo, conforme regras de controle de estoque (por exemplo, abaixo do mï¿½nimo).
         /// </summary>
-        /// <returns>Coleção de produtos com baixo estoque.</returns>
-        Task<OperationResult<IEnumerable<Product>>> GetLowStockAsync();
+        /// <returns>Coleï¿½ï¿½o de produtos com baixo estoque.</returns>
+        Task<OperationResult<IEnumerable<ProductDto>>> GetLowStockAsync();
 
         /// <summary>
-        /// Recupera produtos que estão sem estoque.
+        /// Recupera produtos que estï¿½o sem estoque.
         /// </summary>
-        /// <returns>Coleção de produtos sem estoque.</returns>
-        Task<OperationResult<IEnumerable<Product>>> GetOutOfStockAsync();
+        /// <returns>Coleï¿½ï¿½o de produtos sem estoque.</returns>
+        Task<OperationResult<IEnumerable<ProductDto>>> GetOutOfStockAsync();
 
         /// <summary>
         /// Recupera produtos marcados como em destaque (featured).
         /// </summary>
-        /// <returns>Coleção de produtos em destaque.</returns>
-        Task<OperationResult<IEnumerable<Product>>> GetFeaturedAsync();
+        /// <returns>Coleï¿½ï¿½o de produtos em destaque.</returns>
+        Task<OperationResult<IEnumerable<ProductDto>>> GetFeaturedAsync();
 
         /// <summary>
-        /// Recupera produtos que possuem controle de validade/expiração.
+        /// Recupera produtos que possuem controle de validade/expiraï¿½ï¿½o.
         /// </summary>
-        /// <returns>Coleção de produtos que possuem data de expiração.</returns>
-        Task<OperationResult<IEnumerable<Product>>> GetWithExpirationAsync();
+        /// <returns>Coleï¿½ï¿½o de produtos que possuem data de expiraï¿½ï¿½o.</returns>
+        Task<OperationResult<IEnumerable<ProductDto>>> GetWithExpirationAsync();
 
         /// <summary>
         /// Verifica se um produto existe pelo identificador.
         /// </summary>
         /// <param name="id">Identificador do produto.</param>
-        /// <returns>True se o produto existir; caso contrário, false.</returns>
+        /// <returns>True se o produto existir; caso contrï¿½rio, false.</returns>
         Task<bool> ExistsAsync(int id);
 
         /// <summary>
-        /// Verifica se um código de barras já está em uso por outro produto.
+        /// Verifica se um cï¿½digo de barras jï¿½ estï¿½ em uso por outro produto.
         /// </summary>
-        /// <param name="barcode">Código de barras a verificar.</param>
-        /// <param name="excludeId">Id opcional para excluir da verificação (útil em atualizações).</param>
-        /// <returns>True se o código de barras existir em outro produto; caso contrário, false.</returns>
+        /// <param name="barcode">Cï¿½digo de barras a verificar.</param>
+        /// <param name="excludeId">Id opcional para excluir da verificaï¿½ï¿½o (ï¿½til em atualizaï¿½ï¿½es).</param>
+        /// <returns>True se o cï¿½digo de barras existir em outro produto; caso contrï¿½rio, false.</returns>
         Task<bool> BarcodeExistsAsync(string barcode, int? excludeId = null);
 
         /// <summary>
-        /// Verifica se um SKU já está em uso por outro produto.
+        /// Verifica se um SKU jï¿½ estï¿½ em uso por outro produto.
         /// </summary>
         /// <param name="sku">SKU a verificar.</param>
-        /// <param name="excludeId">Id opcional para excluir da verificação (útil em atualizações).</param>
-        /// <returns>True se o SKU existir em outro produto; caso contrário, false.</returns>
+        /// <param name="excludeId">Id opcional para excluir da verificaï¿½ï¿½o (ï¿½til em atualizaï¿½ï¿½es).</param>
+        /// <returns>True se o SKU existir em outro produto; caso contrï¿½rio, false.</returns>
         Task<bool> SKUExistsAsync(string sku, int? excludeId = null);
 
         /// <summary>
-        /// Verifica se um código de produto já está em uso por outro produto.
+        /// Verifica se um cï¿½digo de produto jï¿½ estï¿½ em uso por outro produto.
         /// </summary>
-        /// <param name="code">Código a verificar.</param>
-        /// <param name="excludeId">Id opcional para excluir da verificação (útil em atualizações).</param>
-        /// <returns>True se o código existir em outro produto; caso contrário, false.</returns>
+        /// <param name="code">Cï¿½digo a verificar.</param>
+        /// <param name="excludeId">Id opcional para excluir da verificaï¿½ï¿½o (ï¿½til em atualizaï¿½ï¿½es).</param>
+        /// <returns>True se o cï¿½digo existir em outro produto; caso contrï¿½rio, false.</returns>
         Task<bool> CodeExistsAsync(string code, int? excludeId = null);
 
         /// <summary>
         /// Adiciona um novo produto ao sistema.
         /// </summary>
-        /// <param name="product">Instância de <see cref="Product"/> com os dados do novo produto.</param>
+        /// <param name="product">Instï¿½ncia de <see cref="ProductDto"/> com os dados do novo produto.</param>
         /// <returns>
-        /// Um <see cref="OperationResult{Product}"/> com o produto criado (incluindo id) ou erros de validação.
+        /// Um <see cref="OperationResult{ProductDto}"/> com o produto criado (incluindo id) ou erros de validaï¿½ï¿½o.
         /// </returns>
-        Task<OperationResult<Product>> AddAsync(Product product);
+        Task<OperationResult<ProductDto>> AddAsync(ProductDto product);
 
         /// <summary>
         /// Atualiza os dados de um produto existente.
         /// </summary>
-        /// <param name="product">Instância de <see cref="Product"/> com os dados atualizados (deve conter o id).</param>
+        /// <param name="product">Instï¿½ncia de <see cref="ProductDto"/> com os dados atualizados (deve conter o id).</param>
         /// <returns>
-        /// Um <see cref="OperationResult{Product}"/> com o produto atualizado ou informações de erro.
+        /// Um <see cref="OperationResult{ProductDto}"/> com o produto atualizado ou informaï¿½ï¿½es de erro.
         /// </returns>
-        Task<OperationResult<Product>> UpdateAsync(Product product);
+        Task<OperationResult<ProductDto>> UpdateAsync(ProductDto product);
 
         /// <summary>
         /// Remove um produto pelo seu identificador.
         /// </summary>
         /// <param name="id">Identificador do produto a remover.</param>
         /// <returns>
-        /// Um <see cref="OperationResult{bool}"/> onde o valor indica sucesso da exclusão e erros descrevem falhas.
+        /// Um <see cref="OperationResult{bool}"/> onde o valor indica sucesso da exclusï¿½o e erros descrevem falhas.
         /// </returns>
         Task<OperationResult<bool>> DeleteAsync(int id);
 
         /// <summary>
-        /// Realiza busca por produtos usando um termo (nome, código, SKU, descrição, etc.).
+        /// Realiza busca por produtos usando um termo (nome, cï¿½digo, SKU, descriï¿½ï¿½o, etc.).
         /// </summary>
         /// <param name="searchTerm">Termo de busca parcial ou completo.</param>
-        /// <returns>Coleção de produtos que correspondem ao termo.</returns>
-        Task<OperationResult<IEnumerable<Product>>> SearchAsync(string searchTerm);
+        /// <returns>Coleï¿½ï¿½o de produtos que correspondem ao termo.</returns>
+        Task<OperationResult<IEnumerable<ProductDto>>> SearchAsync(string searchTerm);
 
         /// <summary>
-        /// Recupera uma página de produtos usando paginação baseada em número de página e tamanho.
+        /// Recupera uma pï¿½gina de produtos usando paginaï¿½ï¿½o baseada em nï¿½mero de pï¿½gina e tamanho.
         /// </summary>
-        /// <param name="pageNumber">Número da página (1-based).</param>
-        /// <param name="pageSize">Quantidade de itens por página.</param>
-        /// <returns>Coleção de produtos correspondentes à página solicitada.</returns>
-        Task<OperationResult<IEnumerable<Product>>> GetPaginatedAsync(int pageNumber, int pageSize);
+        /// <param name="pageNumber">Nï¿½mero da pï¿½gina (1-based).</param>
+        /// <param name="pageSize">Quantidade de itens por pï¿½gina.</param>
+        /// <returns>Coleï¿½ï¿½o de produtos correspondentes ï¿½ pï¿½gina solicitada.</returns>
+        Task<OperationResult<IEnumerable<ProductDto>>> GetPaginatedAsync(int pageNumber, int pageSize);
 
         /// <summary>
-        /// Recupera o número total de produtos existentes.
+        /// Recupera o nï¿½mero total de produtos existentes.
         /// </summary>
         /// <returns>Total de produtos cadastrados.</returns>
         Task<int> GetTotalCountAsync();
@@ -181,15 +182,15 @@ namespace VendaFlex.Core.Interfaces
         /// Recupera produtos filtrados por status.
         /// </summary>
         /// <param name="status">Status do produto (<see cref="ProductStatus"/>).</param>
-        /// <returns>Coleção de produtos com o status informado.</returns>
-        Task<OperationResult<IEnumerable<Product>>> GetByStatusAsync(ProductStatus status);
+        /// <returns>Coleï¿½ï¿½o de produtos com o status informado.</returns>
+        Task<OperationResult<IEnumerable<ProductDto>>> GetByStatusAsync(ProductStatus status);
 
         /// <summary>
-        /// Recupera produtos cujo preço está dentro de um intervalo informado.
+        /// Recupera produtos cujo preï¿½o estï¿½ dentro de um intervalo informado.
         /// </summary>
-        /// <param name="minPrice">Preço mínimo (inclusive).</param>
-        /// <param name="maxPrice">Preço máximo (inclusive).</param>
-        /// <returns>Coleção de produtos dentro do intervalo de preço.</returns>
-        Task<OperationResult<IEnumerable<Product>>> GetByPriceRangeAsync(decimal minPrice, decimal maxPrice);
+        /// <param name="minPrice">Preï¿½o mï¿½nimo (inclusive).</param>
+        /// <param name="maxPrice">Preï¿½o mï¿½ximo (inclusive).</param>
+        /// <returns>Coleï¿½ï¿½o de produtos dentro do intervalo de preï¿½o.</returns>
+        Task<OperationResult<IEnumerable<ProductDto>>> GetByPriceRangeAsync(decimal minPrice, decimal maxPrice);
     }
 }

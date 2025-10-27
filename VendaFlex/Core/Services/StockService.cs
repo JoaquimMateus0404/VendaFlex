@@ -27,64 +27,221 @@ namespace VendaFlex.Core.Services
             _mapper = mapper;
         }
 
-        public Task<OperationResult<StockDto>> AddAsync(StockDto stock)
+        public async Task<OperationResult<StockDto>> AddAsync(StockDto stock)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (stock == null)
+                    return OperationResult<StockDto>.CreateFailure("Estoque é obrigatório.");
+
+                var validation = await _stockValidator.ValidateAsync(stock);
+                if (!validation.IsValid)
+                {
+                    return OperationResult<StockDto>.CreateFailure(
+                        "Dados inválidos.",
+                        validation.Errors.Select(e => e.ErrorMessage));
+                }
+
+                var exists = await _stockRepository.ExistsAsync(stock.ProductId);
+                if (exists)
+                    return OperationResult<StockDto>.CreateFailure("Já existe registro de estoque para este produto.");
+
+                var entity = _mapper.Map<Stock>(stock);
+                var created = await _stockRepository.AddAsync(entity);
+                var resultDto = _mapper.Map<StockDto>(created);
+
+                return OperationResult<StockDto>.CreateSuccess(resultDto, "Estoque criado com sucesso.");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<StockDto>.CreateFailure(
+                    "Erro ao criar estoque.",
+                    new[] { ex.Message });
+            }
         }
 
-        public Task<bool> DeleteAsync(int productId)
+        public async Task<bool> DeleteAsync(int productId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                return await _stockRepository.DeleteAsync(productId);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
-        public Task<bool> ExistsAsync(int productId)
+        public async Task<bool> ExistsAsync(int productId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                return await _stockRepository.ExistsAsync(productId);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
-        public Task<OperationResult<IEnumerable<StockDto>>> GetAllAsync()
+        public async Task<OperationResult<IEnumerable<StockDto>>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            try
+            {
+                var entities = await _stockRepository.GetAllAsync();
+                var dtos = _mapper.Map<IEnumerable<StockDto>>(entities);
+                return OperationResult<IEnumerable<StockDto>>.CreateSuccess(dtos, $"{dtos.Count()} registro(s) de estoque encontrado(s).");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<IEnumerable<StockDto>>.CreateFailure(
+                    "Erro ao listar estoques.",
+                    new[] { ex.Message });
+            }
         }
 
-        public Task<int> GetAvailableQuantityAsync(int productId)
+        public async Task<int> GetAvailableQuantityAsync(int productId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                return await _stockRepository.GetAvailableQuantityAsync(productId);
+            }
+            catch
+            {
+                return 0;
+            }
         }
 
-        public Task<OperationResult<StockDto>> GetByProductIdAsync(int productId)
+        public async Task<OperationResult<StockDto>> GetByProductIdAsync(int productId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (productId <= 0)
+                    return OperationResult<StockDto>.CreateFailure("Produto inválido.");
+
+                var entity = await _stockRepository.GetByProductIdAsync(productId);
+                if (entity == null)
+                    return OperationResult<StockDto>.CreateFailure("Estoque não encontrado.");
+
+                var dto = _mapper.Map<StockDto>(entity);
+                return OperationResult<StockDto>.CreateSuccess(dto, "Estoque encontrado com sucesso.");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<StockDto>.CreateFailure(
+                    "Erro ao buscar estoque.",
+                    new[] { ex.Message });
+            }
         }
 
-        public Task<OperationResult<IEnumerable<StockDto>>> GetLowStockAsync()
+        public async Task<OperationResult<IEnumerable<StockDto>>> GetLowStockAsync()
         {
-            throw new NotImplementedException();
+            try
+            {
+                var entities = await _stockRepository.GetLowStockAsync();
+                var dtos = _mapper.Map<IEnumerable<StockDto>>(entities);
+                return OperationResult<IEnumerable<StockDto>>.CreateSuccess(dtos, $"{dtos.Count()} produto(s) com baixo estoque.");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<IEnumerable<StockDto>>.CreateFailure(
+                    "Erro ao buscar baixo estoque.",
+                    new[] { ex.Message });
+            }
         }
 
-        public Task<OperationResult<IEnumerable<StockDto>>> GetOutOfStockAsync()
+        public async Task<OperationResult<IEnumerable<StockDto>>> GetOutOfStockAsync()
         {
-            throw new NotImplementedException();
+            try
+            {
+                var entities = await _stockRepository.GetOutOfStockAsync();
+                var dtos = _mapper.Map<IEnumerable<StockDto>>(entities);
+                return OperationResult<IEnumerable<StockDto>>.CreateSuccess(dtos, $"{dtos.Count()} produto(s) sem estoque.");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<IEnumerable<StockDto>>.CreateFailure(
+                    "Erro ao buscar produtos sem estoque.",
+                    new[] { ex.Message });
+            }
         }
 
-        public Task<bool> ReleaseReservedQuantityAsync(int productId, int quantity)
+        public async Task<bool> ReleaseReservedQuantityAsync(int productId, int quantity)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (productId <= 0 || quantity <= 0)
+                    return false;
+
+                return await _stockRepository.ReleaseReservedQuantityAsync(productId, quantity);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
-        public Task<bool> ReserveQuantityAsync(int productId, int quantity)
+        public async Task<bool> ReserveQuantityAsync(int productId, int quantity)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (productId <= 0 || quantity <= 0)
+                    return false;
+
+                return await _stockRepository.ReserveQuantityAsync(productId, quantity);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
-        public Task<OperationResult<StockDto>> UpdateAsync(StockDto stock)
+        public async Task<OperationResult<StockDto>> UpdateAsync(StockDto stock)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (stock == null)
+                    return OperationResult<StockDto>.CreateFailure("Estoque é obrigatório.");
+
+                var validation = await _stockValidator.ValidateAsync(stock);
+                if (!validation.IsValid)
+                {
+                    return OperationResult<StockDto>.CreateFailure(
+                        "Dados inválidos.",
+                        validation.Errors.Select(e => e.ErrorMessage));
+                }
+
+                var existing = await _stockRepository.GetByProductIdAsync(stock.ProductId);
+                if (existing == null)
+                    return OperationResult<StockDto>.CreateFailure("Estoque não encontrado.");
+
+                _mapper.Map(stock, existing);
+                var updated = await _stockRepository.UpdateAsync(existing);
+                var resultDto = _mapper.Map<StockDto>(updated);
+
+                return OperationResult<StockDto>.CreateSuccess(resultDto, "Estoque atualizado com sucesso.");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<StockDto>.CreateFailure(
+                    "Erro ao atualizar estoque.",
+                    new[] { ex.Message });
+            }
         }
 
-        public Task<bool> UpdateQuantityAsync(int productId, int quantity, int? userId = null)
+        public async Task<bool> UpdateQuantityAsync(int productId, int quantity, int? userId = null)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (productId <= 0 || quantity < 0)
+                    return false;
+
+                return await _stockRepository.UpdateQuantityAsync(productId, quantity, userId);
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
