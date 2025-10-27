@@ -11,44 +11,32 @@ namespace VendaFlex.Core.Services
     /// </summary>
     public class AuditLogService : IAuditLogService
     {
-        private readonly IRepository<AuditLog> _repo;
+        
         private readonly IMapper _mapper;
 
-        public AuditLogService(IRepository<AuditLog> repo, IMapper mapper)
+        public Task<IEnumerable<AuditLogDto>> GetAllAsync()
         {
-            _repo = repo;
-            _mapper = mapper;
+            throw new NotImplementedException();
         }
 
-        public async Task<AuditLogDto> GetByIdAsync(int id)
+        public Task<IEnumerable<AuditLogDto>> GetByEntityAsync(string entityName, int entityId)
         {
-            var e = await _repo.GetByIdAsync(id);
-            return _mapper.Map<AuditLogDto>(e);
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<AuditLogDto>> GetAllAsync()
+        public Task<AuditLogDto> GetByIdAsync(int id)
         {
-            var list = await _repo.GetAllAsync();
-            return _mapper.Map<IEnumerable<AuditLogDto>>(list);
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<AuditLogDto>> GetByUserAsync(int userId)
+        public Task<IEnumerable<AuditLogDto>> GetByUserAsync(int userId)
         {
-            var list = await _repo.FindAsync(l => l.UserId == userId);
-            return _mapper.Map<IEnumerable<AuditLogDto>>(list.OrderByDescending(l => l.Timestamp));
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<AuditLogDto>> GetByEntityAsync(string entityName, int entityId)
+        public Task<bool> RegisterLogAsync(AuditLogDto dto)
         {
-            var list = await _repo.FindAsync(l => l.EntityName == entityName && l.EntityId == entityId);
-            return _mapper.Map<IEnumerable<AuditLogDto>>(list.OrderByDescending(l => l.Timestamp));
-        }
-
-        public async Task<bool> RegisterLogAsync(AuditLogDto dto)
-        {
-            var e = _mapper.Map<AuditLog>(dto);
-            await _repo.AddAsync(e);
-            return true;
+            throw new NotImplementedException();
         }
     }
 }

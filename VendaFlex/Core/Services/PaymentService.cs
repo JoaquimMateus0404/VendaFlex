@@ -11,52 +11,36 @@ namespace VendaFlex.Core.Services
     /// </summary>
     public class PaymentService : IPaymentService
     {
-        private readonly IRepository<Payment> _repo;
-        private readonly IRepository<PaymentType> _types;
         private readonly IMapper _mapper;
 
-        public PaymentService(IRepository<Payment> repo, IRepository<PaymentType> types, IMapper mapper)
+        public Task<PaymentDto> CreateAsync(PaymentDto dto)
         {
-            _repo = repo;
-            _types = types;
-            _mapper = mapper;
+            throw new NotImplementedException();
         }
 
-        public async Task<PaymentDto> GetByIdAsync(int id)
+        public Task<bool> DeleteAsync(int id)
         {
-            var e = await _repo.GetByIdAsync(id);
-            return _mapper.Map<PaymentDto>(e);
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<PaymentDto>> GetAllAsync()
+        public Task<IEnumerable<PaymentDto>> GetAllAsync()
         {
-            var list = await _repo.GetAllAsync();
-            return _mapper.Map<IEnumerable<PaymentDto>>(list);
+            throw new NotImplementedException();
         }
 
-        public async Task<PaymentDto> CreateAsync(PaymentDto dto)
+        public Task<PaymentDto> GetByIdAsync(int id)
         {
-            var e = _mapper.Map<Payment>(dto);
-            var created = await _repo.AddAsync(e);
-            return _mapper.Map<PaymentDto>(created);
+            throw new NotImplementedException();
         }
 
-        public async Task<PaymentDto> UpdateAsync(PaymentDto dto)
+        public Task<IEnumerable<PaymentTypeDto>> GetPaymentTypesAsync()
         {
-            var e = _mapper.Map<Payment>(dto);
-            var updated = await _repo.UpdateAsync(e);
-            return _mapper.Map<PaymentDto>(updated);
+            throw new NotImplementedException();
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public Task<PaymentDto> UpdateAsync(PaymentDto dto)
         {
-            return await _repo.DeleteAsync(id);
-        }
-
-        public async Task<IEnumerable<PaymentTypeDto>> GetPaymentTypesAsync()
-        {
-            var list = await _types.GetAllAsync();
-            return _mapper.Map<IEnumerable<PaymentTypeDto>>(list);
+            throw new NotImplementedException();
         }
     }
 }

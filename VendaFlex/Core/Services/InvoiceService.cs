@@ -11,81 +11,52 @@ namespace VendaFlex.Core.Services
     /// </summary>
     public class InvoiceService : IInvoiceService
     {
-        private readonly IRepository<Invoice> _repo;
-        private readonly IRepository<InvoiceProduct> _invoiceProducts;
-        private readonly IRepository<Payment> _payments;
+
         private readonly IMapper _mapper;
 
-        public InvoiceService(IRepository<Invoice> repo,
-                              IRepository<InvoiceProduct> invoiceProducts,
-                              IRepository<Payment> payments,
-                              IMapper mapper)
+        public Task<bool> AddProductsAsync(int invoiceId, IEnumerable<InvoiceProductDto> products)
         {
-            _repo = repo;
-            _invoiceProducts = invoiceProducts;
-            _payments = payments;
-            _mapper = mapper;
+            throw new NotImplementedException();
         }
 
-        public async Task<InvoiceDto> GetByIdAsync(int id)
+        public Task<InvoiceDto> CreateAsync(InvoiceDto dto)
         {
-            var e = await _repo.GetByIdAsync(id);
-            return _mapper.Map<InvoiceDto>(e);
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<InvoiceDto>> GetAllAsync()
+        public Task<bool> DeleteAsync(int id)
         {
-            var list = await _repo.GetAllAsync();
-            return _mapper.Map<IEnumerable<InvoiceDto>>(list);
+            throw new NotImplementedException();
         }
 
-        public async Task<InvoiceDto> CreateAsync(InvoiceDto dto)
+        public Task<IEnumerable<InvoiceDto>> GetAllAsync()
         {
-            var e = _mapper.Map<Invoice>(dto);
-            var created = await _repo.AddAsync(e);
-            return _mapper.Map<InvoiceDto>(created);
+            throw new NotImplementedException();
         }
 
-        public async Task<InvoiceDto> UpdateAsync(InvoiceDto dto)
+        public Task<IEnumerable<InvoiceDto>> GetByCustomerAsync(int personId)
         {
-            var e = _mapper.Map<Invoice>(dto);
-            var updated = await _repo.UpdateAsync(e);
-            return _mapper.Map<InvoiceDto>(updated);
+            throw new NotImplementedException();
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public Task<InvoiceDto> GetByIdAsync(int id)
         {
-            return await _repo.DeleteAsync(id);
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<InvoiceDto>> GetByCustomerAsync(int personId)
+        public Task<IEnumerable<InvoiceProductDto>> GetProductsAsync(int invoiceId)
         {
-            var list = await _repo.FindAsync(i => i.PersonId == personId);
-            return _mapper.Map<IEnumerable<InvoiceDto>>(list);
+            throw new NotImplementedException();
         }
 
-        public async Task<bool> RegisterPaymentAsync(PaymentDto paymentDto)
+        public Task<bool> RegisterPaymentAsync(PaymentDto paymentDto)
         {
-            var payment = _mapper.Map<Payment>(paymentDto);
-            await _payments.AddAsync(payment);
-            return true;
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<InvoiceProductDto>> GetProductsAsync(int invoiceId)
+        public Task<InvoiceDto> UpdateAsync(InvoiceDto dto)
         {
-            var list = await _invoiceProducts.FindAsync(ip => ip.InvoiceId == invoiceId);
-            return _mapper.Map<IEnumerable<InvoiceProductDto>>(list);
-        }
-
-        public async Task<bool> AddProductsAsync(int invoiceId, IEnumerable<InvoiceProductDto> products)
-        {
-            foreach (var p in products)
-            {
-                var entity = _mapper.Map<InvoiceProduct>(p);
-                entity.InvoiceId = invoiceId;
-                await _invoiceProducts.AddAsync(entity);
-            }
-            return true;
+            throw new NotImplementedException();
         }
     }
 }

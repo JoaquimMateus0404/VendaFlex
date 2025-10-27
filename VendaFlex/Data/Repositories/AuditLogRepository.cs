@@ -6,7 +6,7 @@ namespace VendaFlex.Data.Repositories
     /// <summary>
     /// Repositório para operações relacionadas a logs de auditoria.
     /// </summary>
-    public class AuditLogRepository : IRepository<AuditLog>
+    public class AuditLogRepository 
     {
         private readonly ApplicationDbContext _context;
 

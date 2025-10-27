@@ -11,52 +11,36 @@ namespace VendaFlex.Core.Services
     /// </summary>
     public class ExpenseService : IExpenseService
     {
-        private readonly IRepository<Expense> _repo;
-        private readonly IRepository<ExpenseType> _types;
         private readonly IMapper _mapper;
 
-        public ExpenseService(IRepository<Expense> repo, IRepository<ExpenseType> types, IMapper mapper)
+        public Task<ExpenseDto> CreateAsync(ExpenseDto dto)
         {
-            _repo = repo;
-            _types = types;
-            _mapper = mapper;
+            throw new NotImplementedException();
         }
 
-        public async Task<ExpenseDto> GetByIdAsync(int id)
+        public Task<bool> DeleteAsync(int id)
         {
-            var e = await _repo.GetByIdAsync(id);
-            return _mapper.Map<ExpenseDto>(e);
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<ExpenseDto>> GetAllAsync()
+        public Task<IEnumerable<ExpenseDto>> GetAllAsync()
         {
-            var list = await _repo.GetAllAsync();
-            return _mapper.Map<IEnumerable<ExpenseDto>>(list);
+            throw new NotImplementedException();
         }
 
-        public async Task<ExpenseDto> CreateAsync(ExpenseDto dto)
+        public Task<ExpenseDto> GetByIdAsync(int id)
         {
-            var e = _mapper.Map<Expense>(dto);
-            var created = await _repo.AddAsync(e);
-            return _mapper.Map<ExpenseDto>(created);
+            throw new NotImplementedException();
         }
 
-        public async Task<ExpenseDto> UpdateAsync(ExpenseDto dto)
+        public Task<IEnumerable<ExpenseTypeDto>> GetExpenseTypesAsync()
         {
-            var e = _mapper.Map<Expense>(dto);
-            var updated = await _repo.UpdateAsync(e);
-            return _mapper.Map<ExpenseDto>(updated);
+            throw new NotImplementedException();
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public Task<ExpenseDto> UpdateAsync(ExpenseDto dto)
         {
-            return await _repo.DeleteAsync(id);
-        }
-
-        public async Task<IEnumerable<ExpenseTypeDto>> GetExpenseTypesAsync()
-        {
-            var list = await _types.GetAllAsync();
-            return _mapper.Map<IEnumerable<ExpenseTypeDto>>(list);
+            throw new NotImplementedException();
         }
     }
 }

@@ -7,7 +7,7 @@ using VendaFlex.Data.Entities;
 namespace VendaFlex.Data.Repositories
 {
     /// <summary>
-    /// Repositório para operações relacionadas a produtos.
+    /// Repositï¿½rio para operaï¿½ï¿½es relacionadas a produtos.
     /// </summary>
     public class ProductRepository
     {
