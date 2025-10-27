@@ -1,3 +1,5 @@
+using VendaFlex.Data.Entities;
+
 namespace VendaFlex.Core.DTOs
 {
     public class StockMovementDto
@@ -9,7 +11,7 @@ namespace VendaFlex.Core.DTOs
         public int? PreviousQuantity { get; set; }
         public int? NewQuantity { get; set; }
         public DateTime Date { get; set; }
-        public int Type { get; set; }
+        public StockMovementType Type { get; set; }
         public string Notes { get; set; }
         public string Reference { get; set; }
         public decimal? UnitCost { get; set; }

@@ -49,13 +49,26 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<CompanyConfigRepository>();
             services.AddScoped<PrivilegeRepository>();
             services.AddScoped<UserPrivilegeRepository>();
-            
+            services.AddScoped<ProductRepository>();
+            services.AddScoped<CategoryRepository>();
+            services.AddScoped<StockMovementRepository>();
+            services.AddScoped<StockRepository>();
+            services.AddScoped<PriceHistoryRepository>();
+            services.AddScoped<ExpirationRepository>();
+
             // Serviços principais
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IPersonService, PersonService>();
             services.AddScoped<ICompanyConfigService, CompanyConfigService>();
             services.AddScoped<IPrivilegeService, PrivilegeService>();
             services.AddScoped<IUserPrivilegeService, UserPrivilegeService>();
+            services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<IExpirationService, ExpirationService>();
+            services.AddScoped<IStockService, StockService>();
+            services.AddScoped<IPriceHistoryService, PriceHistoryService>();
+            services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<IStockMovementService, StockMovementService>();
+
 
             // Validadores
             services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
@@ -65,17 +78,13 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<PersonBusinessValidator>();
             services.AddScoped<IValidator<PrivilegeDto>, PrivilegeDtoValidator>();
             services.AddScoped<IValidator<UserPrivilegeDto>, UserPrivilegeDtoValidator>();
+            services.AddScoped<IValidator<ProductDto>, ProductDtoValidator>();
+            services.AddScoped<IValidator<CategoryDto>, CategoryDtoValidator>();
+            services.AddScoped<IValidator<ExpirationDto>, ExpirationDtoValidator>();
+            services.AddScoped<IValidator<StockDto>, StockDtoValidator>();
+            services.AddScoped<IValidator<PriceHistoryDto>, PriceHistoryDtoValidator>();
+            services.AddScoped<IValidator<StockMovementDto>, StockMovementDtoValidator>();
 
-
-
-
-
-            // Genéricos
-            services.AddScoped<IRepository<InvoiceProduct>, GenericRepository<InvoiceProduct>>();
-            services.AddScoped<IRepository<PaymentType>, GenericRepository<PaymentType>>();
-            services.AddScoped<IRepository<StockMovement>, GenericRepository<StockMovement>>();
-            services.AddScoped<IRepository<Expiration>, GenericRepository<Expiration>>();
-            services.AddScoped<IRepository<PriceHistory>, GenericRepository<PriceHistory>>();
 
             // Registrar Views e ViewModels usados pela navegação
             services.AddTransient<InitialSetupView>();

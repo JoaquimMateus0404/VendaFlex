@@ -1,6 +1,8 @@
 using AutoMapper;
+using FluentValidation;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
+using VendaFlex.Core.Utils;
 using VendaFlex.Data.Entities;
 using VendaFlex.Data.Repositories;
 
@@ -8,20 +10,78 @@ namespace VendaFlex.Core.Services
 {
     public class PriceHistoryService : IPriceHistoryService
     {
-        private readonly IRepository<PriceHistory> _repo;
+        private readonly PriceHistoryRepository _priceHistoryRepository;
+        private readonly IValidator<PriceHistoryDto> _validator;
         private readonly IMapper _mapper;
-        public PriceHistoryService(IRepository<PriceHistory> repo, IMapper mapper) { _repo = repo; _mapper = mapper; }
 
-        public async Task<IEnumerable<PriceHistoryDto>> GetByProductAsync(int productId)
+        public PriceHistoryService(
+            PriceHistoryRepository priceHistoryRepository,
+            IValidator<PriceHistoryDto> validator,
+            IMapper mapper)
         {
-            var list = await _repo.FindAsync(ph => ph.ProductId == productId);
-            return _mapper.Map<IEnumerable<PriceHistoryDto>>(list.OrderByDescending(p => p.ChangeDate));
+            _priceHistoryRepository = priceHistoryRepository;
+            _validator = validator;
+            _mapper = mapper;
         }
 
-        public async Task<PriceHistoryDto> AddAsync(PriceHistoryDto dto)
+        public Task<OperationResult<PriceHistoryDto>> AddAsync(PriceHistoryDto priceHistoryDto)
         {
-            var added = await _repo.AddAsync(_mapper.Map<PriceHistory>(dto));
-            return _mapper.Map<PriceHistoryDto>(added);
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> DeleteAsync(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<OperationResult<IEnumerable<PriceHistoryDto>>> GetAllAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<OperationResult<IEnumerable<PriceHistoryDto>>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<OperationResult<PriceHistoryDto>> GetByIdAsync(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<OperationResult<IEnumerable<PriceHistoryDto>>> GetByProductIdAsync(int productId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<OperationResult<PriceHistoryDto>> GetLatestByProductIdAsync(int productId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<OperationResult<IEnumerable<PriceHistoryDto>>> GetPaginatedAsync(int pageNumber, int pageSize)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<OperationResult<IEnumerable<PriceHistoryDto>>> GetPriceDecreaseHistoryAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<OperationResult<IEnumerable<PriceHistoryDto>>> GetPriceIncreaseHistoryAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> GetTotalCountAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<OperationResult<PriceHistoryDto>> UpdateAsync(PriceHistoryDto priceHistoryDto)
+        {
+            throw new NotImplementedException();
         }
     }
 }

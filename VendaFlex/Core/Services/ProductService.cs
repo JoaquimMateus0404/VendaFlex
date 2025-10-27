@@ -1,6 +1,8 @@
 using AutoMapper;
+using FluentValidation;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
+using VendaFlex.Core.Utils;
 using VendaFlex.Data.Entities;
 using VendaFlex.Data.Repositories;
 
@@ -11,72 +13,168 @@ namespace VendaFlex.Core.Services
     /// </summary>
     public class ProductService : IProductService
     {
-        private readonly IRepository<Product> _repo;
-        private readonly IRepository<Stock> _stocks;
+        private readonly ProductRepository _productRepository;
+        private readonly StockRepository _stockRepository;
+        private readonly IValidator<ProductDto> _productValidator;
+        private readonly IValidator<StockDto> _stockValidator;
         private readonly IMapper _mapper;
 
-        public ProductService(IRepository<Product> repo, IRepository<Stock> stocks, IMapper mapper)
+        public ProductService(
+            ProductRepository productRepository,
+            StockRepository stockRepository,
+            IValidator<ProductDto> productValidator,
+            IValidator<StockDto> stockValidator,
+            IMapper mapper)
         {
-            _repo = repo;
-            _stocks = stocks;
+            _productRepository = productRepository;
+            _stockRepository = stockRepository;
+            _productValidator = productValidator;
+            _stockValidator = stockValidator;
             _mapper = mapper;
         }
 
-        public async Task<ProductDto> GetByIdAsync(int id)
+        /// <inheritdoc/>
+        public Task<OperationResult<Product>> AddAsync(Product product)
         {
-            var e = await _repo.GetByIdAsync(id);
-            return _mapper.Map<ProductDto>(e);
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<ProductDto>> GetAllAsync()
+        /// <inheritdoc/>
+        public Task<bool> BarcodeExistsAsync(string barcode, int? excludeId = null)
         {
-            var list = await _repo.GetAllAsync();
-            return _mapper.Map<IEnumerable<ProductDto>>(list);
+            throw new NotImplementedException();
         }
 
-        public async Task<ProductDto> CreateAsync(ProductDto dto)
+        /// <inheritdoc/>
+        public Task<bool> CodeExistsAsync(string code, int? excludeId = null)
         {
-            var e = _mapper.Map<Product>(dto);
-            var created = await _repo.AddAsync(e);
-            return _mapper.Map<ProductDto>(created);
+            throw new NotImplementedException();
         }
 
-        public async Task<ProductDto> UpdateAsync(ProductDto dto)
+        /// <inheritdoc/>
+        public Task<OperationResult<bool>> DeleteAsync(int id)
         {
-            var e = _mapper.Map<Product>(dto);
-            var updated = await _repo.UpdateAsync(e);
-            return _mapper.Map<ProductDto>(updated);
+            throw new NotImplementedException();
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        /// <inheritdoc/>
+        public Task<bool> ExistsAsync(int id)
         {
-            return await _repo.DeleteAsync(id);
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<ProductDto>> SearchAsync(string term)
+        /// <inheritdoc/>
+        public Task<OperationResult<IEnumerable<Product>>> GetActiveAsync()
         {
-            var list = await _repo.FindAsync(p => p.Name.Contains(term) || p.Barcode.Contains(term) || p.InternalCode.Contains(term));
-            return _mapper.Map<IEnumerable<ProductDto>>(list);
+            throw new NotImplementedException();
         }
 
-        public async Task<bool> UpdateStockAsync(int productId, int quantity)
+        /// <inheritdoc/>
+        public Task<OperationResult<IEnumerable<Product>>> GetAllAsync()
         {
-            var stock = await _stocks.GetByIdAsync(productId);
-            if (stock == null)
-            {
-                stock = new Stock { ProductId = productId, Quantity = quantity };
-                await _stocks.AddAsync(stock);
-                return true;
-            }
-            stock.Quantity = quantity;
-            await _stocks.UpdateAsync(stock);
-            return true;
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<ProductDto>> GetLowStockProductsAsync()
+        /// <inheritdoc/>
+        public Task<OperationResult<Product>> GetByBarcodeAsync(string barcode)
         {
-            var list = await _repo.FindAsync(p => p.MinimumStock.HasValue && p.Stock != null && p.Stock.Quantity <= p.MinimumStock);
-            return _mapper.Map<IEnumerable<ProductDto>>(list);
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<OperationResult<IEnumerable<Product>>> GetByCategoryIdAsync(int categoryId)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<OperationResult<Product>> GetByCodeAsync(string code)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<OperationResult<Product>> GetByIdAsync(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<OperationResult<IEnumerable<Product>>> GetByPriceRangeAsync(decimal minPrice, decimal maxPrice)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<OperationResult<Product>> GetBySKUAsync(string sku)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<OperationResult<IEnumerable<Product>>> GetByStatusAsync(ProductStatus status)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<OperationResult<IEnumerable<Product>>> GetBySupplierIdAsync(int supplierId)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<OperationResult<IEnumerable<Product>>> GetFeaturedAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<OperationResult<IEnumerable<Product>>> GetLowStockAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<OperationResult<IEnumerable<Product>>> GetOutOfStockAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<OperationResult<IEnumerable<Product>>> GetPaginatedAsync(int pageNumber, int pageSize)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<int> GetTotalCountAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<OperationResult<IEnumerable<Product>>> GetWithExpirationAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<OperationResult<IEnumerable<Product>>> SearchAsync(string searchTerm)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> SKUExistsAsync(string sku, int? excludeId = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<OperationResult<Product>> UpdateAsync(Product product)
+        {
+            throw new NotImplementedException();
         }
     }
 }

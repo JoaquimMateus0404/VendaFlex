@@ -1,6 +1,8 @@
 using AutoMapper;
+using FluentValidation;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
+using VendaFlex.Core.Utils;
 using VendaFlex.Data.Entities;
 using VendaFlex.Data.Repositories;
 
@@ -11,71 +13,78 @@ namespace VendaFlex.Core.Services
     /// </summary>
     public class StockService : IStockService
     {
-        private readonly IRepository<Stock> _repo;
-        private readonly IRepository<StockMovement> _movements;
+        private readonly StockRepository _stockRepository;
+        private readonly IValidator<StockDto> _stockValidator;
         private readonly IMapper _mapper;
 
-        public StockService(IRepository<Stock> repo, IRepository<StockMovement> movements, IMapper mapper)
+        public StockService(
+            StockRepository stockRepository,
+            IValidator<StockDto> stockValidator,
+            IMapper mapper)
         {
-            _repo = repo;
-            _movements = movements;
+            _stockRepository = stockRepository;
+            _stockValidator = stockValidator;
             _mapper = mapper;
         }
 
-        public async Task<StockDto> GetByProductIdAsync(int productId)
+        public Task<OperationResult<StockDto>> AddAsync(StockDto stock)
         {
-            var e = await _repo.GetByIdAsync(productId);
-            return _mapper.Map<StockDto>(e);
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<StockDto>> GetAllAsync()
+        public Task<bool> DeleteAsync(int productId)
         {
-            var list = await _repo.GetAllAsync();
-            return _mapper.Map<IEnumerable<StockDto>>(list);
+            throw new NotImplementedException();
         }
 
-        public async Task<bool> UpdateStockAsync(int productId, int quantity, int userId)
+        public Task<bool> ExistsAsync(int productId)
         {
-            var stock = await _repo.GetByIdAsync(productId);
-            var previous = stock?.Quantity ?? 0;
-            if (stock == null)
-            {
-                stock = new Stock { ProductId = productId, Quantity = quantity, LastStockUpdateByUserId = userId };
-                await _repo.AddAsync(stock);
-            }
-            else
-            {
-                stock.Quantity = quantity;
-                stock.LastStockUpdateByUserId = userId;
-                await _repo.UpdateAsync(stock);
-            }
-
-            // registrar movimento
-            var movement = new StockMovement
-            {
-                ProductId = productId,
-                UserId = userId,
-                Quantity = quantity - previous,
-                PreviousQuantity = previous,
-                NewQuantity = quantity,
-                Type = StockMovementType.Adjustment,
-                Date = DateTime.UtcNow
-            };
-            await _movements.AddAsync(movement);
-            return true;
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<StockMovementDto>> GetMovementsAsync(int productId)
+        public Task<OperationResult<IEnumerable<StockDto>>> GetAllAsync()
         {
-            var list = await _movements.FindAsync(m => m.ProductId == productId);
-            return _mapper.Map<IEnumerable<StockMovementDto>>(list.OrderByDescending(m => m.Date));
+            throw new NotImplementedException();
         }
 
-        public async Task<bool> RegisterMovementAsync(StockMovementDto movementDto)
+        public Task<int> GetAvailableQuantityAsync(int productId)
         {
-            var movement = _mapper.Map<StockMovement>(movementDto);
-            await _movements.AddAsync(movement);
-            return true;
+            throw new NotImplementedException();
+        }
+
+        public Task<OperationResult<StockDto>> GetByProductIdAsync(int productId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<OperationResult<IEnumerable<StockDto>>> GetLowStockAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<OperationResult<IEnumerable<StockDto>>> GetOutOfStockAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> ReleaseReservedQuantityAsync(int productId, int quantity)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> ReserveQuantityAsync(int productId, int quantity)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<OperationResult<StockDto>> UpdateAsync(StockDto stock)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> UpdateQuantityAsync(int productId, int quantity, int? userId = null)
+        {
+            throw new NotImplementedException();
         }
     }
 }
