@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows.Input;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
@@ -65,13 +66,13 @@ namespace VendaFlex.ViewModels.Setup
 
             AdminPerson = new PersonDto
             {
-                Type = (int)PersonType.Employee,
+                Type = PersonType.Employee,
                 IsActive = true
             };
 
             AdminUser = new UserDto
             {
-                Status = (int)LoginStatus.Active
+                Status = LoginStatus.Active
             };
 
             // Atualizar visibilidade dos steps
@@ -95,14 +96,14 @@ namespace VendaFlex.ViewModels.Setup
         public ObservableCollection<PrivilegeSelectionItem> AvailablePrivileges { get; } = new();
 
         /// <summary>
-        /// Retorna a contagem de privilégios selecionados.
+        /// Retorna a quantidade de privilégios selecionados
         /// </summary>
         public int SelectedPrivilegesCount => AvailablePrivileges.Count(p => p.IsSelected);
 
         public class PrivilegeSelectionItem : System.ComponentModel.INotifyPropertyChanged
         {
-            private readonly InitialSetupViewModel? _viewModel;
-            
+            private readonly Action? _onSelectionChanged;
+
             public PrivilegeDto Privilege { get; }
 
             private bool _isSelected;
@@ -114,18 +115,16 @@ namespace VendaFlex.ViewModels.Setup
                     if (_isSelected == value) return;
                     _isSelected = value;
                     PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsSelected)));
-                    
-                    // Notify parent ViewModel that the count has changed
-                    _viewModel?.OnPropertyChanged(nameof(SelectedPrivilegesCount));
+                    _onSelectionChanged?.Invoke();
                 }
             }
 
-            public PrivilegeSelectionItem(PrivilegeDto p, InitialSetupViewModel? viewModel = null)
+            public PrivilegeSelectionItem(PrivilegeDto p, Action? onSelectionChanged = null)
             {
                 Privilege = p;
-                _viewModel = viewModel;
+                _onSelectionChanged = onSelectionChanged;
             }
-            
+
             public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
         }
 
@@ -531,7 +530,7 @@ namespace VendaFlex.ViewModels.Setup
                     AvailablePrivileges.Clear();
                     foreach (var privilege in result.Data)
                     {
-                        AvailablePrivileges.Add(new PrivilegeSelectionItem(privilege, this));
+                        AvailablePrivileges.Add(new PrivilegeSelectionItem(privilege));
                     }
                 }
                 else
@@ -1013,22 +1012,10 @@ namespace VendaFlex.ViewModels.Setup
                 IsBusy = true;
                 ErrorMessage = string.Empty;
                 SuccessMessage = string.Empty;
-
-                // 1) Salvar configuração da empresa
-                var companyResult = await _companyService.UpdateAsync(Company);
-
-                if (!companyResult.Success)
-                {
-                    ErrorMessage = companyResult.Message ?? "Erro ao salvar configuração da empresa.";
-
-                    if (companyResult.Errors?.Any() == true)
-                        ErrorMessage += "\n• " + string.Join("\n• ", companyResult.Errors);
-
-                    return;
-                }
+                
 
                 // 2) Criar pessoa (funcionário)
-                AdminPerson.Type = (int)PersonType.Employee;
+                AdminPerson.Type = PersonType.Employee;
                 var personResult = await _personService.CreateAsync(AdminPerson);
 
                 // ✅ VERIFICAÇÃO SEGURA
@@ -1061,6 +1048,22 @@ namespace VendaFlex.ViewModels.Setup
 
                 var createdUser = userResult.Data;
 
+
+                // 1) Salvar configuração da empresa
+
+                Company.CreatedByUserId = createdUser.UserId;
+
+                var companyResult = await _companyService.UpdateAsync(Company);
+
+                if (!companyResult.Success)
+                {
+                    ErrorMessage = companyResult.Message ?? "Erro ao salvar configuração da empresa.";
+
+                    if (companyResult.Errors?.Any() == true)
+                        ErrorMessage += "\n• " + string.Join("\n• ", companyResult.Errors);
+
+                    return;
+                }
                 // 4) Associar privilégios selecionados
                 await AssociatePrivilegesAsync(createdUser.UserId);
 
@@ -1094,6 +1097,7 @@ namespace VendaFlex.ViewModels.Setup
 
                 foreach (var item in selectedPrivileges)
                 {
+                    
                     var dto = new UserPrivilegeDto
                     {
                         UserId = userId,
@@ -1104,16 +1108,17 @@ namespace VendaFlex.ViewModels.Setup
                     // ✅ USAR SERVICE COM OPERATIONRESULT
                     var result = await _userPrivilegeService.GrantAsync(dto);
 
+
                     if (!result.Success)
                     {
-                        System.Diagnostics.Debug.WriteLine(
+                        Debug.WriteLine(
                             $"Erro ao associar privilégio {item.Privilege.Name}: {result.Message}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Erro ao associar privilégios: {ex.Message}");
+               Debug.WriteLine($"Erro ao associar privilégios: {ex.Message}");
                 // Não bloqueia o fluxo principal
             }
         }

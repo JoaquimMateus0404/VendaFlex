@@ -26,5 +26,6 @@ namespace VendaFlex.Core.DTOs
         public bool AllowAnonymousInvoice { get; set; }
         public string BusinessHours { get; set; }
         public bool IsActive { get; set; }
+        public int? CreatedByUserId { get; set; }
     }
 }

@@ -12,7 +12,7 @@ namespace VendaFlex.Core.DTOs.Validators
         public PersonBusinessValidator()
         {
             // Para Clientes (Customer ou Both), validar dados financeiros
-            When(p => p.Type == (int)PersonType.Customer || p.Type == (int)PersonType.Both, () =>
+            When(p => p.Type == PersonType.Customer || p.Type == PersonType.Both, () =>
             {
                 RuleFor(p => p.Email)
                     .NotEmpty().WithMessage("Email é obrigatório para clientes.")
@@ -28,7 +28,7 @@ namespace VendaFlex.Core.DTOs.Validators
             });
 
             // Para Fornecedores (Supplier ou Both), validar dados comerciais
-            When(p => p.Type == (int)PersonType.Supplier || p.Type == (int)PersonType.Both, () =>
+            When(p => p.Type == PersonType.Supplier || p.Type == PersonType.Both, () =>
             {
                 RuleFor(p => p.TaxId)
                     .NotEmpty().WithMessage("Documento fiscal é obrigatório para fornecedores.");
@@ -39,7 +39,7 @@ namespace VendaFlex.Core.DTOs.Validators
             });
 
             // Para Funcionários (Employee), validar identificação
-            When(p => p.Type == (int)PersonType.Employee, () =>
+            When(p => p.Type == PersonType.Employee, () =>
             {
                 RuleFor(p => p.IdentificationNumber)
                     .NotEmpty().WithMessage("Número de identificação é obrigatório para funcionários.");

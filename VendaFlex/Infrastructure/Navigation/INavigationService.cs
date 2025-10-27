@@ -17,7 +17,7 @@ namespace VendaFlex.Infrastructure.Navigation
         /// <summary>
         /// Navega para a tela principal do sistema
         /// </summary>
-        void NavigateToMain();
+        void NavigateToDashBoard();
 
         /// <summary>
         /// Fecha a janela atual

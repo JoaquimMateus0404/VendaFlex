@@ -164,7 +164,7 @@
                         <Viewbox Width="40" Height="40" Margin="0,0,12,0">
                             <Grid>
                                 <Ellipse Width="40" Height="40" Fill="#3B82F6" Opacity="0.1"/>
-                                <materialDesign:PackIcon Kind="StorefrontOutline"
+                                <materialDesign:PackIcon Kind="Domain"
                                                        Width="24" Height="24"
                                                        Foreground="#3B82F6"
                                                        HorizontalAlignment="Center"
@@ -172,7 +172,7 @@
                             </Grid>
                         </Viewbox>
                         <StackPanel VerticalAlignment="Center" x:Name="TextLabels" Opacity="1">
-                            <TextBlock Text="CommerceHub" FontSize="14" FontWeight="Bold" Foreground="#111827"/>
+                            <TextBlock Text="VendaFlex" FontSize="14" FontWeight="Bold" Foreground="#111827"/>
                             <TextBlock Text="Dashboard" FontSize="11" Foreground="#9CA3AF"/>
                         </StackPanel>
                     </StackPanel>
@@ -263,13 +263,13 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <StackPanel Orientation="Vertical">
+                        <StackPanel Orientation="Vertical" Grid.Column="0">
                             <TextBlock Text="Dashboard" FontSize="32" FontWeight="Bold" Foreground="#111827"/>
                             <TextBlock Text="Bem-vindo de volta! Aqui está o resumo do seu negócio." 
                                      FontSize="14" Foreground="#6B7280" Margin="0,6,0,0"/>
                         </StackPanel>
 
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Grid.Column="2">
                             <Button Width="40" Height="40" Style="{DynamicResource MaterialDesignIconButton}"
                                    materialDesign:ButtonAssist.CornerRadius="8">
                                 <materialDesign:PackIcon Kind="Bell" Width="20" Height="20" Foreground="#6B7280"/>

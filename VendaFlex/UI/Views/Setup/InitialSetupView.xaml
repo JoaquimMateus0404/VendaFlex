@@ -988,7 +988,7 @@
                                             <TextBlock Grid.Row="4" Grid.Column="1" 
                                      FontSize="12" Foreground="#E5E7EB" FontWeight="SemiBold"
                                      TextWrapping="Wrap">
-                                <Run Text="{Binding AvailablePrivileges.Count, FallbackValue='0'}"/>
+                                <Run Text="{Binding SelectedPrivilegesCount, Mode=OneWay, FallbackValue='0'}"/>
                                 <Run Text=" selecionado(s)"/>
                                             </TextBlock>
                                         </Grid>

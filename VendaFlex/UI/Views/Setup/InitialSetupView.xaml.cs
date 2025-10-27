@@ -554,6 +554,7 @@ namespace VendaFlex.UI.Views.Setup
                 {
                     privilege.IsSelected = true;
                 }
+                // A notificação já é disparada automaticamente pelo callback em cada item
             }
         }
 
@@ -568,6 +569,7 @@ namespace VendaFlex.UI.Views.Setup
                 {
                     privilege.IsSelected = false;
                 }
+                // A notificação já é disparada automaticamente pelo callback em cada item
             }
         }
 

@@ -1,10 +1,12 @@
+using VendaFlex.Data.Entities;
+
 namespace VendaFlex.Core.DTOs
 {
     public class PersonDto
     {
         public int PersonId { get; set; }
         public string Name { get; set; }
-        public int Type { get; set; }
+        public PersonType Type { get; set; }
         public string TaxId { get; set; }
         public string IdentificationNumber { get; set; }
         public string Email { get; set; }

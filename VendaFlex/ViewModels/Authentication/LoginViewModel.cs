@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using VendaFlex.Core.Interfaces;
+using VendaFlex.Data.Entities;
 using VendaFlex.Infrastructure.Interfaces;
 using VendaFlex.Infrastructure.Navigation;
 using VendaFlex.ViewModels.Base;
@@ -124,13 +125,13 @@ namespace VendaFlex.ViewModels.Authentication
                 var user = result.Data;
 
                 // Verificar status do usuário
-                if (user.Status == 2) // Inactive
+                if (user.Status == LoginStatus.Inactive) // Inactive
                 {
                     ErrorMessage = "Conta inativa. Contacte o administrador.";
                     return;
                 }
 
-                if (user.Status == 3) // Suspended
+                if (user.Status == LoginStatus.Suspended) // Suspended
                 {
                     ErrorMessage = "Conta suspensa. Contacte o administrador.";
                     return;
@@ -157,7 +158,7 @@ namespace VendaFlex.ViewModels.Authentication
                 }
 
                 // Navegar para a tela principal (Dashboard)
-                _navigationService.NavigateToMain();
+                _navigationService.NavigateToDashBoard();
             }
             catch (Exception ex)
             {

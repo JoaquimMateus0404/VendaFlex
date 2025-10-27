@@ -3,8 +3,10 @@ using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using VendaFlex.UI.Views.Authentication;
+using VendaFlex.UI.Views.Dashboard;
 using VendaFlex.UI.Views.Setup;
 using VendaFlex.ViewModels.Authentication;
+using VendaFlex.ViewModels.Dashboard;
 using VendaFlex.ViewModels.Setup;
 
 namespace VendaFlex.Infrastructure.Navigation
@@ -56,28 +58,17 @@ namespace VendaFlex.Infrastructure.Navigation
             }
         }
 
-        public void NavigateToMain()
+        public void NavigateToDashBoard()
         {
             _logger.LogInformation("Navegando para tela Principal");
 
             try
             {
-                // TODO: Criar MainView e MainViewModel
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    MessageBox.Show(
-                        "MainView ainda não implementada.\n\nEsta funcionalidade será adicionada em breve.",
-                        "Em Desenvolvimento",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information
-                    );
-                });
-
-                _logger.LogWarning("MainView ainda não implementada");
+                NavigateToPage<DashboardView, DashboardViewModel>("VendaFlex - DashBoard", 1000, 700, closeCurrent: true);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao navegar para Main");
+                _logger.LogError(ex, "Erro ao navegar para DashBoard");
                 throw;
             }
         }

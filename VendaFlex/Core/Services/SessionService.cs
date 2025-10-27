@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
+using VendaFlex.Data.Entities;
 
 namespace VendaFlex.Core.Services
 {
@@ -46,7 +47,7 @@ namespace VendaFlex.Core.Services
 
                 // Considera administrador se o usuário tem status Active (1) e UserId == 1
                 // ou possui privilégios de administrador
-                return _currentUser!.UserId == 1 && _currentUser.Status == 1;
+                return _currentUser!.UserId == 1 && _currentUser.Status == LoginStatus.Active;
             }
         }
 

@@ -18,8 +18,7 @@ namespace VendaFlex.Core.DTOs.Validators
 
             // Validação de Tipo
             RuleFor(p => p.Type)
-                .IsInEnum().WithMessage("O tipo de pessoa é inválido.")
-                .NotEqual(0).WithMessage("O tipo de pessoa é obrigatório.");
+                .IsInEnum().WithMessage("O tipo de pessoa é inválido.");
 
             // Validação de Email (quando fornecido)
             RuleFor(p => p.Email)
@@ -100,9 +99,8 @@ namespace VendaFlex.Core.DTOs.Validators
 
             // Validação de ProfileImageUrl
             RuleFor(p => p.ProfileImageUrl)
-                .Must(BeValidUrl).WithMessage("URL da imagem inválida.")
-                .MaximumLength(500).WithMessage("URL da imagem não pode exceder 500 caracteres.")
-                .When(p => !string.IsNullOrWhiteSpace(p.ProfileImageUrl));
+                .MaximumLength(500).WithMessage("URL do logo não pode exceder 500 caracteres.")
+                .When(c => !string.IsNullOrWhiteSpace(c.ProfileImageUrl));
 
             // Validação de Rating
             RuleFor(p => p.Rating)

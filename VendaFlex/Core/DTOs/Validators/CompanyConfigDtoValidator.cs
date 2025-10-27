@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using static VendaFlex.Data.Entities.CompanyConfig;
 
 namespace VendaFlex.Core.DTOs.Validators
 {
@@ -106,7 +107,8 @@ namespace VendaFlex.Core.DTOs.Validators
 
             // Validação de Formato da Fatura
             RuleFor(c => c.InvoiceFormat)
-                .IsInEnum().WithMessage("Formato de fatura inválido.");
+                .Must(v => Enum.IsDefined(typeof(InvoiceFormatType), v))
+                .WithMessage("Formato de fatura inválido.");
 
             // Validação de Horário de Funcionamento
             RuleFor(c => c.BusinessHours)
