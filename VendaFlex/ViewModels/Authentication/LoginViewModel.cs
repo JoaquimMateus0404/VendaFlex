@@ -158,7 +158,16 @@ namespace VendaFlex.ViewModels.Authentication
                 }
 
                 // Navegar para a tela principal (Dashboard)
-                _navigationService.NavigateToDashBoard();
+                try
+                {
+                    _navigationService.NavigateToDashBoard();
+                }
+                catch (Exception navEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Erro na navegação para o DashBoard: {navEx}");
+                    ErrorMessage = "Login efetuado, mas houve um erro ao abrir o painel. Tente novamente.";
+                    return;
+                }
             }
             catch (Exception ex)
             {

@@ -12,17 +12,20 @@ namespace VendaFlex.Core.Services
     public class SessionService : ISessionService
     {
         private readonly ILogger<SessionService> _logger;
-        private readonly IUserPrivilegeService _userPrivilegeService;
+        private readonly ICurrentUserContext _currentUserContext;
+        private readonly IServiceProvider _serviceProvider;
         private UserDto? _currentUser;
         private DateTime? _loginTime;
         private string? _loginIpAddress;
 
         public SessionService(
             ILogger<SessionService> logger,
-            IUserPrivilegeService userPrivilegeService)
+            ICurrentUserContext currentUserContext,
+            IServiceProvider serviceProvider)
         {
             _logger = logger;
-            _userPrivilegeService = userPrivilegeService;
+            _currentUserContext = currentUserContext;
+            _serviceProvider = serviceProvider;
         }
 
         /// <inheritdoc/>
@@ -45,8 +48,6 @@ namespace VendaFlex.Core.Services
                 if (!IsLoggedIn)
                     return false;
 
-                // Considera administrador se o usuário tem status Active (1) e UserId == 1
-                // ou possui privilégios de administrador
                 return _currentUser!.UserId == 1 && _currentUser.Status == LoginStatus.Active;
             }
         }
@@ -69,6 +70,9 @@ namespace VendaFlex.Core.Services
             _currentUser = user;
             _loginTime = DateTime.UtcNow;
             _loginIpAddress = ipAddress;
+
+            // Atualiza contexto de usuário atual
+            _currentUserContext.UserId = user.UserId;
 
             _logger.LogInformation(
                 "Sessão iniciada para usuário {Username} (ID: {UserId}) às {LoginTime}",
@@ -98,6 +102,9 @@ namespace VendaFlex.Core.Services
             _currentUser = null;
             _loginTime = null;
             _loginIpAddress = null;
+
+            // Limpa contexto de usuário atual
+            _currentUserContext.UserId = null;
 
             _logger.LogInformation(
                 "Sessão encerrada para usuário {Username} (ID: {UserId}). Duração: {Duration}",
@@ -135,6 +142,9 @@ namespace VendaFlex.Core.Services
 
             _currentUser = user;
 
+            // Mantém contexto sincronizado
+            _currentUserContext.UserId = user.UserId;
+
             _logger.LogInformation(
                 "Informações do usuário {Username} (ID: {UserId}) atualizadas na sessão",
                 user.Username,
@@ -150,7 +160,6 @@ namespace VendaFlex.Core.Services
                 return false;
             }
 
-            // Administradores têm todos os privilégios
             if (IsAdministrator)
             {
                 _logger.LogDebug(
@@ -162,8 +171,14 @@ namespace VendaFlex.Core.Services
 
             try
             {
-                // Busca privilégios detalhados do usuário (com código)
-                var privilegesResult = await _userPrivilegeService.GetUserPrivilegesDetailsAsync(_currentUser!.UserId);
+                var privilegeService = _serviceProvider.GetService(typeof(IUserPrivilegeService)) as IUserPrivilegeService;
+                if (privilegeService == null)
+                {
+                    _logger.LogWarning("IUserPrivilegeService não está registrado");
+                    return false;
+                }
+
+                var privilegesResult = await privilegeService.GetUserPrivilegesDetailsAsync(_currentUser!.UserId);
 
                 if (!privilegesResult.Success || privilegesResult.Data == null)
                 {

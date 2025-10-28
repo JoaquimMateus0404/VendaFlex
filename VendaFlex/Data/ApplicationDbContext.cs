@@ -1,5 +1,7 @@
 ﻿using VendaFlex.Data.Entities;
 using Microsoft.EntityFrameworkCore;
+using VendaFlex.Core.Interfaces;
+using System.Text.Json;
 
 namespace VendaFlex.Data
 {
@@ -7,10 +9,13 @@ namespace VendaFlex.Data
     {
         private readonly int? _currentUserId;
 
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, int? currentUserId = null)
+        private readonly ICurrentUserContext? _currentUserContext;
+
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, ICurrentUserContext? currentUserContext = null)
             : base(options)
         {
-            _currentUserId = currentUserId;
+            _currentUserContext = currentUserContext;
+            _currentUserId = _currentUserContext?.UserId;
         }
 
         public DbSet<Person> Persons { get; set; }
@@ -460,7 +465,7 @@ namespace VendaFlex.Data
                     SubTotal = 20000m,
                     TaxAmount = 2744m,
                     DiscountAmount = 400m,
-                    ShippingCost = 0m,
+                    ShippingCost = 1000m,
                     Total = 22344m,
                     PaidAmount = 10000m,
                     Notes = "Venda com desconto",
@@ -554,37 +559,172 @@ namespace VendaFlex.Data
 
         public override int SaveChanges()
         {
-            UpdateAuditFields();
+            ApplyAuditFieldsAndSoftDelete();
+            CreateAuditLogs();
             return base.SaveChanges();
         }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            UpdateAuditFields();
+            ApplyAuditFieldsAndSoftDelete();
+            CreateAuditLogs();
             return await base.SaveChangesAsync(cancellationToken);
         }
 
-        private void UpdateAuditFields()
+        private void ApplyAuditFieldsAndSoftDelete()
         {
+            var utcNow = DateTime.UtcNow;
+            var userId = _currentUserContext?.UserId ?? _currentUserId;
+
             var entries = ChangeTracker.Entries()
-                .Where(e => e.Entity is AuditableEntity &&
-                           (e.State == EntityState.Added || e.State == EntityState.Modified));
+                .Where(e => e.Entity is AuditableEntity);
 
             foreach (var entry in entries)
             {
                 var entity = (AuditableEntity)entry.Entity;
 
-                if (entry.State == EntityState.Added)
+                switch (entry.State)
                 {
-                    entity.CreatedAt = DateTime.UtcNow;
-                    entity.CreatedByUserId = _currentUserId;
-                }
-                else if (entry.State == EntityState.Modified)
-                {
-                    entity.UpdatedAt = DateTime.UtcNow;
-                    entity.UpdatedByUserId = _currentUserId;
+                    case EntityState.Added:
+                        entity.CreatedAt = utcNow;
+                        entity.CreatedByUserId = userId;
+                        entity.IsDeleted = false;
+                        entity.DeletedAt = null;
+                        break;
+
+                    case EntityState.Modified:
+                        entity.UpdatedAt = utcNow;
+                        entity.UpdatedByUserId = userId;
+                        // Evitar marcar IsDeleted como modificação acidental
+                        break;
+
+                    case EntityState.Deleted:
+                        // Soft delete
+                        entry.State = EntityState.Modified;
+                        entity.IsDeleted = true;
+                        entity.DeletedAt = utcNow;
+                        entity.UpdatedAt = utcNow;
+                        entity.UpdatedByUserId = userId;
+                        break;
                 }
             }
+        }
+
+        private void CreateAuditLogs()
+        {
+            var utcNow = DateTime.UtcNow;
+
+            // Auditar apenas entidades que herdam de AuditableEntity e ignorar AuditLog
+            var auditableEntries = ChangeTracker.Entries()
+                .Where(e => e.Entity is AuditableEntity && e.Entity.GetType() != typeof(AuditLog))
+                .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified || e.State == EntityState.Deleted);
+
+            var logs = new List<AuditLog>();
+
+            foreach (var entry in auditableEntries)
+            {
+                string action = entry.State switch
+                {
+                    EntityState.Added => "Create",
+                    EntityState.Modified => ((entry.Entity as AuditableEntity)?.IsDeleted == true) ? "Delete" : "Update",
+                    EntityState.Deleted => "Delete",
+                    _ => "Update"
+                };
+
+                var oldValues = new Dictionary<string, object?>();
+                var newValues = new Dictionary<string, object?>();
+
+                foreach (var prop in entry.Properties)
+                {
+                    if (prop.Metadata.IsPrimaryKey()) continue;
+                    if (prop.Metadata.IsShadowProperty()) continue;
+
+                    // Evitar logar campos muito verbosos ou de auditoria
+                    var propName = prop.Metadata.Name;
+                    if (propName is nameof(AuditableEntity.CreatedAt) or nameof(AuditableEntity.UpdatedAt)
+                        or nameof(AuditableEntity.CreatedByUserId) or nameof(AuditableEntity.UpdatedByUserId))
+                        continue;
+
+                    if (entry.State == EntityState.Added)
+                    {
+                        newValues[propName] = prop.CurrentValue;
+                    }
+                    else if (entry.State == EntityState.Modified)
+                    {
+                        if (prop.IsModified)
+                        {
+                            oldValues[propName] = prop.OriginalValue;
+                            newValues[propName] = prop.CurrentValue;
+                        }
+                    }
+                }
+
+                // Resolver o UserId do ator da operação
+                var actorUserId = ResolveActorUserId(entry);
+                if (actorUserId <= 0)
+                {
+                    // Não é possível determinar o usuário responsável; evitar FK violation pulando este log
+                    continue;
+                }
+
+                var log = new AuditLog
+                {
+                    UserId = actorUserId,
+                    Action = action,
+                    EntityName = entry.Entity.GetType().Name,
+                    EntityId = TryGetEntityId(entry),
+                    OldValues = oldValues.Count > 0 ? JsonSerializer.Serialize(oldValues) : null,
+                    NewValues = newValues.Count > 0 ? JsonSerializer.Serialize(newValues) : null,
+                    Timestamp = utcNow,
+                    IpAddress = GetLocalIpAddress(),
+                    UserAgent = GetUserAgent()
+                };
+
+                logs.Add(log);
+            }
+
+            if (logs.Count > 0)
+            {
+                AuditLogs.AddRange(logs);
+            }
+        }
+
+        private int ResolveActorUserId(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry)
+        {
+            // 1) Tentar via contexto atual
+            var ctxUserId = _currentUserContext?.UserId ?? _currentUserId;
+            if (ctxUserId.HasValue && ctxUserId.Value > 0)
+                return ctxUserId.Value;
+
+            // 2) Se a entidade tiver propriedade UserId, usar
+            var userIdProp = entry.Properties.FirstOrDefault(p => string.Equals(p.Metadata.Name, "UserId", StringComparison.Ordinal));
+            if (userIdProp?.CurrentValue is int uid && uid > 0)
+                return uid;
+
+            // 3) Se a entidade for User, usar o próprio UserId
+            if (entry.Entity is User u && u.UserId > 0)
+                return u.UserId;
+
+            // 4) Tentar via campos de auditoria preenchidos anteriormente
+            if (entry.Entity is AuditableEntity ae)
+            {
+                if (ae.UpdatedByUserId.HasValue && ae.UpdatedByUserId.Value > 0)
+                    return ae.UpdatedByUserId.Value;
+                if (ae.CreatedByUserId.HasValue && ae.CreatedByUserId.Value > 0)
+                    return ae.CreatedByUserId.Value;
+            }
+
+            // 5) Não resolveu
+            return 0;
+        }
+
+        private static int? TryGetEntityId(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry)
+        {
+            var key = entry.Properties.FirstOrDefault(p => p.Metadata.IsPrimaryKey());
+            if (key == null) return null;
+            if (key.CurrentValue is int idInt) return idInt;
+            if (int.TryParse(key.CurrentValue?.ToString(), out var idParsed)) return idParsed;
+            return null;
         }
 
         /// <summary>
@@ -593,6 +733,36 @@ namespace VendaFlex.Data
         public IQueryable<T> GetAllIncludingDeleted<T>() where T : class
         {
             return Set<T>().IgnoreQueryFilters();
+        }
+
+        // Helpers para capturar dados de contexto quando disponíveis
+        private static string GetLocalIpAddress()
+        {
+            try
+            {
+                var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
+                var ipAddress = host.AddressList
+                    .FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+                return ipAddress?.ToString() ?? "127.0.0.1";
+            }
+            catch
+            {
+                return "127.0.0.1";
+            }
+        }
+
+        private static string GetUserAgent()
+        {
+            try
+            {
+                var appName = AppDomain.CurrentDomain.FriendlyName;
+                var os = System.Runtime.InteropServices.RuntimeInformation.OSDescription;
+                return $"{appName}; {os}";
+            }
+            catch
+            {
+                return "VendaFlex";
+            }
         }
     }
 }

@@ -35,7 +35,10 @@ namespace VendaFlex.Infrastructure
 
             // Serviços de infraestrutura
             services.AddSingleton<INavigationService, NavigationService>();
-            services.AddSingleton<ISessionService, SessionService>();
+            // Contexto de usuário atual (por escopo)
+            services.AddScoped<ICurrentUserContext, CurrentUserContext>();
+            // Sessão também escopo para alinhar com UserContext e evitar resolução antes do DbContext em escopos globais
+            services.AddScoped<ISessionService, SessionService>();
             services.AddSingleton<ICredentialManager, WindowsCredentialManager>();
             services.AddScoped<IDatabaseStatusService, DatabaseStatusService>();
             services.AddScoped<IDatabaseSyncService, DatabaseSyncService>();
@@ -55,6 +58,10 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<StockRepository>();
             services.AddScoped<PriceHistoryRepository>();
             services.AddScoped<ExpirationRepository>();
+            services.AddScoped<InvoiceRepository>();
+            services.AddScoped<InvoiceProductRepository>();
+            services.AddScoped<PaymentRepository>();
+            services.AddScoped<PaymentTypeRepository>();
 
             // Serviços principais
             services.AddScoped<IUserService, UserService>();
@@ -68,7 +75,10 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<IPriceHistoryService, PriceHistoryService>();
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IStockMovementService, StockMovementService>();
-
+            services.AddScoped<IInvoiceService, InvoiceService>();
+            services.AddScoped<IInvoiceProductService, InvoiceProductService>();
+            services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<IPaymentTypeService, PaymentTypeService>();
 
             // Validadores
             services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
@@ -84,6 +94,10 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<IValidator<StockDto>, StockDtoValidator>();
             services.AddScoped<IValidator<PriceHistoryDto>, PriceHistoryDtoValidator>();
             services.AddScoped<IValidator<StockMovementDto>, StockMovementDtoValidator>();
+            services.AddScoped<IValidator<InvoiceDto>, InvoiceDtoValidator>();
+            services.AddScoped<IValidator<InvoiceProductDto>, InvoiceProductDtoValidator>();
+            services.AddScoped<IValidator<PaymentDto>, PaymentDtoValidator>();
+            services.AddScoped<IValidator<PaymentTypeDto>, PaymentTypeDtoValidator>();
 
 
             // Registrar Views e ViewModels usados pela navegação

@@ -90,6 +90,7 @@ namespace VendaFlex.Data.Repositories
 
         /// <summary>
         /// Atualiza um usu�rio existente.
+        /// Evita marcar o grafo inteiro como modificado para n�o impactar entidades relacionadas (ex: Person).
         /// </summary>
         /// <param name="entity">Usu�rio com dados atualizados</param>
         /// <returns>Usu�rio atualizado</returns>
@@ -98,7 +99,39 @@ namespace VendaFlex.Data.Repositories
             if (entity == null)
                 throw new ArgumentNullException(nameof(entity));
 
-            _context.Users.Update(entity);
+            // Se j� est� sendo rastreado, apenas garante que o estado do User esteja como Modified
+            var tracked = _context.Users.Local.FirstOrDefault(u => u.UserId == entity.UserId);
+            if (tracked != null)
+            {
+                // Copia campos simples se a inst�ncia rastreada n�o for a mesma
+                if (!ReferenceEquals(tracked, entity))
+                {
+                    _context.Entry(tracked).CurrentValues.SetValues(entity);
+                }
+
+                _context.Entry(tracked).State = EntityState.Modified;
+
+                // Garante que a navega��o Person (se carregada) n�o seja marcada para update
+                var personRef = _context.Entry(tracked).Reference(u => u.Person);
+                if (personRef.IsLoaded && personRef.TargetEntry != null)
+                {
+                    personRef.TargetEntry.State = EntityState.Unchanged;
+                }
+            }
+            else
+            {
+                // Anexa apenas a entidade User e marca como Modified (n�o propaga para navega��es)
+                _context.Users.Attach(entity);
+                var entry = _context.Entry(entity);
+                entry.State = EntityState.Modified;
+
+                var personRef = entry.Reference(u => u.Person);
+                if (personRef.IsLoaded && personRef.TargetEntry != null)
+                {
+                    personRef.TargetEntry.State = EntityState.Unchanged;
+                }
+            }
+
             await _context.SaveChangesAsync();
             return entity;
         }
@@ -343,7 +376,18 @@ namespace VendaFlex.Data.Repositories
             if (users == null || !users.Any())
                 throw new ArgumentException("Lista de usu�rios n�o pode ser vazia.", nameof(users));
 
-            _context.Users.UpdateRange(users);
+            foreach (var user in users)
+            {
+                _context.Users.Attach(user);
+                _context.Entry(user).State = EntityState.Modified;
+
+                var personRef = _context.Entry(user).Reference(u => u.Person);
+                if (personRef.IsLoaded && personRef.TargetEntry != null)
+                {
+                    personRef.TargetEntry.State = EntityState.Unchanged;
+                }
+            }
+
             await _context.SaveChangesAsync();
         }
 
