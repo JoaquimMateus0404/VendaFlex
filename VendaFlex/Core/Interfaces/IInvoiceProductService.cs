@@ -14,6 +14,9 @@ namespace VendaFlex.Core.Interfaces
         Task<OperationResult<InvoiceProductDto>> GetByIdAsync(int id);
         Task<OperationResult<IEnumerable<InvoiceProductDto>>> GetByInvoiceIdAsync(int invoiceId);
 
+        // Consultas agregadas
+        Task<OperationResult<IEnumerable<TopProductDto>>> GetTopSellingProductsAsync(int top);
+
         // Verificações
         Task<bool> ExistsAsync(int id);
         Task<bool> ExistsProductInInvoiceAsync(int invoiceId, int productId, int? excludeId = null);

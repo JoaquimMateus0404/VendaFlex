@@ -6,6 +6,9 @@ using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
 using VendaFlex.Data.Entities;
 using VendaFlex.ViewModels.Base;
+using OxyPlot;
+using OxyPlot.Axes;
+using OxyPlot.Series;
 
 namespace VendaFlex.ViewModels.Dashboard
 {
@@ -101,6 +104,28 @@ namespace VendaFlex.ViewModels.Dashboard
             set => Set(ref _currentUserId, value);
         }
 
+        private PlotModel? _salesPlotModel;
+        public PlotModel? SalesPlotModel
+        {
+            get => _salesPlotModel;
+            set => Set(ref _salesPlotModel, value);
+        }
+
+        private string _salesChartCaption = string.Empty;
+        public string SalesChartCaption
+        {
+            get => _salesChartCaption;
+            set => Set(ref _salesChartCaption, value);
+        }
+
+        // Dados para o gráfico simples (fallback)
+        private ObservableCollection<SalesPointDto> _salesPoints = new();
+        public ObservableCollection<SalesPointDto> SalesPoints
+        {
+            get => _salesPoints;
+            set => Set(ref _salesPoints, value);
+        }
+
         #endregion
 
         public DashboardViewModel(
@@ -148,6 +173,9 @@ namespace VendaFlex.ViewModels.Dashboard
                 await RefreshNotificationsAsync();
                 System.Diagnostics.Debug.WriteLine($"DashboardViewModel: Notifications carregadas. Count = {Notifications.Count}");
 
+                System.Diagnostics.Debug.WriteLine("DashboardViewModel: Carregando Sales Chart...");
+                await LoadSalesChartAsync();
+
                 CurrentUserName = _sessionService.CurrentUser!.Username;
             }
             catch (Exception ex)
@@ -161,6 +189,93 @@ namespace VendaFlex.ViewModels.Dashboard
             {
                 IsLoading = false;
                 System.Diagnostics.Debug.WriteLine("=== DashboardViewModel: LoadDashboardDataAsync CONCLUÍDO ===");
+            }
+        }
+
+        /// <summary>
+        /// Carrega dados do gráfico de receita (últimos 30 dias)
+        /// </summary>
+        private async Task LoadSalesChartAsync()
+        {
+            try
+            {
+                var start = DateTime.Today.AddDays(-29);
+                var end = DateTime.Today;
+                var days = (end - start).Days + 1; // 30 dias
+
+                var map = Enumerable.Range(0, days)
+                    .ToDictionary(i => start.AddDays(i).Date, _ => 0m);
+
+                var invoicesResult = await _invoiceService.GetAllAsync();
+                if (invoicesResult.Success && invoicesResult.Data != null)
+                {
+                    foreach (var inv in invoicesResult.Data.Where(i => i.Date.Date >= start && i.Date.Date <= end))
+                    {
+                        var d = inv.Date.Date;
+                        map[d] += inv.Total;
+                    }
+                }
+
+                SalesPoints = new ObservableCollection<SalesPointDto>(
+                    map.Select(kvp => new SalesPointDto
+                    {
+                        Date = kvp.Key,
+                        Label = kvp.Key.ToString("dd/MM"),
+                        Value = kvp.Value,
+                        BarHeight = 0
+                    }));
+
+                // Legenda/Descrição
+                SalesChartCaption = $"Receita diária de {start:dd/MM} a {end:dd/MM}. Eixo X: Data • Eixo Y: Valor (Kz).";
+
+                var model = new PlotModel { Title = string.Empty };
+
+                var xAxis = new DateTimeAxis
+                {
+                    Position = AxisPosition.Bottom,
+                    StringFormat = "dd/MM",
+                    IntervalType = DateTimeIntervalType.Days,
+                    MinorIntervalType = DateTimeIntervalType.Days
+                };
+
+                var yAxis = new LinearAxis
+                {
+                    Position = AxisPosition.Left,
+                    Minimum = 0,
+                    MajorGridlineStyle = LineStyle.Solid,
+                    MinorGridlineStyle = LineStyle.Dot
+                };
+                yAxis.LabelFormatter = v => $"Kz {v:N0}";
+
+                var line = new LineSeries
+                {
+                    Title = "Receita",
+                    StrokeThickness = 2,
+                    MarkerType = MarkerType.Circle,
+                    MarkerSize = 3
+                };
+
+                foreach (var p in SalesPoints)
+                {
+                    line.Points.Add(new DataPoint(DateTimeAxis.ToDouble(p.Date), (double)p.Value));
+                }
+
+                // Exibir legenda abaixo (removido para compatibilidade da versão em uso)
+                // model.LegendPlacement = LegendPlacement.Outside;
+                // model.LegendPosition = LegendPosition.BottomCenter;
+                // model.LegendOrientation = LegendOrientation.Horizontal;
+
+                model.Axes.Add(xAxis);
+                model.Axes.Add(yAxis);
+                model.Series.Add(line);
+
+                model.InvalidatePlot(true);
+                SalesPlotModel = model;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"OxyPlot error: {ex.Message}\n{ex.StackTrace}");
+                SalesPlotModel = new PlotModel { Title = string.Empty };
             }
         }
 
@@ -313,27 +428,15 @@ namespace VendaFlex.ViewModels.Dashboard
         {
             try
             {
-                // NOTA: Esta implementação simplificada usa dados de exemplo
-                // Para evitar problemas de concorrência do DbContext ao buscar produtos de cada fatura
-                // TODO: Criar um método otimizado no serviço que faça uma única query agregada
-                
-                // Por enquanto, usar dados de exemplo
-               // LoadSampleTopProducts();
-                
-                // IMPLEMENTAÇÃO FUTURA COM QUERY OTIMIZADA:
-
                 var topProductsResult = await _invoiceProductService.GetTopSellingProductsAsync(5);
                 if (topProductsResult.Success && topProductsResult.Data != null)
                 {
                     TopProducts = new ObservableCollection<TopProductDto>(topProductsResult.Data);
                 }
-                
-                
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Erro ao carregar produtos top: {ex.Message}");
-                //LoadSampleTopProducts();
             }
         }
 
@@ -347,7 +450,6 @@ namespace VendaFlex.ViewModels.Dashboard
                 var allInvoicesResult = await _invoiceService.GetAllAsync();
                 if (!allInvoicesResult.Success || allInvoicesResult.Data == null)
                 {
-                    //LoadSampleInvoices();
                     return;
                 }
 
@@ -396,7 +498,6 @@ namespace VendaFlex.ViewModels.Dashboard
             catch (Exception ex)
             {
                 Console.WriteLine($"Erro ao carregar faturas recentes: {ex.Message}");
-                //LoadSampleInvoices();
             }
         }
 
@@ -478,142 +579,10 @@ namespace VendaFlex.ViewModels.Dashboard
             catch (Exception ex)
             {
                 Console.WriteLine($"Erro ao carregar notificações: {ex.Message}");
-                //LoadSampleNotifications();
             }
         }
 
         #region Sample Data Methods (fallback)
-
-       /* private void LoadSampleMetrics()
-        {
-            Metrics = new ObservableCollection<DashboardMetricDto>
-            {
-                new DashboardMetricDto
-                {
-                    Title = "Receita Total",
-                    Value = "Kz 4.523.000,00",
-                    IconKind = "CashMultiple",
-                    IconBackgroundColor = "#FEE2E2",
-                    IconColor = "#EF4444",
-                    ChangeText = "↑ 12.5%",
-                    ChangeColor = "#10B981",
-                    DescriptionText = "vs. mês passado"
-                },
-                new DashboardMetricDto
-                {
-                    Title = "Faturas Emitidas",
-                    Value = "342",
-                    IconKind = "Receipt",
-                    IconBackgroundColor = "#DBEAFE",
-                    IconColor = "#3B82F6",
-                    ChangeText = "↑ 8.2%",
-                    ChangeColor = "#10B981",
-                    DescriptionText = "vs. mês passado"
-                },
-                new DashboardMetricDto
-                {
-                    Title = "Produtos",
-                    Value = "1.248",
-                    IconKind = "Package",
-                    IconBackgroundColor = "#E0E7FF",
-                    IconColor = "#6366F1",
-                    ChangeText = "18 baixo estoque",
-                    ChangeColor = "#F59E0B",
-                    DescriptionText = ""
-                },
-                new DashboardMetricDto
-                {
-                    Title = "Pendentes",
-                    Value = "Kz 856.400,00",
-                    IconKind = "CreditCardClock",
-                    IconBackgroundColor = "#FEF3C7",
-                    IconColor = "#F59E0B",
-                    ChangeText = "23 faturas",
-                    ChangeColor = "#9CA3AF",
-                    DescriptionText = ""
-                }
-            };
-        }
-
-        private void LoadSampleTopProducts()
-        {
-            TopProducts = new ObservableCollection<TopProductDto>
-            {
-                new TopProductDto { ProductName = "Cimento 50kg", QuantitySold = 450, Revenue = 1250000, ProgressPercentage = 100 },
-                new TopProductDto { ProductName = "Tijolo Furado", QuantitySold = 3200, Revenue = 980000, ProgressPercentage = 78 },
-                new TopProductDto { ProductName = "Areia Fina", QuantitySold = 120, Revenue = 750000, ProgressPercentage = 60 },
-                new TopProductDto { ProductName = "Tinta Branca 20L", QuantitySold = 85, Revenue = 620000, ProgressPercentage = 50 },
-                new TopProductDto { ProductName = "Ferro 10mm", QuantitySold = 220, Revenue = 580000, ProgressPercentage = 46 }
-            };
-        }
-
-        private void LoadSampleInvoices()
-        {
-            RecentInvoices = new ObservableCollection<RecentInvoiceDto>
-            {
-                new RecentInvoiceDto
-                {
-                    InvoiceNumber = "INV-2025-042",
-                    CustomerName = "João Silva",
-                    IssueDate = DateTime.Now.AddHours(-2),
-                    TotalAmount = 245000,
-                    Status = "Pago"
-                },
-                new RecentInvoiceDto
-                {
-                    InvoiceNumber = "INV-2025-041",
-                    CustomerName = "Maria Costa",
-                    IssueDate = DateTime.Now.AddHours(-5),
-                    TotalAmount = 156000,
-                    Status = "Pendente"
-                },
-                new RecentInvoiceDto
-                {
-                    InvoiceNumber = "INV-2025-040",
-                    CustomerName = "Pedro Santos",
-                    IssueDate = DateTime.Now.AddDays(-1),
-                    TotalAmount = 432000,
-                    Status = "Pago"
-                }
-            };
-        }
-
-        private void LoadSampleNotifications()
-        {
-            Notifications = new ObservableCollection<DashboardNotificationDto>
-            {
-                new DashboardNotificationDto
-                {
-                    Title = "Estoque Baixo",
-                    Message = "5 produtos com estoque abaixo do mínimo",
-                    IconKind = "AlertCircle",
-                    IconBackgroundColor = "#FEE2E2",
-                    IconColor = "#EF4444",
-                    Timestamp = DateTime.Now.AddHours(-2),
-                    IsRead = false
-                },
-                new DashboardNotificationDto
-                {
-                    Title = "Nova Fatura",
-                    Message = "Fatura #INV-2025-042 foi criada",
-                    IconKind = "Receipt",
-                    IconBackgroundColor = "#DBEAFE",
-                    IconColor = "#3B82F6",
-                    Timestamp = DateTime.Now.AddHours(-5),
-                    IsRead = false
-                },
-                new DashboardNotificationDto
-                {
-                    Title = "Produtos Próximos ao Vencimento",
-                    Message = "3 produtos vencem em 7 dias",
-                    IconKind = "ClockAlert",
-                    IconBackgroundColor = "#FEF3C7",
-                    IconColor = "#F59E0B",
-                    Timestamp = DateTime.Now.AddDays(-1),
-                    IsRead = false
-                }
-            };
-        }*/
 
         #endregion
     }

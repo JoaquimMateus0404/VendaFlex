@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using VendaFlex.Data.Entities;
+using VendaFlex.Core.DTOs;
 
 namespace VendaFlex.Data.Repositories
 {
@@ -73,5 +74,39 @@ namespace VendaFlex.Data.Repositories
             return await _context.InvoiceProducts.AnyAsync(ip => ip.InvoiceId == invoiceId && ip.ProductId == productId);
         }
         #endregion
+
+        /// <summary>
+        /// Retorna os produtos mais vendidos agregando quantidade e receita.
+        /// </summary>
+        public async Task<IEnumerable<TopProductDto>> GetTopSellingProductsAsync(int top)
+        {
+            if (top <= 0) top = 5;
+
+            var query = await _context.InvoiceProducts
+                .AsNoTracking()
+                .Include(ip => ip.Product)
+                .GroupBy(ip => new { ip.ProductId, ip.Product.Name })
+                .Select(g => new TopProductDto
+                {
+                    ProductName = g.Key.Name,
+                    QuantitySold = g.Sum(x => x.Quantity),
+                    Revenue = g.Sum(x => (x.UnitPrice * x.Quantity) - ((x.UnitPrice * x.Quantity) * (x.DiscountPercentage / 100m)))
+                })
+                .OrderByDescending(x => x.QuantitySold)
+                .Take(top)
+                .ToListAsync();
+
+            // Calcular ProgressPercentage relativo ao maior
+            var maxQty = query.Count > 0 ? query.Max(x => x.QuantitySold) : 0;
+            if (maxQty > 0)
+            {
+                foreach (var item in query)
+                {
+                    item.ProgressPercentage = Math.Round((item.QuantitySold / (double)maxQty) * 100.0, 2);
+                }
+            }
+
+            return query;
+        }
     }
 }

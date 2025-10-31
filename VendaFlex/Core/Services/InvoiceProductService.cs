@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
 using VendaFlex.Core.Utils;
@@ -145,6 +146,20 @@ namespace VendaFlex.Core.Services
             catch (Exception ex)
             {
                 return OperationResult<InvoiceProductDto>.CreateFailure("Erro ao atualizar item da fatura.", new[] { ex.Message });
+            }
+        }
+
+        public async Task<OperationResult<IEnumerable<TopProductDto>>> GetTopSellingProductsAsync(int top)
+        {
+            try
+            {
+                if (top <= 0) top = 5;
+                var data = await _invoiceProductRepository.GetTopSellingProductsAsync(top);
+                return OperationResult<IEnumerable<TopProductDto>>.CreateSuccess(data, $"Top {data.Count()} produtos carregados.");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<IEnumerable<TopProductDto>>.CreateFailure("Erro ao obter produtos mais vendidos.", new[] { ex.Message });
             }
         }
     }
