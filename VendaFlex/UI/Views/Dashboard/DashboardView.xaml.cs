@@ -1,9 +1,10 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
+using VendaFlex.ViewModels.Dashboard;
 
 namespace VendaFlex.UI.Views.Dashboard
 {
@@ -12,19 +13,83 @@ namespace VendaFlex.UI.Views.Dashboard
     /// ✅ Popups de notificações e perfil
     /// ✅ Hover effects nas linhas da tabela
     /// ✅ Animações suaves
+    /// ✅ ViewModel dinâmico com dados do banco
     /// </summary>
     public partial class DashboardView : Page
     {
-        public DashboardView()
+        private bool _isDataLoaded = false;
+        private DispatcherTimer? _notificationTimer;
+
+        public DashboardView(DashboardViewModel viewModel)
         {
             InitializeComponent();
+            // NÃO configurar DataContext aqui - o NavigationService já faz isso
+            // DataContext = viewModel;
+            
+            // Log para debug
+            System.Diagnostics.Debug.WriteLine($"DashboardView: Construtor chamado. ViewModel != null: {viewModel != null}");
+            
+            // Garantir que o evento Loaded está registrado
+            this.Loaded += Page_Loaded;
+            this.Unloaded += Page_Unloaded;
         }
 
-        private void Page_Loaded(object sender, RoutedEventArgs e)
+        private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            // Iniciar animação de entrada
-            var storyboard = (Storyboard)this.Resources["CardEntrance"];
-            storyboard?.Begin();
+            // Evitar carregamento duplicado
+            if (!_isDataLoaded)
+            {
+                _isDataLoaded = true;
+
+                // Obter ViewModel do DataContext (configurado pelo NavigationService)
+                if (DataContext is not DashboardViewModel viewModel)
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ DashboardView: DataContext não é DashboardViewModel!");
+                    return;
+                }
+
+                // Iniciar animação de entrada
+                var storyboard = (Storyboard)this.Resources["CardEntrance"];
+                storyboard?.Begin();
+
+                // Carregar dados do dashboard
+                System.Diagnostics.Debug.WriteLine("DashboardView: Chamando LoadDashboardDataAsync...");
+                await viewModel.LoadDashboardDataAsync();
+                System.Diagnostics.Debug.WriteLine("DashboardView: LoadDashboardDataAsync concluído");
+                System.Diagnostics.Debug.WriteLine($"DashboardView: Metrics.Count = {viewModel.Metrics?.Count ?? 0}");
+                System.Diagnostics.Debug.WriteLine($"DashboardView: TopProducts.Count = {viewModel.TopProducts?.Count ?? 0}");
+                System.Diagnostics.Debug.WriteLine($"DashboardView: RecentInvoices.Count = {viewModel.RecentInvoices?.Count ?? 0}");
+            }
+
+            // Timer para atualizar notificações em tempo real (a cada 15s)
+            if (DataContext is DashboardViewModel vm)
+            {
+                _notificationTimer ??= new DispatcherTimer
+                {
+                    Interval = System.TimeSpan.FromSeconds(15)
+                };
+                _notificationTimer.Tick -= NotificationTimer_Tick;
+                _notificationTimer.Tick += NotificationTimer_Tick;
+                _notificationTimer.Start();
+            }
+        }
+
+        private async void NotificationTimer_Tick(object? sender, System.EventArgs e)
+        {
+            if (DataContext is DashboardViewModel vm)
+            {
+                await vm.RefreshNotificationsAsync();
+            }
+        }
+
+        private void Page_Unloaded(object sender, RoutedEventArgs e)
+        {
+            if (_notificationTimer != null)
+            {
+                _notificationTimer.Stop();
+                _notificationTimer.Tick -= NotificationTimer_Tick;
+                _notificationTimer = null;
+            }
         }
 
         #region Popup Handlers

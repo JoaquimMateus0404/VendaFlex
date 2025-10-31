@@ -59,6 +59,9 @@ namespace VendaFlex
                 // Iniciar a aplicação WPF
                 var app = new App();
 
+                // Carregar recursos XAML (App.xaml) antes do Run
+                app.InitializeComponent();
+
                 // Configurar o ServiceProvider no App antes de inicializar
                 app.ServiceProvider = serviceProvider;
 

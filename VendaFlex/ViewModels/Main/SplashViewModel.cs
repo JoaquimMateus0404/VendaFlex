@@ -163,7 +163,7 @@ namespace VendaFlex.ViewModels.Main
             if (precisaSetup)
                 _navigationService.NavigateToSetup();
             else
-                _navigationService.NavigateToDashBoard();
+                _navigationService.NavigateToLogin();
 
         }
 

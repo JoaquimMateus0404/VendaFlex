@@ -5,11 +5,17 @@
       xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:VendaFlex.UI.Views.Dashboard"
+      xmlns:converters="clr-namespace:VendaFlex.Infrastructure.Converters"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Loaded="Page_Loaded">
 
     <Page.Resources>
+        <!-- Converters -->
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+        <converters:HexToColorConverter x:Key="HexToColorConverter"/>
+        <converters:IntToVisibilityConverter x:Key="IntToVisibilityConverter"/>
+        
         <!-- Sidebar Collapse/Expand Animation -->
         <Storyboard x:Key="SidebarExpand">
             <DoubleAnimation Storyboard.TargetName="SidebarColumn"
@@ -140,7 +146,11 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
+        <LinearGradientBrush x:Key="ModernGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#0A0E27" Offset="0"/>
+            <GradientStop Color="#1A1B3F" Offset="0.5"/>
+            <GradientStop Color="#0F1419" Offset="1"/>
+        </LinearGradientBrush>
     </Page.Resources>
 
     <Page.Triggers>
@@ -156,7 +166,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- SIDEBAR -->
-        <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="#E8EBF0" BorderThickness="0,0,1,0">
+        <Border Grid.Column="0" Background="{StaticResource ModernGradient}" BorderBrush="#E8EBF0" BorderThickness="0,0,1,0">
             <StackPanel Orientation="Vertical">
                 <!-- Header Logo -->
                 <Border Padding="20,24,20,20" BorderBrush="#E8EBF0" BorderThickness="0,0,0,1">
@@ -172,7 +182,7 @@
                             </Grid>
                         </Viewbox>
                         <StackPanel VerticalAlignment="Center" x:Name="TextLabels" Opacity="1">
-                            <TextBlock Text="VendaFlex" FontSize="14" FontWeight="Bold" Foreground="#111827"/>
+                            <TextBlock Text="VendaFlex" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF"/>
                             <TextBlock Text="Dashboard" FontSize="11" Foreground="#9CA3AF"/>
                         </StackPanel>
                     </StackPanel>
@@ -260,7 +270,9 @@
         </Border>
 
         <!-- MAIN CONTENT -->
-        <Grid Grid.Column="1" Background="#F8F9FA" x:Name="MainContent" Opacity="0">
+        <Grid Grid.Column="1" 
+              Background="#F8F9FA" 
+              x:Name="MainContent" Opacity="100">
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel Orientation="Vertical" Margin="32,28,32,32">
 
@@ -275,22 +287,26 @@
                             <TextBlock Text="Dashboard" FontSize="32" FontWeight="Bold" Foreground="#111827"/>
                             <TextBlock Text="Bem-vindo de volta! Aqui está o resumo do seu negócio." 
                                      FontSize="14" Foreground="#6B7280" Margin="0,6,0,0"/>
+
                         </StackPanel>
 
                         <!-- Notification and Profile Buttons -->
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Grid.Column="1">
                             <!-- Notification Button -->
-                            <Button x:Name="NotificationButton" Width="40" Height="40" 
+                            <Button x:Name="NotificationButton" Width="40" Height="40" BorderBrush="Red"
+                                   
                                    Style="{DynamicResource MaterialDesignIconButton}"
-                                   materialDesign:ButtonAssist.CornerRadius="8"
+                                   materialDesign:ButtonAssist.CornerRadius="50"
+                                   
                                    Click="NotificationButton_Click">
                                 <Grid>
                                     <materialDesign:PackIcon Kind="Bell" Width="20" Height="20" Foreground="#6B7280"/>
                                     <!-- Badge de notificação -->
                                     <Border Width="18" Height="18" Background="#EF4444" CornerRadius="9"
                                            HorizontalAlignment="Right" VerticalAlignment="Top"
-                                           Margin="0,-4,-4,0">
-                                        <TextBlock Text="3" FontSize="10" FontWeight="Bold" 
+                                           Margin="0,-4,-4,0"
+                                           Visibility="{Binding UnreadNotificationsCount, Converter={StaticResource IntToVisibilityConverter}}">
+                                        <TextBlock Text="{Binding UnreadNotificationsCount}" FontSize="10" FontWeight="Bold" 
                                                  Foreground="White" HorizontalAlignment="Center" 
                                                  VerticalAlignment="Center"/>
                                     </Border>
@@ -325,108 +341,54 @@
                                                 <Button Content="Marcar todas lidas" 
                                                        Style="{DynamicResource MaterialDesignFlatButton}"
                                                        FontSize="11" Foreground="#3B82F6"
-                                                       HorizontalAlignment="Right" Height="24" Padding="8,0"/>
+                                                       HorizontalAlignment="Right" Height="24" Padding="8,0"
+                                                       Command="{x:Static ApplicationCommands.NotACommand}"
+                                                       CommandParameter="markAll"/>
                                             </Grid>
                                         </Border>
 
-                                        <!-- Notifications List -->
+                                        <!-- Notifications List (dinâmica) -->
                                         <ScrollViewer MaxHeight="400" VerticalScrollBarVisibility="Auto">
-                                            <StackPanel>
-                                                <!-- Notification 1 -->
-                                                <Border BorderBrush="#E8EBF0" BorderThickness="0,0,0,1" 
-                                                       Background="Transparent" Padding="16,12"
-                                                       MouseEnter="NotificationItem_MouseEnter"
-                                                       MouseLeave="NotificationItem_MouseLeave">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                        </Grid.ColumnDefinitions>
+                                            <ItemsControl ItemsSource="{Binding Notifications}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border BorderBrush="#E8EBF0" BorderThickness="0,0,0,1" 
+                                                               Background="Transparent" Padding="16,12"
+                                                               MouseEnter="NotificationItem_MouseEnter"
+                                                               MouseLeave="NotificationItem_MouseLeave">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                </Grid.ColumnDefinitions>
 
-                                                        <Border Width="40" Height="40" Background="#FEE2E2" 
-                                                               CornerRadius="8" Margin="0,0,12,0">
-                                                            <materialDesign:PackIcon Kind="AlertCircle" 
-                                                                                   Width="20" Height="20" 
-                                                                                   Foreground="#EF4444"
-                                                                                   HorizontalAlignment="Center" 
-                                                                                   VerticalAlignment="Center"/>
+                                                                <Border Width="40" Height="40" CornerRadius="8" Margin="0,0,12,0">
+                                                                    <Border.Background>
+                                                                        <SolidColorBrush Color="{Binding IconBackgroundColor, Converter={StaticResource HexToColorConverter}}"/>
+                                                                    </Border.Background>
+                                                                    <materialDesign:PackIcon Kind="{Binding IconKind}" 
+                                                                                           Width="20" Height="20" 
+                                                                                           HorizontalAlignment="Center" 
+                                                                                           VerticalAlignment="Center">
+                                                                        <materialDesign:PackIcon.Foreground>
+                                                                            <SolidColorBrush Color="{Binding IconColor, Converter={StaticResource HexToColorConverter}}"/>
+                                                                        </materialDesign:PackIcon.Foreground>
+                                                                    </materialDesign:PackIcon>
+                                                                </Border>
+
+                                                                <StackPanel Grid.Column="1">
+                                                                    <TextBlock Text="{Binding Title}" FontSize="12" 
+                                                                             FontWeight="SemiBold" Foreground="#111827"/>
+                                                                    <TextBlock Text="{Binding Message}" FontSize="11" Foreground="#6B7280" 
+                                                                             TextWrapping="Wrap" Margin="0,2,0,4"/>
+                                                                    <TextBlock Text="{Binding RelativeTime}" FontSize="10" 
+                                                                             Foreground="#9CA3AF"/>
+                                                                </StackPanel>
+                                                            </Grid>
                                                         </Border>
-
-                                                        <StackPanel Grid.Column="1">
-                                                            <TextBlock Text="Estoque Baixo" FontSize="12" 
-                                                                     FontWeight="SemiBold" Foreground="#111827"/>
-                                                            <TextBlock Text="5 produtos com estoque abaixo do mínimo" 
-                                                                     FontSize="11" Foreground="#6B7280" 
-                                                                     TextWrapping="Wrap" Margin="0,2,0,4"/>
-                                                            <TextBlock Text="Há 2 horas" FontSize="10" 
-                                                                     Foreground="#9CA3AF"/>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                </Border>
-
-                                                <!-- Notification 2 -->
-                                                <Border BorderBrush="#E8EBF0" BorderThickness="0,0,0,1" 
-                                                       Background="Transparent" Padding="16,12"
-                                                       MouseEnter="NotificationItem_MouseEnter"
-                                                       MouseLeave="NotificationItem_MouseLeave">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <Border Width="40" Height="40" Background="#DBEAFE" 
-                                                               CornerRadius="8" Margin="0,0,12,0">
-                                                            <materialDesign:PackIcon Kind="Receipt" 
-                                                                                   Width="20" Height="20" 
-                                                                                   Foreground="#3B82F6"
-                                                                                   HorizontalAlignment="Center" 
-                                                                                   VerticalAlignment="Center"/>
-                                                        </Border>
-
-                                                        <StackPanel Grid.Column="1">
-                                                            <TextBlock Text="Nova Fatura" FontSize="12" 
-                                                                     FontWeight="SemiBold" Foreground="#111827"/>
-                                                            <TextBlock Text="Fatura #INV-2025-042 foi criada" 
-                                                                     FontSize="11" Foreground="#6B7280" 
-                                                                     TextWrapping="Wrap" Margin="0,2,0,4"/>
-                                                            <TextBlock Text="Há 5 horas" FontSize="10" 
-                                                                     Foreground="#9CA3AF"/>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                </Border>
-
-                                                <!-- Notification 3 -->
-                                                <Border Background="Transparent" Padding="16,12"
-                                                       MouseEnter="NotificationItem_MouseEnter"
-                                                       MouseLeave="NotificationItem_MouseLeave">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <Border Width="40" Height="40" Background="#FEF3C7" 
-                                                               CornerRadius="8" Margin="0,0,12,0">
-                                                            <materialDesign:PackIcon Kind="ClockAlert" 
-                                                                                   Width="20" Height="20" 
-                                                                                   Foreground="#F59E0B"
-                                                                                   HorizontalAlignment="Center" 
-                                                                                   VerticalAlignment="Center"/>
-                                                        </Border>
-
-                                                        <StackPanel Grid.Column="1">
-                                                            <TextBlock Text="Produtos Próximos ao Vencimento" FontSize="12" 
-                                                                     FontWeight="SemiBold" Foreground="#111827"/>
-                                                            <TextBlock Text="3 produtos vencem em 7 dias" 
-                                                                     FontSize="11" Foreground="#6B7280" 
-                                                                     TextWrapping="Wrap" Margin="0,2,0,4"/>
-                                                            <TextBlock Text="Ontem" FontSize="10" 
-                                                                     Foreground="#9CA3AF"/>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                </Border>
-                                            </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
                                         </ScrollViewer>
 
                                         <!-- Footer -->
@@ -467,7 +429,7 @@
                                                 </Border>
 
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                    <TextBlock Text="Admin User" FontSize="14" FontWeight="SemiBold" 
+                                                    <TextBlock Text="{Binding CurrentUserName}" FontSize="14" FontWeight="SemiBold" 
                                                              Foreground="#111827"/>
                                                     <TextBlock Text="admin@vendaflex.ao" FontSize="11" 
                                                              Foreground="#6B7280" Margin="0,2,0,0"/>
@@ -479,7 +441,7 @@
                                         <StackPanel >
                                             <Button Style="{DynamicResource MaterialDesignFlatButton}"
                                                    Height="40" HorizontalContentAlignment="Left"
-                                                   Padding="12,0">
+                                                   Padding="12">
                                                 <StackPanel Orientation="Horizontal">
                                                     <materialDesign:PackIcon Kind="AccountCircle" 
                                                                            Width="20" Height="20" 
@@ -538,129 +500,57 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Key Metrics Row -->
-                    <Grid Margin="0,0,0,28">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                    <!-- Key Metrics Row - DINÂMICO -->
+                    <ItemsControl ItemsSource="{Binding Metrics}" Margin="0,0,0,28">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1" Columns="4"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource MetricCardStyle}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
 
-                        <!-- Total Receita -->
-                        <Border Grid.Column="0" Style="{StaticResource MetricCardStyle}">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
+                                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                                            <Border Width="48" Height="48" CornerRadius="8">
+                                                <Border.Background>
+                                                    <SolidColorBrush Color="{Binding IconBackgroundColor, Converter={StaticResource HexToColorConverter}}"/>
+                                                </Border.Background>
+                                                <materialDesign:PackIcon Kind="{Binding IconKind}" Width="24" Height="24"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <materialDesign:PackIcon.Foreground>
+                                                        <SolidColorBrush Color="{Binding IconColor, Converter={StaticResource HexToColorConverter}}"/>
+                                                    </materialDesign:PackIcon.Foreground>
+                                                </materialDesign:PackIcon>
+                                            </Border>
+                                            <TextBlock Text="{Binding Title}" Foreground="#6B7280" FontSize="12"
+                                                     VerticalAlignment="Center" Margin="12,0,0,0" FontWeight="Medium"/>
+                                        </StackPanel>
 
-                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
-                                    <Border Width="48" Height="48" Background="#FEE2E2" CornerRadius="8">
-                                        <materialDesign:PackIcon Kind="CashMultiple" Width="24" Height="24"
-                                                               Foreground="#EF4444" HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="Receita Total" Foreground="#6B7280" FontSize="12"
-                                             VerticalAlignment="Center" Margin="12,0,0,0" FontWeight="Medium"/>
-                                </StackPanel>
+                                        <TextBlock Grid.Row="1" Text="{Binding Value}" FontSize="24" FontWeight="Bold"
+                                                 Foreground="#111827" Margin="0,0,0,4"/>
 
-                                <TextBlock Grid.Row="1" Text="Kz 4.523.000,00" FontSize="24" FontWeight="Bold"
-                                         Foreground="#111827" Margin="0,0,0,4"/>
-
-                                <StackPanel Grid.Row="2" Orientation="Horizontal">
-                                    <TextBlock Text="↑ 12.5%" Foreground="#10B981" FontSize="12" FontWeight="SemiBold"/>
-                                    <TextBlock Text="vs. mês passado" Foreground="#9CA3AF" FontSize="12" Margin="6,0,0,0"/>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-
-                        <!-- Faturas Emitidas -->
-                        <Border Grid.Column="1" Style="{StaticResource MetricCardStyle}">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-
-                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
-                                    <Border Width="48" Height="48" Background="#DBEAFE" CornerRadius="8">
-                                        <materialDesign:PackIcon Kind="Receipt" Width="24" Height="24"
-                                                               Foreground="#3B82F6" HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="Faturas Emitidas" Foreground="#6B7280" FontSize="12"
-                                             VerticalAlignment="Center" Margin="12,0,0,0" FontWeight="Medium"/>
-                                </StackPanel>
-
-                                <TextBlock Grid.Row="1" Text="342" FontSize="24" FontWeight="Bold"
-                                         Foreground="#111827" Margin="0,0,0,4"/>
-
-                                <StackPanel Grid.Row="2" Orientation="Horizontal">
-                                    <TextBlock Text="↑ 8.2%" Foreground="#10B981" FontSize="12" FontWeight="SemiBold"/>
-                                    <TextBlock Text="vs. mês passado" Foreground="#9CA3AF" FontSize="12" Margin="6,0,0,0"/>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-
-                        <!-- Produtos em Estoque -->
-                        <Border Grid.Column="2" Style="{StaticResource MetricCardStyle}">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-
-                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
-                                    <Border Width="48" Height="48" Background="#E0E7FF" CornerRadius="8">
-                                        <materialDesign:PackIcon Kind="Package" Width="24" Height="24"
-                                                               Foreground="#6366F1" HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="Produtos" Foreground="#6B7280" FontSize="12"
-                                             VerticalAlignment="Center" Margin="12,0,0,0" FontWeight="Medium"/>
-                                </StackPanel>
-
-                                <TextBlock Grid.Row="1" Text="1.248" FontSize="24" FontWeight="Bold"
-                                         Foreground="#111827" Margin="0,0,0,4"/>
-
-                                <StackPanel Grid.Row="2" Orientation="Horizontal">
-                                    <TextBlock Text="18 baixo estoque" Foreground="#F59E0B" FontSize="12" FontWeight="SemiBold"/>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-
-                        <!-- Pagamentos Pendentes -->
-                        <Border Grid.Column="3" Style="{StaticResource MetricCardStyle}">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-
-                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
-                                    <Border Width="48" Height="48" Background="#FEF3C7" CornerRadius="8">
-                                        <materialDesign:PackIcon Kind="CreditCardClock" Width="24" Height="24"
-                                                               Foreground="#F59E0B" HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="Pendentes" Foreground="#6B7280" FontSize="12"
-                                             VerticalAlignment="Center" Margin="12,0,0,0" FontWeight="Medium"/>
-                                </StackPanel>
-
-                                <TextBlock Grid.Row="1" Text="Kz 856.400,00" FontSize="24" FontWeight="Bold"
-                                         Foreground="#111827" Margin="0,0,0,4"/>
-
-                                <StackPanel Grid.Row="2" Orientation="Horizontal">
-                                    <TextBlock Text="23 faturas" Foreground="#9CA3AF" FontSize="12"/>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                    </Grid>
+                                        <StackPanel Grid.Row="2" Orientation="Horizontal">
+                                            <TextBlock Text="{Binding ChangeText}" FontSize="12" FontWeight="SemiBold">
+                                                <TextBlock.Foreground>
+                                                    <SolidColorBrush Color="{Binding ChangeColor, Converter={StaticResource HexToColorConverter}}"/>
+                                                </TextBlock.Foreground>
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding DescriptionText}" Foreground="#9CA3AF" 
+                                                     FontSize="12" Margin="6,0,0,0"
+                                                     Visibility="{Binding DescriptionText, Converter={StaticResource StringToVisibilityConverter}}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
                     <!-- Charts Row -->
                     <Grid Margin="0,0,0,28">
@@ -687,98 +577,52 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Top Products -->
+                        <!-- Top Products - DINÂMICO -->
                         <Border Grid.Column="1" Style="{StaticResource DashboardCard}" Margin="20,0,0,0">
                             <StackPanel>
                                 <TextBlock Text="Produtos Top" FontSize="16" FontWeight="Bold"
                                          Foreground="#111827" Margin="0,0,0,16"/>
 
-                                <StackPanel Orientation="Vertical">
-                                    <!-- Product 1 -->
-                                    <Border Padding="0,12" BorderBrush="#E8EBF0" BorderThickness="0,0,0,1">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
+                                <ItemsControl ItemsSource="{Binding TopProducts}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Padding="0,12" BorderBrush="#E8EBF0" BorderThickness="0,0,0,1">
+                                                <StackPanel>
+                                                    <Grid Margin="0,0,0,8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
 
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Notebook Dell Inspiron" FontSize="13" FontWeight="SemiBold"
-                                                         Foreground="#111827"/>
-                                                <TextBlock Text="Kz 350.000,00" FontSize="11" Foreground="#9CA3AF"
-                                                         Margin="0,2,0,0"/>
-                                            </StackPanel>
+                                                        <StackPanel Grid.Column="0">
+                                                            <TextBlock Text="{Binding ProductName}" FontSize="13" FontWeight="SemiBold"
+                                                                     Foreground="#111827"/>
+                                                            <TextBlock Text="{Binding RevenueFormatted}" FontSize="11" Foreground="#9CA3AF"
+                                                                     Margin="0,2,0,0"/>
+                                                        </StackPanel>
 
-                                            <TextBlock Grid.Column="1" Text="45 un." FontSize="12" FontWeight="Bold"
-                                                     Foreground="#3B82F6" VerticalAlignment="Center"/>
-                                        </Grid>
-                                    </Border>
+                                                        <TextBlock Grid.Column="1" FontSize="12" FontWeight="Bold"
+                                                                 Foreground="#3B82F6" VerticalAlignment="Center">
+                                                            <Run Text="{Binding QuantitySold}"/>
+                                                            <Run Text=" un."/>
+                                                        </TextBlock>
+                                                    </Grid>
 
-                                    <!-- Product 2 -->
-                                    <Border Padding="0,12" BorderBrush="#E8EBF0" BorderThickness="0,0,0,1">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Mouse Logitech MX" FontSize="13" FontWeight="SemiBold"
-                                                         Foreground="#111827"/>
-                                                <TextBlock Text="Kz 15.000,00" FontSize="11" Foreground="#9CA3AF"
-                                                         Margin="0,2,0,0"/>
-                                            </StackPanel>
-
-                                            <TextBlock Grid.Column="1" Text="89 un." FontSize="12" FontWeight="Bold"
-                                                     Foreground="#3B82F6" VerticalAlignment="Center"/>
-                                        </Grid>
-                                    </Border>
-
-                                    <!-- Product 3 -->
-                                    <Border Padding="0,12" BorderBrush="#E8EBF0" BorderThickness="0,0,0,1">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Teclado Mecânico RGB" FontSize="13" FontWeight="SemiBold"
-                                                         Foreground="#111827"/>
-                                                <TextBlock Text="Kz 25.000,00" FontSize="11" Foreground="#9CA3AF"
-                                                         Margin="0,2,0,0"/>
-                                            </StackPanel>
-
-                                            <TextBlock Grid.Column="1" Text="67 un." FontSize="12" FontWeight="Bold"
-                                                     Foreground="#3B82F6" VerticalAlignment="Center"/>
-                                        </Grid>
-                                    </Border>
-
-                                    <!-- Product 4 -->
-                                    <Border Padding="0,12">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Headset Gamer" FontSize="13" FontWeight="SemiBold"
-                                                         Foreground="#111827"/>
-                                                <TextBlock Text="Kz 35.000,00" FontSize="11" Foreground="#9CA3AF"
-                                                         Margin="0,2,0,0"/>
-                                            </StackPanel>
-
-                                            <TextBlock Grid.Column="1" Text="52 un." FontSize="12" FontWeight="Bold"
-                                                     Foreground="#3B82F6" VerticalAlignment="Center"/>
-                                        </Grid>
-                                    </Border>
-                                </StackPanel>
+                                                    <!-- Progress Bar -->
+                                                    <ProgressBar Value="{Binding ProgressPercentage}" 
+                                                               Maximum="100" Height="4"
+                                                               Foreground="#3B82F6" Background="#E8EBF0"
+                                                               BorderThickness="0"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </StackPanel>
                         </Border>
                     </Grid>
 
-                    <!-- Recent Invoices -->
+                    <!-- Recent Invoices - DINÂMICO -->
                     <Border Style="{StaticResource DashboardCard}">
                         <StackPanel>
                             <Grid Margin="0,0,0,20">
@@ -810,166 +654,49 @@
                                          Foreground="#6B7280" VerticalAlignment="Center"/>
                             </Grid>
 
-                            <StackPanel>
-                                <!-- Invoice Row 1 -->
-                                <Border BorderBrush="#E8EBF0" BorderThickness="0,0,0,1" Padding="12,16"
-                                       Background="Transparent"
-                                       MouseEnter="InvoiceRow_MouseEnter"
-                                       MouseLeave="InvoiceRow_MouseLeave">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="140"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="140"/>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="100"/>
-                                        </Grid.ColumnDefinitions>
+                            <!-- Invoices List - Data Binding -->
+                            <ItemsControl ItemsSource="{Binding RecentInvoices}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="#E8EBF0" BorderThickness="0,0,0,1" Padding="12,16"
+                                               Background="Transparent"
+                                               MouseEnter="InvoiceRow_MouseEnter"
+                                               MouseLeave="InvoiceRow_MouseLeave">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="140"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="140"/>
+                                                    <ColumnDefinition Width="120"/>
+                                                    <ColumnDefinition Width="100"/>
+                                                </Grid.ColumnDefinitions>
 
-                                        <TextBlock Grid.Column="0" Text="INV-2025-042" FontSize="12" 
-                                                 FontWeight="SemiBold" Foreground="#3B82F6" 
-                                                 VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="1" Text="João Manuel da Silva" FontSize="12" 
-                                                 Foreground="#111827" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="28 Out 2025" FontSize="12" 
-                                                 Foreground="#6B7280" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="3" Text="Kz 245.000,00" FontSize="12" 
-                                                 FontWeight="SemiBold" Foreground="#111827" 
-                                                 VerticalAlignment="Center"/>
-                                        <Border Grid.Column="4" Background="#DCFCE7" CornerRadius="6" 
-                                               Padding="8,4" HorizontalAlignment="Center">
-                                            <TextBlock Text="Pago" FontSize="11" FontWeight="SemiBold" 
-                                                     Foreground="#059669"/>
+                                                <TextBlock Grid.Column="0" Text="{Binding InvoiceNumber}" FontSize="12" 
+                                                         FontWeight="SemiBold" Foreground="#3B82F6" 
+                                                         VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding CustomerName}" FontSize="12" 
+                                                         Foreground="#111827" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2" Text="{Binding IssueDateFormatted}" FontSize="12" 
+                                                         Foreground="#6B7280" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="3" Text="{Binding TotalAmountFormatted}" FontSize="12" 
+                                                         FontWeight="SemiBold" Foreground="#111827" 
+                                                         VerticalAlignment="Center"/>
+                                                <Border Grid.Column="4" CornerRadius="6" 
+                                                       Padding="8,4" HorizontalAlignment="Center">
+                                                    <Border.Background>
+                                                        <SolidColorBrush Color="{Binding StatusBackgroundColor, Converter={StaticResource HexToColorConverter}}"/>
+                                                    </Border.Background>
+                                                    <TextBlock Text="{Binding Status}" FontSize="11" FontWeight="SemiBold">
+                                                        <TextBlock.Foreground>
+                                                            <SolidColorBrush Color="{Binding StatusColor, Converter={StaticResource HexToColorConverter}}"/>
+                                                        </TextBlock.Foreground>
+                                                    </TextBlock>
+                                                </Border>
+                                            </Grid>
                                         </Border>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Invoice Row 2 -->
-                                <Border BorderBrush="#E8EBF0" BorderThickness="0,0,0,1" Padding="12,16"
-                                       Background="Transparent"
-                                       MouseEnter="InvoiceRow_MouseEnter"
-                                       MouseLeave="InvoiceRow_MouseLeave">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="140"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="140"/>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="100"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <TextBlock Grid.Column="0" Text="INV-2025-041" FontSize="12" 
-                                                 FontWeight="SemiBold" Foreground="#3B82F6" 
-                                                 VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="1" Text="Maria Luísa Costa" FontSize="12" 
-                                                 Foreground="#111827" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="27 Out 2025" FontSize="12" 
-                                                 Foreground="#6B7280" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="3" Text="Kz 89.500,00" FontSize="12" 
-                                                 FontWeight="SemiBold" Foreground="#111827" 
-                                                 VerticalAlignment="Center"/>
-                                        <Border Grid.Column="4" Background="#FEF3C7" CornerRadius="6" 
-                                               Padding="8,4" HorizontalAlignment="Center">
-                                            <TextBlock Text="Pendente" FontSize="11" FontWeight="SemiBold" 
-                                                     Foreground="#F59E0B"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Invoice Row 3 -->
-                                <Border BorderBrush="#E8EBF0" BorderThickness="0,0,0,1" Padding="12,16"
-                                       Background="Transparent"
-                                       MouseEnter="InvoiceRow_MouseEnter"
-                                       MouseLeave="InvoiceRow_MouseLeave">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="140"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="140"/>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="100"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <TextBlock Grid.Column="0" Text="INV-2025-040" FontSize="12" 
-                                                 FontWeight="SemiBold" Foreground="#3B82F6" 
-                                                 VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="1" Text="Pedro Fernandes Lda" FontSize="12" 
-                                                 Foreground="#111827" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="26 Out 2025" FontSize="12" 
-                                                 Foreground="#6B7280" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="3" Text="Kz 1.250.000,00" FontSize="12" 
-                                                 FontWeight="SemiBold" Foreground="#111827" 
-                                                 VerticalAlignment="Center"/>
-                                        <Border Grid.Column="4" Background="#DCFCE7" CornerRadius="6" 
-                                               Padding="8,4" HorizontalAlignment="Center">
-                                            <TextBlock Text="Pago" FontSize="11" FontWeight="SemiBold" 
-                                                     Foreground="#059669"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Invoice Row 4 -->
-                                <Border BorderBrush="#E8EBF0" BorderThickness="0,0,0,1" Padding="12,16"
-                                       Background="Transparent"
-                                       MouseEnter="InvoiceRow_MouseEnter"
-                                       MouseLeave="InvoiceRow_MouseLeave">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="140"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="140"/>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="100"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <TextBlock Grid.Column="0" Text="INV-2025-039" FontSize="12" 
-                                                 FontWeight="SemiBold" Foreground="#3B82F6" 
-                                                 VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="1" Text="Ana Paula Rodrigues" FontSize="12" 
-                                                 Foreground="#111827" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="25 Out 2025" FontSize="12" 
-                                                 Foreground="#6B7280" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="3" Text="Kz 156.800,00" FontSize="12" 
-                                                 FontWeight="SemiBold" Foreground="#111827" 
-                                                 VerticalAlignment="Center"/>
-                                        <Border Grid.Column="4" Background="#FEE2E2" CornerRadius="6" 
-                                               Padding="8,4" HorizontalAlignment="Center">
-                                            <TextBlock Text="Vencida" FontSize="11" FontWeight="SemiBold" 
-                                                     Foreground="#EF4444"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Invoice Row 5 -->
-                                <Border Padding="12,16" Background="Transparent"
-                                       MouseEnter="InvoiceRow_MouseEnter"
-                                       MouseLeave="InvoiceRow_MouseLeave">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="140"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="140"/>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="100"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <TextBlock Grid.Column="0" Text="INV-2025-038" FontSize="12" 
-                                                 FontWeight="SemiBold" Foreground="#3B82F6" 
-                                                 VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="1" Text="Carlos Alberto Sousa" FontSize="12" 
-                                                 Foreground="#111827" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="24 Out 2025" FontSize="12" 
-                                                 Foreground="#6B7280" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="3" Text="Kz 78.900,00" FontSize="12" 
-                                                 FontWeight="SemiBold" Foreground="#111827" 
-                                                 VerticalAlignment="Center"/>
-                                        <Border Grid.Column="4" Background="#DCFCE7" CornerRadius="6" 
-                                               Padding="8,4" HorizontalAlignment="Center">
-                                            <TextBlock Text="Pago" FontSize="11" FontWeight="SemiBold" 
-                                                     Foreground="#059669"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                            </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </Border>
 

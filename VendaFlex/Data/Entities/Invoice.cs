@@ -76,11 +76,11 @@ namespace VendaFlex.Data.Entities
 
     public enum InvoiceStatus
     {
-        Draft = 1,
+        Draft = 1, // rascunho
         Confirmed = 2,
-        Paid = 3,
+        Paid = 3, // pago
         Cancelled = 4,
-        Refunded = 5
+        Refunded = 5 // reembolsado
     }
     #endregion
 }
