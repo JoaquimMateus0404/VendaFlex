@@ -13,6 +13,13 @@
                 <ResourceDictionary Source="/Styles/GlobalStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
+            <!-- PDV Light & Vivid Background -->
+            <LinearGradientBrush x:Key="PdvVibrantGradient" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#E0F2FE" Offset="0"/>
+                <GradientStop Color="#EDE9FE" Offset="0.5"/>
+                <GradientStop Color="#FCE7F3" Offset="1"/>
+            </LinearGradientBrush>
+
             <!-- Card Hover Animation -->
             <Storyboard x:Key="CardHoverIn">
                 <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.BlurRadius)"
@@ -65,16 +72,28 @@
         </ResourceDictionary>
     </Page.Resources>
 
-    <Grid Background="{StaticResource BackgroundBrush}">
-        <!-- Main Content Grid -->
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+    <Grid>
+        <!-- Grid Principal com 3 camadas -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <!-- Conteúdo Principal -->
+            <RowDefinition Height="Auto"/>
+            <!-- Rodapé/Snackbar -->
+        </Grid.RowDefinitions>
 
-            <!-- ENHANCED HEADER -->
-            <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}"
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- CAMADA 1: CONTEÚDO PRINCIPAL (Grid.Row="0")                  -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="0" Background="{StaticResource PdvVibrantGradient}">
+            <!-- Main Content Grid -->
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                 <!-- ENHANCED HEADER -->
+                <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}"
                     BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,0,0,1">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.2" Color="#000000"/>
@@ -119,7 +138,7 @@
                                 <Ellipse Width="8" Height="8" Fill="{StaticResource SuccessBrush}" 
                                         Margin="0,0,8,0" VerticalAlignment="Center"/>
                                 <TextBlock Text="Sistema Online" FontSize="11" FontWeight="SemiBold"
-                                         Foreground="Red" VerticalAlignment="Center"/>
+                                         Foreground="{StaticResource SuccessBrush}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
 
@@ -184,24 +203,95 @@
                 </Grid>
             </Border>
 
-            <!-- MAIN CONTENT -->
-            <Grid Grid.Row="1" Margin="20">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="1.3*"/>
-                </Grid.ColumnDefinitions>
+                 <!-- MAIN CONTENT -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <Grid  Margin="20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="1.3*"/>
+                    </Grid.ColumnDefinitions>
 
                 <!-- LEFT PANEL: Product Search + Cart -->
                 <Grid Grid.Column="0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Quick Product Add -->
+                    <!-- Customer Selection -->
                     <Border Grid.Row="0" Style="{StaticResource GlassCard}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,16">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Account" Width="24" Height="24"
+                                       Foreground="{StaticResource PrimaryBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                    <TextBlock Text="Cliente" FontSize="17" FontWeight="Bold" 
+                         Foreground="{StaticResource TextPrimaryBrush}" 
+                         VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <Button Content="Consumidor Final" 
+                   Style="{DynamicResource MaterialDesignFlatButton}"
+                   FontSize="12" Foreground="{StaticResource PrimaryBrush}"
+                   HorizontalAlignment="Right" Height="32" Padding="12,0"
+                   materialDesign:ButtonAssist.CornerRadius="8"
+                   Command="{Binding SelectAnonymousCustomerCommand}"/>
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}"
+                   CornerRadius="10" BorderBrush="{StaticResource BorderLightBrush}"
+                   BorderThickness="2" Height="52">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <materialDesign:PackIcon Grid.Column="0" Kind="Magnify" 
+                                           Width="22" Height="22"
+                                           Foreground="{StaticResource TextTertiaryBrush}"
+                                           Margin="16,0,12,0" VerticalAlignment="Center"/>
+
+                                        <TextBox Grid.Column="1"
+                            Style="{StaticResource ModernTextBox}"
+                            Tag="Buscar cliente por nome, NIF..."
+                            Text="{Binding CustomerSearchTerm, UpdateSourceTrigger=PropertyChanged}"
+                            BorderThickness="0" Background="Transparent"
+                            VerticalContentAlignment="Center" Margin="0"
+                            FontSize="14" Height="Auto"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Exibir Cliente Selecionado -->
+                                <Border Grid.Column="2" Background="{StaticResource SuccessBrush}" Opacity="0.15"
+                   CornerRadius="10" Padding="16,0" Height="52"
+                   Visibility="{Binding SelectedCustomer, Converter={StaticResource NullToVisibilityConverter}}">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <materialDesign:PackIcon Kind="CheckCircle" Width="20" Height="20"
+                                           Foreground="{StaticResource SuccessBrush}"
+                                           Margin="0,0,8,0"/>
+                                        <TextBlock Text="{Binding SelectedCustomer.Name}" 
+                             FontWeight="SemiBold" FontSize="14"
+                             Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    
+                    
+                    <!-- Quick Product Add -->
+                    <Border Grid.Row="1" Style="{StaticResource GlassCard}" Margin="0,0,0,16">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -235,9 +325,10 @@
                                     <ColumnDefinition Width="140"/>
                                 </Grid.ColumnDefinitions>
 
+                                <!-- Search Input with Suggestions -->
                                 <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}"
-                                       CornerRadius="10" BorderBrush="{StaticResource BorderLightBrush}"
-                                       BorderThickness="2" Height="52">
+       CornerRadius="10" BorderBrush="{StaticResource BorderLightBrush}"
+       BorderThickness="2" Height="52">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
@@ -245,20 +336,65 @@
                                         </Grid.ColumnDefinitions>
 
                                         <materialDesign:PackIcon Grid.Column="0" Kind="Magnify" 
-                                                               Width="22" Height="22"
-                                                               Foreground="{StaticResource TextTertiaryBrush}"
-                                                               Margin="16,0,12,0" VerticalAlignment="Center"/>
+                               Width="22" Height="22"
+                               Foreground="{StaticResource TextTertiaryBrush}"
+                               Margin="16,0,12,0" VerticalAlignment="Center"/>
 
                                         <TextBox Grid.Column="1" x:Name="ProductSearchBox"
-                                                Style="{StaticResource ModernTextBox}"
-                                                Tag="Código de Barras / SKU / Nome..."
-                                                Text="{Binding ProductSearchTerm, UpdateSourceTrigger=PropertyChanged}"
-                                                BorderThickness="0" Background="Transparent"
-                                                VerticalContentAlignment="Center" Margin="0"
-                                                FontSize="14" Height="Auto"/>
+                Style="{StaticResource ModernTextBox}"
+                Tag="Código de Barras / SKU / Nome..."
+                Text="{Binding ProductSearchTerm, UpdateSourceTrigger=PropertyChanged}"
+                BorderThickness="0" Background="Transparent"
+                VerticalContentAlignment="Center" Margin="0"
+                FontSize="14" Height="Auto">
+                                            <TextBox.InputBindings>
+                                                <KeyBinding Key="Enter" Command="{Binding AddProductByCodeCommand}"/>
+                                            </TextBox.InputBindings>
+                                        </TextBox>
+
+                                        <!-- Popup de Sugestões -->
+                                        <Popup IsOpen="{Binding ProductSuggestions.Count, Mode=OneWay, Converter={StaticResource CountToBoolConverter}}"
+               PlacementTarget="{Binding ElementName=ProductSearchBox}"
+               Placement="Bottom" StaysOpen="False"
+               AllowsTransparency="True" PopupAnimation="Slide">
+                                            <Border Background="{StaticResource SurfaceBrush}" 
+                   CornerRadius="8" BorderThickness="1"
+                   BorderBrush="{StaticResource BorderLightBrush}"
+                   MaxHeight="300" MinWidth="400"
+                   Effect="{DynamicResource MaterialDesignShadowDepth2}">
+                                                <ListBox ItemsSource="{Binding ProductSuggestions}"
+                        SelectedItem="{Binding SelectedProductSuggestion}"
+                        BorderThickness="0" Background="Transparent">
+                                                    <ListBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="8">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <StackPanel Grid.Column="0">
+                                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                                    <TextBlock Text="{Binding Barcode}" FontSize="11"
+                                             Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                                </StackPanel>
+
+                                                                <TextBlock Grid.Column="1" Text="{Binding SalePrice, StringFormat=Kz {0:N2}}"
+                                         FontWeight="Bold" FontSize="14"
+                                         Foreground="{StaticResource PrimaryBrush}"
+                                         VerticalAlignment="Center"/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ListBox.ItemTemplate>
+                                                    <ListBox.InputBindings>
+                                                        <KeyBinding Key="Enter" Command="{Binding AddSelectedSuggestionCommand}"/>
+                                                    </ListBox.InputBindings>
+                                                </ListBox>
+                                            </Border>
+                                        </Popup>
                                     </Grid>
                                 </Border>
-
+                                 <!-- Add Button -->
                                 <Button Grid.Column="2" Style="{StaticResource PrimaryButton}"
                                        Command="{Binding AddProductByCodeCommand}" Height="52">
                                     <StackPanel Orientation="Horizontal">
@@ -274,7 +410,8 @@
                     </Border>
 
                     <!-- Shopping Cart -->
-                    <Border Grid.Row="1" Style="{StaticResource GlassCard}">
+                    <Border Grid.Row="2" Style="{StaticResource GlassCard}"
+                            Background="#E0F2FE">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -358,6 +495,7 @@
                                         </Style>
                                     </DataGrid.CellStyle>
                                     <DataGrid.Columns>
+                                        
                                         <DataGridTextColumn Header="Produto" Binding="{Binding Name}" Width="*" IsReadOnly="True">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock">
@@ -366,14 +504,37 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-                                        <DataGridTextColumn Header="Qtd" Binding="{Binding Quantity}" Width="80">
-                                            <DataGridTextColumn.ElementStyle>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="TextAlignment" Value="Center"/>
-                                                    <Setter Property="VerticalAlignment" Value="Center"/>
-                                                </Style>
-                                            </DataGridTextColumn.ElementStyle>
-                                        </DataGridTextColumn>
+
+                                        <!-- Quantity Column with Increment/Decrement Buttons -->
+                                        <DataGridTemplateColumn Header="Qtd" Width="140">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                        <Button Style="{DynamicResource MaterialDesignIconButton}"
+                       Width="28" Height="28" Padding="0"
+                       Command="{Binding DataContext.DecreaseItemQtyCommand, 
+                               RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                       CommandParameter="{Binding}">
+                                                            <materialDesign:PackIcon Kind="Minus" Width="16" Height="16"/>
+                                                        </Button>
+
+                                                        <TextBlock Text="{Binding Quantity}" FontWeight="SemiBold"
+                         VerticalAlignment="Center" Margin="12,0"
+                         MinWidth="30" TextAlignment="Center"/>
+
+                                                        <Button Style="{DynamicResource MaterialDesignIconButton}"
+                       Width="28" Height="28" Padding="0"
+                       Command="{Binding DataContext.IncreaseItemQtyCommand, 
+                               RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                       CommandParameter="{Binding}">
+                                                            <materialDesign:PackIcon Kind="Plus" Width="16" Height="16"/>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <!-- Unit Price Column -->
                                         <DataGridTextColumn Header="Preço Unit." Binding="{Binding UnitPrice, StringFormat=Kz {0:N2}}" 
                                                            Width="120" IsReadOnly="True">
                                             <DataGridTextColumn.ElementStyle>
@@ -429,12 +590,12 @@
                     </Border>
                 </Grid>
 
-                <!-- RIGHT PANEL: Summary + Payment -->
-                <Grid Grid.Column="2">
+                    <!-- RIGHT PANEL: Summary + Payment (SEM SCROLLVIEWER INTERNO) -->
+                    <Grid Grid.Column="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
@@ -544,36 +705,86 @@
                     <!-- Payment Summary -->
                     <Border Grid.Row="2" Style="{StaticResource GlassCard}" Margin="0,0,0,16">
                         <StackPanel>
+                            <!-- Título da Seção -->
                             <TextBlock Text="Status do Pagamento" FontSize="15" FontWeight="Bold" 
-                                     Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+                 Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
 
+                            <!-- Lista de Pagamentos Adicionados -->
+                            <Border Background="{StaticResource SurfaceVariantBrush}" 
+               CornerRadius="8" Padding="12" Margin="0,0,0,16"
+               Visibility="{Binding Payments.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="Pagamentos Registrados" FontSize="12" FontWeight="SemiBold" 
+                         Foreground="{StaticResource TextSecondaryBrush}" 
+                         Margin="0,0,0,8"/>
+
+                                    <ItemsControl ItemsSource="{Binding Payments}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="{StaticResource SurfaceBrush}"
+                                   CornerRadius="6" Padding="10,6" Margin="0,0,0,6">
+                                                    <Grid>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="CheckCircle" Width="14" Height="14"
+                                                               Foreground="{StaticResource SuccessBrush}"
+                                                               VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                            <TextBlock Text="{Binding PaymentTypeName}" 
+                                                 FontWeight="Medium" FontSize="12"
+                                                 VerticalAlignment="Center"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                            <TextBlock Text="{Binding Amount, StringFormat=Kz {0:N2}}" 
+                                                 FontWeight="Bold" FontSize="13"
+                                                 Foreground="{StaticResource PrimaryBrush}"
+                                                 VerticalAlignment="Center" Margin="0,0,6,0"/>
+
+                                                            <Button Style="{DynamicResource MaterialDesignIconButton}"
+                                               Width="24" Height="24" Padding="0"
+                                               Command="{Binding DataContext.RemovePaymentCommand, 
+                                                       RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                               CommandParameter="{Binding}"
+                                               ToolTip="Remover pagamento">
+                                                                <materialDesign:PackIcon Kind="Close" Width="12" Height="12"
+                                                                   Foreground="{StaticResource ErrorBrush}"/>
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Resumo de Valores (Original) -->
                             <Grid Margin="0,0,0,10">
                                 <TextBlock Text="Valor Pago" Foreground="{StaticResource TextSecondaryBrush}" 
-                                         FontSize="13"/>
+                     FontSize="13"/>
                                 <TextBlock FontSize="14" HorizontalAlignment="Right" FontWeight="SemiBold"
-                                         Foreground="{StaticResource SuccessBrush}">
-                                    <Run Text="Kz"/>
-                                    <Run Text="{Binding AmountPaid, Mode=OneWay, StringFormat={}{0:N2}}"/>
+                     Foreground="{StaticResource SuccessBrush}">
+                <Run Text="Kz"/>
+                <Run Text="{Binding AmountPaid, Mode=OneWay, StringFormat={}{0:N2}}"/>
                                 </TextBlock>
                             </Grid>
 
                             <Grid Margin="0,0,0,10">
                                 <TextBlock Text="Em Falta" Foreground="{StaticResource TextSecondaryBrush}" 
-                                         FontSize="13"/>
+                     FontSize="13"/>
                                 <TextBlock FontSize="14" HorizontalAlignment="Right" FontWeight="SemiBold"
-                                         Foreground="{StaticResource WarningBrush}">
-                                    <Run Text="Kz"/>
-                                    <Run Text="{Binding RemainingAmount, Mode=OneWay, StringFormat={}{0:N2}}"/>
+                     Foreground="{StaticResource WarningBrush}">
+                <Run Text="Kz"/>
+                <Run Text="{Binding RemainingAmount, Mode=OneWay, StringFormat={}{0:N2}}"/>
                                 </TextBlock>
                             </Grid>
 
                             <Grid>
                                 <TextBlock Text="Troco" Foreground="{StaticResource TextSecondaryBrush}" 
-                                         FontSize="13"/>
+                     FontSize="13"/>
                                 <TextBlock FontSize="18" HorizontalAlignment="Right" FontWeight="Bold"
-                                         Foreground="{StaticResource PrimaryBrush}">
-                                    <Run Text="Kz"/>
-                                    <Run Text="{Binding ChangeDue, Mode=OneWay, StringFormat={}{0:N2}}"/>
+                     Foreground="{StaticResource PrimaryBrush}">
+                <Run Text="Kz"/>
+                <Run Text="{Binding ChangeDue, Mode=OneWay, StringFormat={}{0:N2}}"/>
                                 </TextBlock>
                             </Grid>
                         </StackPanel>
@@ -588,160 +799,232 @@
                         </StackPanel>
                     </Button>
                 </Grid>
-            </Grid>
-        </Grid>
+                </Grid>
+                </ScrollViewer>
 
-        <!-- PRODUCT CATALOG MODAL -->
-        <Grid x:Name="ProductCatalogOverlay" Visibility="{Binding IsCatalogOpen, Converter={StaticResource BooleanToVisibilityConverter}}" Background="#AA000000">
-            <Border MaxWidth="1200" MaxHeight="800" Background="{StaticResource SurfaceBrush}"
+            </Grid>
+
+            <!-- PRODUCT CATALOG MODAL -->
+            <Grid x:Name="ProductCatalogOverlay" Visibility="{Binding IsCatalogOpen, Converter={StaticResource BooleanToVisibilityConverter}}" Background="#AA000000">
+                <Border MaxWidth="1200" MaxHeight="800" Background="{StaticResource SurfaceBrush}"
                    CornerRadius="20" BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="2"
                    Effect="{DynamicResource MaterialDesignShadowDepth4}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
 
-                    <!-- Modal Header -->
-                    <Border Grid.Row="0" Background="{StaticResource LogoGradient}" 
+                        <!-- Modal Header -->
+                        <Border Grid.Row="0" Background="{StaticResource LogoGradient}" 
                            CornerRadius="20,20,0,0" Padding="28,24">
-                        <Grid>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <materialDesign:PackIcon Kind="ViewGrid" Width="32" Height="32"
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="ViewGrid" Width="32" Height="32"
                                                        Foreground="White" Margin="0,0,16,0"/>
-                                <StackPanel>
-                                    <TextBlock Text="Catálogo de Produtos" FontSize="24" FontWeight="Bold" 
+                                    <StackPanel>
+                                        <TextBlock Text="Catálogo de Produtos" FontSize="24" FontWeight="Bold" 
                                              Foreground="White"/>
-                                    <TextBlock Text="Selecione um produto para adicionar ao carrinho" 
+                                        <TextBlock Text="Selecione um produto para adicionar ao carrinho" 
                                              FontSize="13" Foreground="#E0E7FF"/>
+                                    </StackPanel>
                                 </StackPanel>
-                            </StackPanel>
 
-                            <Button Style="{DynamicResource MaterialDesignIconButton}"
+                                <Button Style="{DynamicResource MaterialDesignIconButton}"
                                    Width="40" Height="40" HorizontalAlignment="Right"
                                    Command="{Binding CloseCatalogCommand}">
-                                <materialDesign:PackIcon Kind="Close" Width="24" Height="24" 
+                                    <materialDesign:PackIcon Kind="Close" Width="24" Height="24" 
                                                        Foreground="White"/>
-                            </Button>
-                        </Grid>
-                    </Border>
+                                </Button>
+                            </Grid>
+                        </Border>
 
-                    <!-- Search Bar -->
-                    <Border Grid.Row="1" Padding="28,20" Background="{StaticResource SurfaceVariantBrush}"
+                        <!-- Search Bar -->
+                        <Border Grid.Row="1" Padding="28,20" Background="{StaticResource SurfaceVariantBrush}"
                            BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,0,0,1">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="16"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                            <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}"
+                                <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}"
                                    CornerRadius="12" BorderBrush="{StaticResource BorderLightBrush}"
                                    BorderThickness="2" Height="48">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
 
-                                    <materialDesign:PackIcon Grid.Column="0" Kind="Magnify" 
+                                        <materialDesign:PackIcon Grid.Column="0" Kind="Magnify" 
                                                            Width="22" Height="22"
                                                            Foreground="{StaticResource TextTertiaryBrush}"
                                                            Margin="16,0,12,0" VerticalAlignment="Center"/>
 
-                                    <TextBox Grid.Column="1" x:Name="CatalogSearchBox"
+                                        <TextBox Grid.Column="1" x:Name="CatalogSearchBox"
                                             Style="{StaticResource ModernTextBox}"
                                             Tag="Pesquisar produtos por nome, código..."
                                             BorderThickness="0" Background="Transparent"
                                             VerticalContentAlignment="Center" Margin="0"
                                             FontSize="14" Height="Auto"
                                             Text="{Binding CatalogSearchTerm, UpdateSourceTrigger=PropertyChanged}"/>
-                                </Grid>
-                            </Border>
-                            <!-- Category Filter -->
-                            <ComboBox Grid.Column="2" Style="{StaticResource ModernComboBox}"
+                                    </Grid>
+                                </Border>
+                                <!-- Category Filter -->
+                                <ComboBox Grid.Column="2" Style="{StaticResource ModernComboBox}"
                                      ItemsSource="{Binding CatalogCategories}"
                                      SelectedItem="{Binding SelectedCatalogCategory}"
                                      DisplayMemberPath="Name"
                                      Width="200" Margin="0" Height="48"/>
-                        </Grid>
-                    </Border>
+                            </Grid>
+                        </Border>
 
-                    <!-- Product Grid -->
-                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="28,20">
-                        <ItemsControl x:Name="ProductCatalogItems" ItemsSource="{Binding CatalogProducts}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel Orientation="Horizontal"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Style="{StaticResource ProductCard}" Width="280" Height="320"
+                        <!-- Product Grid -->
+                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="28,20">
+                            <ItemsControl x:Name="ProductCatalogItems" ItemsSource="{Binding CatalogProducts}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource ProductCard}" Width="280" Height="320"
                                            Tag="{Binding}">
-                                        <Grid>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="180"/>
-                                                <RowDefinition Height="*"/>
-                                                <RowDefinition Height="Auto"/>
-                                            </Grid.RowDefinitions>
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="180"/>
+                                                    <RowDefinition Height="*"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
 
-                                            <!-- Product Image -->
-                                            <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}"
+                                                <!-- Product Image -->
+                                                <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}"
                                                    CornerRadius="10" Margin="0,0,0,12">
-                                                <Grid>
-                                                    <Image Source="{Binding PhotoUrl}" Stretch="UniformToFill"
+                                                    <Grid>
+                                                        <Image Source="{Binding PhotoUrl}" Stretch="UniformToFill"
                                                            ClipToBounds="True" />
-                                                    <!-- Stock Badge -->
-                                                    <Border Background="{StaticResource SuccessBrush}" 
+                                                        <!-- Stock Badge -->
+                                                        <Border Background="{StaticResource SuccessBrush}" 
                                                            CornerRadius="6" Padding="8,4"
                                                            HorizontalAlignment="Right" VerticalAlignment="Top"
                                                            Margin="12">
-                                                        <TextBlock Text="{Binding CurrentStock, StringFormat={}{0} un.}" 
+                                                            <TextBlock Text="{Binding CurrentStock, StringFormat={}{0} un.}" 
                                                                  FontSize="10" FontWeight="Bold" 
                                                                  Foreground="White"/>
-                                                    </Border>
-                                                </Grid>
-                                            </Border>
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
 
-                                            <!-- Product Info -->
-                                            <StackPanel Grid.Row="1">
-                                                <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold"
+                                                <!-- Product Info -->
+                                                <StackPanel Grid.Row="1">
+                                                    <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold"
                                                          Foreground="{StaticResource TextPrimaryBrush}"
                                                          TextWrapping="Wrap" MaxHeight="40"
                                                          TextTrimming="CharacterEllipsis" Margin="0,0,0,8"/>
 
-                                                <TextBlock Text="{Binding SKU}" FontSize="11" 
+                                                    <TextBlock Text="{Binding SKU}" FontSize="11" 
                                                          Foreground="{StaticResource TextTertiaryBrush}"
                                                          Margin="0,0,0,12"/>
 
-                                                <TextBlock FontSize="22" FontWeight="Bold" 
+                                                    <TextBlock FontSize="22" FontWeight="Bold" 
                                                          Foreground="{StaticResource PrimaryBrush}">
                                                     <Run Text="Kz"/>
                                                     <Run Text="{Binding SalePrice, StringFormat={}{0:N2}}"/>
-                                                </TextBlock>
-                                            </StackPanel>
+                                                    </TextBlock>
+                                                </StackPanel>
 
-                                            <!-- Add Button -->
-                                            <Button Grid.Row="2" Style="{StaticResource PrimaryButton}" 
+                                                <!-- Add Button -->
+                                                <Button Grid.Row="2" Style="{StaticResource PrimaryButton}" 
                                                    Height="40" Margin="0,12,0,0"
                                                    Command="{Binding DataContext.AddProductFromCatalogCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                    CommandParameter="{Binding}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon Kind="CartPlus" Width="18" Height="18"/>
-                                                    <TextBlock Text="Adicionar" Margin="8,0,0,0"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </Grid>
-            </Border>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <materialDesign:PackIcon Kind="CartPlus" Width="18" Height="18"/>
+                                                        <TextBlock Text="Adicionar" Margin="8,0,0,0"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
         </Grid>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- CAMADA 2: RODAPÉ COM SNACKBAR (Grid.Row="1")                -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="1" 
+            Background="{StaticResource SurfaceBrush}" 
+            BorderBrush="{StaticResource DividerBrush}" 
+            BorderThickness="0,1,0,0"
+            Height="60"
+            Effect="{DynamicResource MaterialDesignShadowDepth1}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Snackbar de Mensagens -->
+                <materialDesign:Snackbar Grid.Column="0"
+                                    x:Name="StatusSnackbar" 
+                                    MessageQueue="{materialDesign:MessageQueue}"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Left"
+                                    Margin="20,0"/>
+
+                <!-- Info Adicional (Opcional) -->
+                <StackPanel Grid.Column="1" 
+                       Orientation="Horizontal" 
+                       VerticalAlignment="Center"
+                       Margin="0,0,20,0">
+                    <materialDesign:PackIcon Kind="Information" 
+                                       Width="16" Height="16"
+                                       Foreground="{StaticResource TextTertiaryBrush}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0"/>
+                    <TextBlock Text="Pressione F1 para ajuda" 
+                         FontSize="11" 
+                         Foreground="{StaticResource TextTertiaryBrush}"
+                         VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- CAMADA 3: LOADING OVERLAY (Sobrepõe tudo)                   -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <Border Grid.RowSpan="2" 
+            Background="#DD000000" 
+            Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
+            Panel.ZIndex="1000">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <!-- Spinner -->
+                <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                        IsIndeterminate="True" 
+                        Width="60" 
+                        Height="60"
+                        Foreground="{StaticResource PrimaryBrush}"/>
+
+                <!-- Mensagem de Loading -->
+                <TextBlock Text="{Binding StatusMessage}" 
+                     FontSize="16" 
+                     FontWeight="SemiBold"
+                     Foreground="White" 
+                     Margin="0,20,0,0" 
+                     TextAlignment="Center"
+                     MaxWidth="400"
+                     TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
     </Grid>
+
 </Page>

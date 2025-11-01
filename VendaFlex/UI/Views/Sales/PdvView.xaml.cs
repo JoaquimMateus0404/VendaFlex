@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MaterialDesignThemes.Wpf;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -12,6 +13,7 @@ namespace VendaFlex.UI.Views.Sales
     /// </summary>
     public partial class PdvView : Page
     {
+        private readonly SnackbarMessageQueue _messageQueue = new SnackbarMessageQueue();
         public PdvView()
         {
             InitializeComponent();
@@ -22,8 +24,28 @@ namespace VendaFlex.UI.Views.Sales
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            // Garantir queue conectada ao Snackbar
+            if (StatusSnackbar != null)
+            {
+                StatusSnackbar.MessageQueue = _messageQueue;
+            }
+
             // Foco na busca rápida
             ProductSearchBox?.Focus();
+
+            // Conectar StatusMessage ao Snackbar
+            if (DataContext is PdvViewModel vm)
+            {
+                vm.PropertyChanged += (s, args) =>
+                {
+                    if (args.PropertyName == nameof(vm.StatusMessage)
+                        && !string.IsNullOrWhiteSpace(vm.StatusMessage)
+                        && !vm.IsBusy) // Só mostra Snackbar quando NÃO está em loading
+                    {
+                        _messageQueue.Enqueue(vm.StatusMessage);
+                    }
+                };
+            }
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e)

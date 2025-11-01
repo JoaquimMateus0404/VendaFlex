@@ -8,6 +8,11 @@
     <!-- Chaves: Color.* e Brush.* para uso consistente em toda a aplicação -->
     <!-- ============================================ -->
 
+    <!-- Converters globally available -->
+    <conv:CountToBoolConverter x:Key="CountToBoolConverter" />
+    <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
+    <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+
     <!-- Cores primárias e secundárias -->
     <Color x:Key="ColorPrimary">#FF3B82F6</Color>        <!-- Azul principal (usado no logo e elementos de destaque) -->
     <Color x:Key="ColorPrimaryDark">#FF1E40AF</Color>    <!-- Azul escuro -->
@@ -78,7 +83,6 @@
     <SolidColorBrush x:Key="TextTertiaryBrush" Color="{StaticResource ColorTextTertiary}" />
     <SolidColorBrush x:Key="TextDisabledBrush" Color="{StaticResource ColorTextDisabled}" />
     <SolidColorBrush x:Key="TextOnPrimaryBrush" Color="{StaticResource ColorTextOnPrimary}" />
-
 
     <!-- ============================================ -->
     <!-- GRADIENTES -->
