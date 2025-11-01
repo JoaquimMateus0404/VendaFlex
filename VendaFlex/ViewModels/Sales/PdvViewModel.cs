@@ -24,6 +24,7 @@ namespace VendaFlex.ViewModels.Sales
         private readonly IPaymentService _paymentService;
         private readonly IPaymentTypeService _paymentTypeService;
         private readonly IExpirationService _expirationService;
+        private readonly IReceiptPrintService _printService;
 
         // Estado básico
         private string _currency = "AOA";
@@ -69,7 +70,8 @@ namespace VendaFlex.ViewModels.Sales
             IStockService stockService,
             IPaymentService paymentService,
             IPaymentTypeService paymentTypeService,
-            IExpirationService expirationService)
+            IExpirationService expirationService,
+            IReceiptPrintService printService)
         {
             _companyConfigService = companyConfigService;
             _sessionService = sessionService;
@@ -81,6 +83,7 @@ namespace VendaFlex.ViewModels.Sales
             _paymentService = paymentService;
             _paymentTypeService = paymentTypeService;
             _expirationService = expirationService;
+            _printService = printService;
 
             // Comandos
             InitializeCommand = new AsyncCommand(InitializeAsync);
@@ -725,19 +728,28 @@ namespace VendaFlex.ViewModels.Sales
                         var newQty = Math.Max(currentQty - item.Quantity, 0);
                         await _stockService.UpdateQuantityAsync(item.ProductId, newQty, userId);
 
-                        // liberar reservas correspondentes a este item
                         await SafeReleaseReservationAsync(item.ProductId, item.Quantity);
                     }
                     else
                     {
-                        // Se não existe estoque ainda, apenas garantir que não fique reserva pendente
                         await SafeReleaseReservationAsync(item.ProductId, item.Quantity);
                     }
                 }
 
+                // 7) Impressão conforme formato
+                var cfgResult = await _companyConfigService.GetAsync();
+                if (cfgResult.Success && cfgResult.Data != null)
+                {
+                    var cfg = cfgResult.Data;
+                    // Recarregar itens persistidos para valores finais
+                    var itemsResult = await _invoiceProductService.GetByInvoiceIdAsync(invoiceId);
+                    var items = itemsResult.Success && itemsResult.Data != null ? itemsResult.Data : Enumerable.Empty<InvoiceProductDto>();
+                    await _printService.PrintAsync(cfg, savedInvoice.Data, items, cfg.InvoiceFormat.ToString());
+                }
+
                 StatusMessage = $"Fatura {invoiceNumber} emitida com sucesso.";
 
-                // 7) Limpar carrinho e pagamentos
+                // 8) Limpar carrinho e pagamentos
                 CartItems.Clear();
                 Payments.Clear();
                 RecalculateTotals();

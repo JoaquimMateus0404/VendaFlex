@@ -29,7 +29,7 @@ namespace VendaFlex.UI.Views.Dashboard
             InitializeComponent();
             _sessionService = sessionService;
             _navigationService = navigationService;
-            
+
             // Log para debug
             System.Diagnostics.Debug.WriteLine($"DashboardView: Construtor chamado. ViewModel != null: {viewModel != null}");
             
@@ -108,6 +108,11 @@ namespace VendaFlex.UI.Views.Dashboard
                 // fallback simples
                 Application.Current.Shutdown();
             }
+        }
+
+        private void SalesButton_Click(object sender, RoutedEventArgs e)
+        {
+            _navigationService.NavigateToPdv();
         }
 
         #region Popup Handlers

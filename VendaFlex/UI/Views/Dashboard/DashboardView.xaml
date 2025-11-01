@@ -202,7 +202,7 @@
                         </Button>
 
                         <!-- Vendas/Faturas -->
-                        <Button Style="{StaticResource SidebarButtonStyle}">
+                        <Button Style="{StaticResource SidebarButtonStyle}" Click="SalesButton_Click">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="Receipt" Width="24" Height="24" Margin="0,0,12,0"/>
                                 <TextBlock Text="Faturas" VerticalAlignment="Center"/>

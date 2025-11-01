@@ -20,6 +20,11 @@ namespace VendaFlex.Infrastructure.Navigation
         void NavigateToDashBoard();
 
         /// <summary>
+        /// Navega para a tela de ponto de venda
+        /// </summary>
+        void NavigateToPdv();
+
+        /// <summary>
         /// Fecha a janela atual
         /// </summary>
         void CloseCurrentWindow();

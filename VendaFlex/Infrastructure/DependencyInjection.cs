@@ -45,8 +45,8 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<IDatabaseStatusService, DatabaseStatusService>();
             services.AddScoped<IDatabaseSyncService, DatabaseSyncService>();
             services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
-            //services.AddScoped<IReceiptPrintService, ReceiptPrintService>();
             services.AddSingleton<IFileStorageService, FileStorageService>();
+            services.AddScoped<IReceiptPrintService, ReceiptPrintService>();
 
             // Repositórios
             services.AddScoped<UserRepository>();
@@ -74,9 +74,6 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<IExpirationService, ExpirationService>();
             services.AddScoped<IStockService, StockService>();
-            services.AddScoped<IPriceHistoryService, PriceHistoryService>();
-            services.AddScoped<ICategoryService, CategoryService>();
-            services.AddScoped<IStockMovementService, StockMovementService>();
             services.AddScoped<IInvoiceService, InvoiceService>();
             services.AddScoped<IInvoiceProductService, InvoiceProductService>();
             services.AddScoped<IPaymentService, PaymentService>();

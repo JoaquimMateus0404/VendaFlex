@@ -4,9 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using VendaFlex.UI.Views.Authentication;
 using VendaFlex.UI.Views.Dashboard;
+using VendaFlex.UI.Views.Sales;
 using VendaFlex.UI.Views.Setup;
 using VendaFlex.ViewModels.Authentication;
 using VendaFlex.ViewModels.Dashboard;
+using VendaFlex.ViewModels.Sales;
 using VendaFlex.ViewModels.Setup;
 
 namespace VendaFlex.Infrastructure.Navigation
@@ -154,6 +156,22 @@ namespace VendaFlex.Infrastructure.Navigation
             {
                 _logger.LogWarning("Tentativa de fechar janela, mas nenhuma janela atual definida");
             }
+        }
+
+        public void NavigateToPdv()
+        {
+            //implementar agora
+            _logger.LogInformation("Navegando para tela de Ponto de Venda - Não implementado");
+            try
+            {
+                NavigateToPage<PdvView, PdvViewModel>("VendaFlex - Ponto de Venda", 1000, 700, closeCurrent: true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao navegar para PDV");
+                throw;
+            }
+
         }
     }
 }
