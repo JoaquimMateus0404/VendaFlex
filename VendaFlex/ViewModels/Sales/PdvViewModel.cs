@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Windows.Threading;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
 using VendaFlex.ViewModels.Base;
@@ -25,6 +26,9 @@ namespace VendaFlex.ViewModels.Sales
         private readonly IPaymentTypeService _paymentTypeService;
         private readonly IExpirationService _expirationService;
         private readonly IReceiptPrintService _printService;
+        private readonly ICategoryService _categoryService;
+
+        private DispatcherTimer? _clockTimer;
 
         // Estado básico
         private string _currency = "AOA";
@@ -32,14 +36,26 @@ namespace VendaFlex.ViewModels.Sales
         private decimal _taxRatePercent = 0m; // Ex.: 14 => 14%
         private bool _allowAnonymousInvoice = true;
 
+        // Header (Relógio e Usuário)
+        private string _currentTime = DateTime.Now.ToString("HH:mm:ss");
+        private string _userName = string.Empty;
+        private string _userInitials = string.Empty;
+
         // Cliente
         private PersonDto? _selectedCustomer;
         private string _customerSearchTerm = string.Empty;
 
-        // Produto / Busca
+        // Produto / Busca rápida
         private string _productSearchTerm = string.Empty;
         private ProductDto? _selectedProductSuggestion;
         private ObservableCollection<ProductDto> _productSuggestions = new();
+
+        // Catálogo (modal)
+        private bool _isCatalogOpen;
+        private string _catalogSearchTerm = string.Empty;
+        private ObservableCollection<ProductDto> _catalogProducts = new();
+        private ObservableCollection<CategoryDto> _catalogCategories = new();
+        private CategoryDto? _selectedCatalogCategory;
 
         // Carrinho
         private ObservableCollection<CartItemViewModel> _cartItems = new();
@@ -71,7 +87,8 @@ namespace VendaFlex.ViewModels.Sales
             IPaymentService paymentService,
             IPaymentTypeService paymentTypeService,
             IExpirationService expirationService,
-            IReceiptPrintService printService)
+            IReceiptPrintService printService,
+            ICategoryService categoryService)
         {
             _companyConfigService = companyConfigService;
             _sessionService = sessionService;
@@ -84,6 +101,7 @@ namespace VendaFlex.ViewModels.Sales
             _paymentTypeService = paymentTypeService;
             _expirationService = expirationService;
             _printService = printService;
+            _categoryService = categoryService;
 
             // Comandos
             InitializeCommand = new AsyncCommand(InitializeAsync);
@@ -97,6 +115,18 @@ namespace VendaFlex.ViewModels.Sales
                     await AddProductToCartAsync(SelectedProductSuggestion, 1);
                 }
             }, _ => SelectedProductSuggestion != null && !IsBusy);
+
+            // Catálogo
+            OpenCatalogCommand = new AsyncCommand(OpenCatalogAsync, () => !IsBusy);
+            CloseCatalogCommand = new RelayCommand(_ => IsCatalogOpen = false);
+            AddProductFromCatalogCommand = new RelayCommand(async p =>
+            {
+                if (p is ProductDto prod)
+                {
+                    await AddProductToCartAsync(prod, 1);
+                    IsCatalogOpen = false;
+                }
+            });
 
             IncreaseItemQtyCommand = new RelayCommand(async item =>
             {
@@ -203,6 +233,7 @@ namespace VendaFlex.ViewModels.Sales
                     ((AsyncCommand)SearchProductCommand).RaiseCanExecuteChanged();
                     ((AsyncCommand)AddProductByCodeCommand).RaiseCanExecuteChanged();
                     ((AsyncCommand)FinalizeSaleCommand).RaiseCanExecuteChanged();
+                    ((AsyncCommand)OpenCatalogCommand).RaiseCanExecuteChanged();
                 }
             }
         }
@@ -211,6 +242,29 @@ namespace VendaFlex.ViewModels.Sales
         {
             get => _statusMessage;
             set => Set(ref _statusMessage, value);
+        }
+
+        // Header
+        public string CurrentTime
+        {
+            get => _currentTime;
+            set => Set(ref _currentTime, value);
+        }
+        public string UserName
+        {
+            get => _userName;
+            set
+            {
+                if (Set(ref _userName, value))
+                {
+                    UserInitials = GetUserInitials(value);
+                }
+            }
+        }
+        public string UserInitials
+        {
+            get => _userInitials;
+            set => Set(ref _userInitials, value);
         }
 
         // Config
@@ -270,6 +324,45 @@ namespace VendaFlex.ViewModels.Sales
         {
             get => _selectedProductSuggestion;
             set => Set(ref _selectedProductSuggestion, value);
+        }
+
+        // Catálogo (modal)
+        public bool IsCatalogOpen
+        {
+            get => _isCatalogOpen;
+            set => Set(ref _isCatalogOpen, value);
+        }
+        public string CatalogSearchTerm
+        {
+            get => _catalogSearchTerm;
+            set
+            {
+                if (Set(ref _catalogSearchTerm, value))
+                {
+                    _ = SearchCatalogAsync();
+                }
+            }
+        }
+        public ObservableCollection<ProductDto> CatalogProducts
+        {
+            get => _catalogProducts;
+            set => Set(ref _catalogProducts, value);
+        }
+        public ObservableCollection<CategoryDto> CatalogCategories
+        {
+            get => _catalogCategories;
+            set => Set(ref _catalogCategories, value);
+        }
+        public CategoryDto? SelectedCatalogCategory
+        {
+            get => _selectedCatalogCategory;
+            set
+            {
+                if (Set(ref _selectedCatalogCategory, value))
+                {
+                    _ = SearchCatalogAsync();
+                }
+            }
         }
 
         // Carrinho
@@ -334,6 +427,10 @@ namespace VendaFlex.ViewModels.Sales
         public ICommand AddProductByCodeCommand { get; }
         public ICommand AddSelectedSuggestionCommand { get; }
 
+        public ICommand OpenCatalogCommand { get; }
+        public ICommand CloseCatalogCommand { get; }
+        public ICommand AddProductFromCatalogCommand { get; }
+
         public ICommand IncreaseItemQtyCommand { get; }
         public ICommand DecreaseItemQtyCommand { get; }
         public ICommand RemoveItemCommand { get; }
@@ -369,10 +466,15 @@ namespace VendaFlex.ViewModels.Sales
                     PaymentTypes = new ObservableCollection<PaymentTypeDto>(types.Data);
                 }
 
+                await LoadCategoriesAsync();
+
                 if (_allowAnonymousInvoice)
                 {
                     SelectAnonymousCustomer();
                 }
+
+                InitializeClock();
+                InitializeUserInfo();
 
                 StatusMessage = "Pronto";
             }
@@ -383,6 +485,139 @@ namespace VendaFlex.ViewModels.Sales
             finally
             {
                 IsBusy = false;
+            }
+        }
+
+        private void InitializeClock()
+        {
+            // Atualiza imediatamente e inicia timer
+            CurrentTime = DateTime.Now.ToString("HH:mm:ss");
+            _clockTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+            _clockTimer.Tick += (s, e) => { CurrentTime = DateTime.Now.ToString("HH:mm:ss"); };
+            _clockTimer.Start();
+        }
+
+        private void InitializeUserInfo()
+        {
+            try
+            {
+                var name = _sessionService?.CurrentUser?.Username ?? "Admin User";
+                UserName = string.IsNullOrWhiteSpace(name) ? "Admin User" : name;
+            }
+            catch
+            {
+                UserName = "Admin User";
+            }
+        }
+
+        private static string GetUserInitials(string fullName)
+        {
+            if (string.IsNullOrWhiteSpace(fullName))
+                return "??";
+
+            var parts = fullName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 1)
+                return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
+
+            return ($"{parts[0][0]}{parts[^1][0]}").ToUpper();
+        }
+        #endregion
+
+        #region Catálogo de produtos (modal)
+        private async Task OpenCatalogAsync()
+        {
+            IsCatalogOpen = true;
+            await LoadCatalogAsync();
+        }
+
+        private async Task LoadCategoriesAsync()
+        {
+            try
+            {
+                var catResult = await _categoryService.GetActiveAsync();
+                var list = new List<CategoryDto>();
+                // Item "Todas Categorias"
+                list.Add(new CategoryDto { CategoryId = 0, Name = "Todas Categorias", IsActive = true });
+
+                if (catResult.Success && catResult.Data != null)
+                {
+                    list.AddRange(catResult.Data);
+                }
+                CatalogCategories = new ObservableCollection<CategoryDto>(list);
+                SelectedCatalogCategory = CatalogCategories.FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erro ao carregar categorias: {ex.Message}";
+            }
+        }
+
+        private async Task LoadCatalogAsync()
+        {
+            try
+            {
+                if (SelectedCatalogCategory != null && SelectedCatalogCategory.CategoryId > 0)
+                {
+                    var byCat = await _productService.GetByCategoryIdAsync(SelectedCatalogCategory.CategoryId);
+                    if (byCat.Success && byCat.Data != null)
+                    {
+                        CatalogProducts = new ObservableCollection<ProductDto>(byCat.Data);
+                    }
+                }
+                else
+                {
+                    var productsResult = await _productService.GetAllAsync();
+                    if (productsResult.Success && productsResult.Data != null)
+                    {
+                        CatalogProducts = new ObservableCollection<ProductDto>(productsResult.Data);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erro ao carregar catálogo: {ex.Message}";
+            }
+        }
+
+        private async Task SearchCatalogAsync()
+        {
+            try
+            {
+                var term = CatalogSearchTerm;
+                IEnumerable<ProductDto> products = Enumerable.Empty<ProductDto>();
+
+                if (SelectedCatalogCategory != null && SelectedCatalogCategory.CategoryId > 0)
+                {
+                    var byCat = await _productService.GetByCategoryIdAsync(SelectedCatalogCategory.CategoryId);
+                    if (byCat.Success && byCat.Data != null)
+                        products = byCat.Data;
+                }
+                else
+                {
+                    var all = await _productService.GetAllAsync();
+                    if (all.Success && all.Data != null)
+                        products = all.Data;
+                }
+
+                if (!string.IsNullOrWhiteSpace(term))
+                {
+                    //(p.Code != null && p.Code.ToLowerInvariant().Contains(lower)) ||
+                var lower = term.Trim().ToLowerInvariant();
+                    products = products.Where(p =>
+                        (p.Name != null && p.Name.ToLowerInvariant().Contains(lower)) ||
+                        (p.SKU != null && p.SKU.ToLowerInvariant().Contains(lower)) ||
+                        (p.Barcode != null && p.Barcode.ToLowerInvariant().Contains(lower))
+                    );
+                }
+
+                CatalogProducts = new ObservableCollection<ProductDto>(products);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erro na busca: {ex.Message}";
             }
         }
         #endregion
@@ -767,6 +1002,16 @@ namespace VendaFlex.ViewModels.Sales
             }
         }
         #endregion
+
+        // Poderíamos ter um método para parar timer quando necessário
+        public void Cleanup()
+        {
+            if (_clockTimer != null)
+            {
+                _clockTimer.Stop();
+                _clockTimer = null;
+            }
+        }
     }
 
     #region Tipos auxiliares

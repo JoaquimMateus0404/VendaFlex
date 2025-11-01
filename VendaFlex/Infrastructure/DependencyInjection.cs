@@ -78,6 +78,7 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<IInvoiceProductService, InvoiceProductService>();
             services.AddScoped<IPaymentService, PaymentService>();
             services.AddScoped<IPaymentTypeService, PaymentTypeService>();
+            services.AddScoped<ICategoryService, CategoryService>();
 
             // Validadores
             services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
