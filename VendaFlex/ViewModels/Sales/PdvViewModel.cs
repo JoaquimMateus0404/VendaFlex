@@ -201,6 +201,8 @@ namespace VendaFlex.ViewModels.Sales
                 OnPropertyChanged(nameof(AmountPaid));
                 OnPropertyChanged(nameof(RemainingAmount));
                 OnPropertyChanged(nameof(ChangeDue));
+                // garantir reavaliação do botão Finalizar
+                ((AsyncCommand)FinalizeSaleCommand).RaiseCanExecuteChanged();
             }, _ => SelectedPaymentType != null && PaymentAmount > 0);
 
             RemovePaymentCommand = new RelayCommand(entry =>
@@ -211,6 +213,8 @@ namespace VendaFlex.ViewModels.Sales
                     OnPropertyChanged(nameof(AmountPaid));
                     OnPropertyChanged(nameof(RemainingAmount));
                     OnPropertyChanged(nameof(ChangeDue));
+                    // garantir reavaliação do botão Finalizar
+                    ((AsyncCommand)FinalizeSaleCommand).RaiseCanExecuteChanged();
                 }
             });
 
@@ -294,7 +298,13 @@ namespace VendaFlex.ViewModels.Sales
         public PersonDto? SelectedCustomer
         {
             get => _selectedCustomer;
-            set => Set(ref _selectedCustomer, value);
+            set
+            {
+                if (Set(ref _selectedCustomer, value))
+                {
+                    ((AsyncCommand)FinalizeSaleCommand).RaiseCanExecuteChanged();
+                }
+            }
         }
         public string CustomerSearchTerm
         {

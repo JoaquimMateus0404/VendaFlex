@@ -4,8 +4,11 @@
       xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:converters="clr-namespace:VendaFlex.UI.Converters"
       mc:Ignorable="d"
-      Loaded="Page_Loaded" d:DesignHeight="1051.143" d:DesignWidth="1143.487" >
+      Loaded="Page_Loaded" 
+      d:DesignHeight="1051.143" 
+      d:DesignWidth="1143.487" >
 
     <Page.Resources>
         <ResourceDictionary>
@@ -69,10 +72,13 @@
                 </Style.Triggers>
             </Style>
 
+            <!-- Converters -->
+            <converters:HeightToScrollBarVisibilityConverter x:Key="HeightToScrollBarVisibilityConverter" />
+
         </ResourceDictionary>
     </Page.Resources>
 
-    <Grid>
+    <Grid x:Name="RootGrid">
         <!-- Grid Principal com 3 camadas -->
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
@@ -204,8 +210,9 @@
             </Border>
 
                  <!-- MAIN CONTENT -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                    <Grid  Margin="20">
+                <ScrollViewer Grid.Row="1" 
+                              VerticalScrollBarVisibility="{Binding ElementName=RootGrid, Path=ActualHeight, Converter={StaticResource HeightToScrollBarVisibilityConverter}, ConverterParameter=720}">
+                    <Grid Margin="20" MinHeight="{Binding ElementName=RootGrid, Path=ActualHeight}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="2*"/>
                         <ColumnDefinition Width="16"/>
