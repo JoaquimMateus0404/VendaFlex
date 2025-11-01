@@ -16,6 +16,7 @@
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
         <converters:HexToColorConverter x:Key="HexToColorConverter"/>
         <converters:IntToVisibilityConverter x:Key="IntToVisibilityConverter"/>
+        <converters:NullOrEmptyToVisibilityConverter x:Key="NullOrEmptyToVisibilityConverter"/>
         
         <!-- Sidebar Collapse/Expand Animation -->
         <Storyboard x:Key="SidebarExpand">
@@ -422,78 +423,77 @@
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
 
-                                                <Border Width="48" Height="48" Background="#3B82F6" 
-                                                       CornerRadius="24" Margin="0,0,12,0">
-                                                    <TextBlock Text="AD" FontSize="18" FontWeight="Bold" 
-                                                             Foreground="White" HorizontalAlignment="Center" 
-                                                             VerticalAlignment="Center"/>
-                                                </Border>
+                                                <!-- Avatar -->
+                                                <Grid Width="48" Height="48" Margin="0,0,12,0">
+                                                  <Image Source="{Binding CurrentUserProfileImageUrl}"
+                                                         Stretch="UniformToFill" Width="48" Height="48" ClipToBounds="True"
+                                                         Visibility="{Binding CurrentUserProfileImageUrl, Converter={StaticResource NullOrEmptyToVisibilityConverter}}"/>
+                                                  <Border Background="#3B82F6" CornerRadius="24"
+                                                          Visibility="{Binding CurrentUserProfileImageUrl, Converter={StaticResource NullOrEmptyToVisibilityConverter}, ConverterParameter=Invert}">
+                                                    <TextBlock Text="{Binding CurrentUserInitials}" FontSize="18" FontWeight="Bold" 
+                                                               Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                  </Border>
+                                                </Grid>
 
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                    <TextBlock Text="Duarte Gauss" FontSize="14" FontWeight="SemiBold" 
-                                                             Foreground="#111827"/>
-                                                    <TextBlock Text="admin@vendaflex.ao" FontSize="11" 
-                                                             Foreground="#6B7280" Margin="0,2,0,0"/>
+                                                    <TextBlock Text="{Binding CurrentUserName}" FontSize="14" FontWeight="SemiBold" 
+                                                               Foreground="#111827"/>
+                                                    <TextBlock Text="{Binding CurrentUserEmail}" FontSize="11" 
+                                                               Foreground="#6B7280" Margin="0,2,0,0"/>
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
 
                                         <!-- Menu Items -->
-                                        <StackPanel >
+                                        <StackPanel>
                                             <Button Style="{DynamicResource MaterialDesignFlatButton}"
-                                                   Height="40" HorizontalContentAlignment="Left"
-                                                   Padding="12">
+                                                    Height="40" HorizontalContentAlignment="Left" Padding="12">
                                                 <StackPanel Orientation="Horizontal">
                                                     <materialDesign:PackIcon Kind="AccountCircle" 
-                                                                           Width="20" Height="20" 
-                                                                           Foreground="#6B7280" 
-                                                                           Margin="0,0,12,0"/>
+                                                                       Width="20" Height="20" 
+                                                                       Foreground="#6B7280" 
+                                                                       Margin="0,0,12,0"/>
                                                     <TextBlock Text="Meu Perfil" FontSize="13" 
-                                                             Foreground="#111827" VerticalAlignment="Center"/>
+                 Foreground="#111827" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
 
                                             <Button Style="{DynamicResource MaterialDesignFlatButton}"
-                                                   Height="40" HorizontalContentAlignment="Left"
-                                                   Padding="12,0">
+       Height="40" HorizontalContentAlignment="Left"
+       Padding="12,0">
                                                 <StackPanel Orientation="Horizontal">
                                                     <materialDesign:PackIcon Kind="Cog" 
-                                                                           Width="20" Height="20" 
-                                                                           Foreground="#6B7280" 
-                                                                           Margin="0,0,12,0"/>
+                               Width="20" Height="20" 
+                               Foreground="#6B7280" 
+                               Margin="0,0,12,0"/>
                                                     <TextBlock Text="Configurações" FontSize="13" 
-                                                             Foreground="#111827" VerticalAlignment="Center"/>
+                 Foreground="#111827" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
 
                                             <Button Style="{DynamicResource MaterialDesignFlatButton}"
-                                                   Height="40" HorizontalContentAlignment="Left"
-                                                   Padding="12,0">
+       Height="40" HorizontalContentAlignment="Left"
+       Padding="12,0">
                                                 <StackPanel Orientation="Horizontal">
                                                     <materialDesign:PackIcon Kind="HelpCircle" 
-                                                                           Width="20" Height="20" 
-                                                                           Foreground="#6B7280" 
-                                                                           Margin="0,0,12,0"/>
+                               Width="20" Height="20" 
+                               Foreground="#6B7280" 
+                               Margin="0,0,12,0"/>
                                                     <TextBlock Text="Ajuda" FontSize="13" 
-                                                             Foreground="#111827" VerticalAlignment="Center"/>
+                 Foreground="#111827" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
 
                                             <Separator Margin="0,8" Background="#E8EBF0"/>
-
+                                            
                                             <Button Style="{DynamicResource MaterialDesignFlatButton}"
-                                                   Height="40" HorizontalContentAlignment="Left"
-                                                   Padding="12,0">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon Kind="Logout" 
-                                                                           Width="20" Height="20" 
-                                                                           Foreground="#EF4444" 
-                                                                           Margin="0,0,12,0"/>
-                                                    <TextBlock Text="Sair" FontSize="13" 
-                                                             Foreground="#EF4444" VerticalAlignment="Center" 
-                                                             FontWeight="SemiBold"/>
-                                                </StackPanel>
-                                            </Button>
+                                                  Height="40" HorizontalContentAlignment="Left" Padding="12,0"
+                                                  Click="LogoutButton_Click">
+                                            <StackPanel Orientation="Horizontal">
+                                              <materialDesign:PackIcon Kind="Logout" Width="20" Height="20" Foreground="#EF4444" Margin="0,0,12,0"/>
+                                              <TextBlock Text="Sair" FontSize="13" Foreground="#EF4444" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                          </Button>
                                         </StackPanel>
                                     </StackPanel>
                                 </Border>

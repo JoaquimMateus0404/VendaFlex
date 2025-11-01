@@ -76,32 +76,32 @@ namespace VendaFlex.ViewModels.Dashboard
             set => Set(ref _isLoading, value);
         }
 
-        private string _currentUserName = "Admin User";
+        private string _currentUserName = "";
         public string CurrentUserName
         {
             get => _currentUserName;
             set => Set(ref _currentUserName, value);
         }
 
-        private string _currentUserEmail = "admin@vendaflex.ao";
+        private string _currentUserEmail = "";
         public string CurrentUserEmail
         {
             get => _currentUserEmail;
             set => Set(ref _currentUserEmail, value);
         }
 
-        private string _currentUserInitials = "AD";
+        private string _currentUserInitials = "";
         public string CurrentUserInitials
         {
             get => _currentUserInitials;
             set => Set(ref _currentUserInitials, value);
         }
 
-        private int? _currentUserId;
-        public int? CurrentUserId
+        private string? _currentUserProfileImageUrl;
+        public string? CurrentUserProfileImageUrl
         {
-            get => _currentUserId;
-            set => Set(ref _currentUserId, value);
+            get => _currentUserProfileImageUrl;
+            set => Set(ref _currentUserProfileImageUrl, value);
         }
 
         private PlotModel? _salesPlotModel;
@@ -118,7 +118,6 @@ namespace VendaFlex.ViewModels.Dashboard
             set => Set(ref _salesChartCaption, value);
         }
 
-        // Dados para o gráfico simples (fallback)
         private ObservableCollection<SalesPointDto> _salesPoints = new();
         public ObservableCollection<SalesPointDto> SalesPoints
         {
@@ -157,39 +156,77 @@ namespace VendaFlex.ViewModels.Dashboard
             IsLoading = true;
             try
             {
-                System.Diagnostics.Debug.WriteLine("DashboardViewModel: Carregando Metrics...");
+                await LoadCurrentUserInfoAsync();
+
                 await LoadMetricsAsync();
-                System.Diagnostics.Debug.WriteLine($"DashboardViewModel: Metrics carregadas. Count = {Metrics.Count}");
-                
-                System.Diagnostics.Debug.WriteLine("DashboardViewModel: Carregando TopProducts...");
                 await LoadTopProductsAsync();
-                System.Diagnostics.Debug.WriteLine($"DashboardViewModel: TopProducts carregados. Count = {TopProducts.Count}");
-                
-                System.Diagnostics.Debug.WriteLine("DashboardViewModel: Carregando RecentInvoices...");
                 await LoadRecentInvoicesAsync();
-                System.Diagnostics.Debug.WriteLine($"DashboardViewModel: RecentInvoices carregadas. Count = {RecentInvoices.Count}");
-                
-                System.Diagnostics.Debug.WriteLine("DashboardViewModel: Carregando Notifications...");
                 await RefreshNotificationsAsync();
-                System.Diagnostics.Debug.WriteLine($"DashboardViewModel: Notifications carregadas. Count = {Notifications.Count}");
-
-                System.Diagnostics.Debug.WriteLine("DashboardViewModel: Carregando Sales Chart...");
                 await LoadSalesChartAsync();
-
-                CurrentUserName = _sessionService.CurrentUser!.Username;
             }
             catch (Exception ex)
             {
-                // Log error
                 System.Diagnostics.Debug.WriteLine($"❌ ERRO ao carregar dados do dashboard: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"❌ StackTrace: {ex.StackTrace}");
-                Console.WriteLine($"Erro ao carregar dados do dashboard: {ex.Message}");
             }
             finally
             {
                 IsLoading = false;
                 System.Diagnostics.Debug.WriteLine("=== DashboardViewModel: LoadDashboardDataAsync CONCLUÍDO ===");
             }
+        }
+
+        private async Task LoadCurrentUserInfoAsync()
+        {
+            var user = _sessionService.CurrentUser;
+            if (user == null)
+            {
+                CurrentUserName = "Usuário";
+                CurrentUserEmail = string.Empty;
+                CurrentUserInitials = "?";
+                CurrentUserProfileImageUrl = null;
+                return;
+            }
+
+            // Tentar obter dados da Person
+            try
+            {
+                if (user.PersonId > 0)
+                {
+                    var personResult = await _personService.GetByIdAsync(user.PersonId);
+                    if (personResult.Success && personResult.Data != null)
+                    {
+                        var name = personResult.Data.Name;
+                        var email = personResult.Data.Email;
+                        var photo = personResult.Data.ProfileImageUrl;
+
+                        CurrentUserName = string.IsNullOrWhiteSpace(name) ? user.Username : name;
+                        CurrentUserEmail = email ?? string.Empty;
+                        CurrentUserProfileImageUrl = string.IsNullOrWhiteSpace(photo) ? null : photo;
+                        CurrentUserInitials = ComputeInitials(CurrentUserName);
+                        return;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Falha ao obter Person do usuário: {ex.Message}");
+            }
+
+            // Fallback para username
+            CurrentUserName = user.Username;
+            CurrentUserEmail = string.Empty;
+            CurrentUserProfileImageUrl = null;
+            CurrentUserInitials = ComputeInitials(CurrentUserName);
+        }
+
+        private static string ComputeInitials(string? name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "?";
+            var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 1) return parts[0].Substring(0, Math.Min(1, parts[0].Length)).ToUpperInvariant();
+            var first = parts[0][0];
+            var last = parts[^1][0];
+            return ($"{first}{last}").ToUpperInvariant();
         }
 
         /// <summary>

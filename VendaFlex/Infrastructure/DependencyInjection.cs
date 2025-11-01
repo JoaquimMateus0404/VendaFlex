@@ -13,9 +13,11 @@ using VendaFlex.Infrastructure.Navigation;
 using VendaFlex.Infrastructure.Services;
 using VendaFlex.UI.Views.Authentication;
 using VendaFlex.UI.Views.Dashboard;
+using VendaFlex.UI.Views.Sales;
 using VendaFlex.UI.Views.Setup;
 using VendaFlex.ViewModels.Authentication;
 using VendaFlex.ViewModels.Dashboard;
+using VendaFlex.ViewModels.Sales;
 using VendaFlex.ViewModels.Setup;
 
 namespace VendaFlex.Infrastructure
@@ -109,6 +111,9 @@ namespace VendaFlex.Infrastructure
 
             services.AddTransient<DashboardView>();
             services.AddTransient<DashboardViewModel>();
+
+            services.AddTransient<PdvView>();
+            services.AddTransient<PdvViewModel>();
 
 
 

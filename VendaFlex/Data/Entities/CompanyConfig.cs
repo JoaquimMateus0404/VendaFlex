@@ -55,18 +55,23 @@ namespace VendaFlex.Data.Entities
         [StringLength(50)]
         public string? Currency { get; set; } = "AOA";
 
+        /// Símbolo
         [StringLength(10)]
         public string? CurrencySymbol { get; set; } = "Kz";
 
+        /// Taxa de imposto padrão aplicada às vendas (em porcentagem).
         [Column(TypeName = "decimal(5,2)")]
         public decimal DefaultTaxRate { get; set; } = 0;
 
+        /// Texto do rodape da fatura.
         [StringLength(1000)]
         public string? InvoiceFooterText { get; set; }
 
+        /// Prefixo usado nas faturas.
         [StringLength(100)]
         public string? InvoicePrefix { get; set; } = "INV";
 
+        /// Próximo número de fatura a ser emitido.
         public int NextInvoiceNumber { get; set; } = 1;
 
         /// Define o formato padrão da fatura.

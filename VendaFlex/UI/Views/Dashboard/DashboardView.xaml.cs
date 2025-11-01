@@ -5,6 +5,8 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using VendaFlex.ViewModels.Dashboard;
+using VendaFlex.Core.Interfaces;
+using VendaFlex.Infrastructure.Navigation;
 
 namespace VendaFlex.UI.Views.Dashboard
 {
@@ -17,14 +19,16 @@ namespace VendaFlex.UI.Views.Dashboard
     /// </summary>
     public partial class DashboardView : Page
     {
+        private readonly ISessionService _sessionService;
+        private readonly INavigationService _navigationService;
         private bool _isDataLoaded = false;
         private DispatcherTimer? _notificationTimer;
 
-        public DashboardView(DashboardViewModel viewModel)
+        public DashboardView(DashboardViewModel viewModel, ISessionService sessionService, INavigationService navigationService)
         {
             InitializeComponent();
-            // NÃO configurar DataContext aqui - o NavigationService já faz isso
-            // DataContext = viewModel;
+            _sessionService = sessionService;
+            _navigationService = navigationService;
             
             // Log para debug
             System.Diagnostics.Debug.WriteLine($"DashboardView: Construtor chamado. ViewModel != null: {viewModel != null}");
@@ -89,6 +93,20 @@ namespace VendaFlex.UI.Views.Dashboard
                 _notificationTimer.Stop();
                 _notificationTimer.Tick -= NotificationTimer_Tick;
                 _notificationTimer = null;
+            }
+        }
+
+        private void LogoutButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                _sessionService.EndSession();
+                _navigationService.NavigateToLogin();
+            }
+            catch
+            {
+                // fallback simples
+                Application.Current.Shutdown();
             }
         }
 

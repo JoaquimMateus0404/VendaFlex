@@ -1,0 +1,573 @@
+﻿<Page
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:viewModels="clr-namespace:VendaFlex.ViewModels.Sales"
+        xmlns:av="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="av" x:Class="VendaFlex.UI.Views.Sales.PdvView"
+        Background="#F5F7FA" av:DesignHeight="985.163" av:DesignWidth="1526.213">
+
+    <Page.Resources>
+        <!-- Animations -->
+        <Storyboard x:Key="ItemAddedAnimation">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                           From="0" To="1" Duration="0:0:0.4">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <ThicknessAnimation Storyboard.TargetProperty="Margin"
+                              From="0,-20,0,0" To="0,0,0,0" Duration="0:0:0.4">
+                <ThicknessAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </ThicknessAnimation.EasingFunction>
+            </ThicknessAnimation>
+        </Storyboard>
+
+        <!-- Card Style -->
+        <Style x:Key="SalesCard" TargetType="{x:Type Border}">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#E8EBF0"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="12" ShadowDepth="0" Opacity="0.06" Color="#000000"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Input Style -->
+        <Style x:Key="SalesInputStyle" TargetType="{x:Type TextBox}">
+            <Setter Property="Background" Value="#F9FAFB"/>
+            <Setter Property="Foreground" Value="#111827"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TextBox}">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#3B82F6"/>
+                                <Setter TargetName="Border" Property="Background" Value="White"/>
+                                <Setter TargetName="Border" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Button Styles -->
+        <Style x:Key="PrimaryActionButton" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="#3B82F6"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="Border"
+								Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="8"
+								Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#2563EB"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#1D4ED8"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Border" Property="Background" Value="#9CA3AF"/>
+                                <Setter Property="Foreground" Value="#D1D5DB"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SuccessButton" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="#10B981"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="Border"
+								Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="8"
+								Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#059669"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#047857"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Border" Property="Background" Value="#9CA3AF"/>
+                                <Setter Property="Foreground" Value="#D1D5DB"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SecondaryButton" TargetType="{x:Type Button}">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#6B7280"/>
+            <Setter Property="BorderBrush" Value="#D1D5DB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="Border"
+								Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="8"
+								Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#F9FAFB"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#9CA3AF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#F3F4F6"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#6B7280"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Border" Property="Background" Value="#F9FAFB"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#E5E7EB"/>
+                                <Setter Property="Foreground" Value="#D1D5DB"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Label Style -->
+        <Style x:Key="SalesLabel" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#6B7280"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
+    </Page.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="581*"/>
+            <ColumnDefinition Width="128*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- TOP HEADER -->
+        <Border Grid.Row="0" Background="White" BorderBrush="#E8EBF0" BorderThickness="0,0,0,1" Padding="24,16" Grid.ColumnSpan="2" Margin="0,0,0,870" Grid.RowSpan="2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Text="Ponto de Venda" FontSize="28" FontWeight="Bold" Foreground="#111827"/>
+                    <TextBlock Text="Sistema integrado para gerenciamento de vendas em tempo real"
+                             FontSize="13" Foreground="#6B7280" Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="#FEF3C7" Padding="12,8" CornerRadius="6" Margin="0,0,16,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Clock" Width="16" Height="16"
+                                                   Foreground="#92400E" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="Horario de Funcionamento" FontSize="11" Foreground="#92400E"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Button Style="{DynamicResource MaterialDesignIconButton}">
+                        <materialDesign:PackIcon Kind="Bell" Width="20" Height="20" Foreground="#6B7280"/>
+                    </Button>
+                    <Button Style="{DynamicResource MaterialDesignIconButton}">
+                        <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Foreground="#6B7280"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- MAIN CONTENT -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="2" Margin="0,0,0,39" Grid.RowSpan="2">
+            <Grid Margin="24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3.5*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="2.5*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- LEFT SECTION - PRODUCTS & ITEMS -->
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+
+                    <!-- Input Section -->
+                    <Border Style="{StaticResource SalesCard}" Margin="0,0,0,20">
+                        <StackPanel>
+                            <TextBlock Text="Adicionar Produtos" FontSize="14" FontWeight="Bold"
+                                     Foreground="#111827" Margin="0,0,0,16"/>
+
+                            <Grid >
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="120" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Barcode Input -->
+                                <StackPanel Grid.Column="0" Orientation="Vertical" Margin="5">
+                                    <TextBlock Style="{StaticResource SalesLabel}" Text="Codigo de Barras / SKU"/>
+                                    <TextBox Style="{StaticResource SalesInputStyle}"
+                                            Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}"
+                                            materialDesign:HintAssist.Hint="Escanear ou digitar..."/>
+                                </StackPanel>
+
+                                <!-- Quantity Input -->
+                                <StackPanel Grid.Column="1" Orientation="Vertical" Margin="5">
+                                    <TextBlock Style="{StaticResource SalesLabel}" Text="Quantidade"/>
+                                    <TextBox Style="{StaticResource SalesInputStyle}"
+                                            Text="{Binding QuantityInput, UpdateSourceTrigger=PropertyChanged}"
+                                            HorizontalContentAlignment="Center"
+                                            materialDesign:HintAssist.Hint="1"/>
+                                </StackPanel>
+
+                                <!-- Add Button -->
+                                <Button Grid.Column="2" Style="{StaticResource PrimaryActionButton}"
+                                       Command="{Binding AddByBarcodeCommand}"
+                                       VerticalAlignment="Bottom"
+                                       Margin="5">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <materialDesign:PackIcon Kind="Plus" Width="18" Height="18" Margin="0,0,6,0"/>
+                                        <TextBlock Text="Adicionar"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Items Grid -->
+                    <Border Style="{StaticResource SalesCard}" Margin="0,0,0,20">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="Itens do Carrinho" FontSize="14" FontWeight="Bold" Foreground="#111827"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Items.Count, StringFormat=Total: {0}}"
+                                         FontSize="12" Foreground="#6B7280"/>
+                            </Grid>
+
+                            <!-- DataGrid -->
+                            <DataGrid ItemsSource="{Binding Items}"
+                                     AutoGenerateColumns="False"
+                                     HeadersVisibility="Column"
+                                     CanUserAddRows="False"
+                                     CanUserDeleteRows="False"
+                                     SelectionMode="Single"
+                                     RowHeaderWidth="0"
+                                     GridLinesVisibility="None"
+                                     BorderBrush="#E8EBF0"
+                                     BorderThickness="1"
+                                     Height="350"
+                                     Foreground="#111827"
+                                     Background="#FAFBFC">
+
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="{x:Type DataGridColumnHeader}">
+                                        <Setter Property="Background" Value="#F3F4F6"/>
+                                        <Setter Property="Foreground" Value="#6B7280"/>
+                                        <Setter Property="FontSize" Value="11"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Padding" Value="8,6"/>
+                                        <Setter Property="BorderBrush" Value="#E5E7EB"/>
+                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="{x:Type DataGridRow}">
+                                        <Setter Property="Height" Value="44"/>
+                                        <Setter Property="Background" Value="White"/>
+                                        <Setter Property="BorderBrush" Value="#E8EBF0"/>
+                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                    </Style>
+                                </DataGrid.RowStyle>
+
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="#" Binding="{Binding Index}"
+                                                      Width="35" IsReadOnly="True"/>
+                                    <DataGridTextColumn Header="Produto" Binding="{Binding Name}"
+                                                      Width="*" IsReadOnly="True"/>
+                                    <DataGridTextColumn Header="Qtd" Binding="{Binding Quantity}"
+                                                      Width="60"/>
+                                    <DataGridTextColumn Header="Preco Unit." Binding="{Binding UnitPrice, StringFormat=R$ 0.00}"
+                                                      Width="100"/>
+                                    <DataGridTextColumn Header="Desc %" Binding="{Binding DiscountPercentage, StringFormat=0.00}"
+                                                      Width="70"/>
+                                    <DataGridTextColumn Header="Imposto %" Binding="{Binding TaxRate, StringFormat=0.00}"
+                                                      Width="80"/>
+                                    <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat=R$ 0.00}"
+                                                      Width="100" IsReadOnly="True"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Quick Actions -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                        <Button Style="{StaticResource SecondaryButton}" Margin="0,0,12,0" Width="140"
+                                Command="{Binding ClearCommand}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <materialDesign:PackIcon Kind="Delete" Width="16" Height="16" Margin="0,0,6,0"/>
+                                <TextBlock Text="Limpar"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource SecondaryButton}" Width="140"
+                                Command="{Binding UndoLastItemCommand}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <materialDesign:PackIcon Kind="UndoVariant" Width="16" Height="16" Margin="0,0,6,0"/>
+                                <TextBlock Text="Desfazer"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- DIVIDER -->
+                <Border Grid.Column="1" Background="#E8EBF0" Width="1" Margin="0,0,0,0"/>
+
+                <!-- RIGHT SECTION - SUMMARY & PAYMENT -->
+                <StackPanel Grid.Column="2" Orientation="Vertical" Margin="20,0,0,0">
+
+                    <!-- Summary Card -->
+                    <Border Style="{StaticResource SalesCard}" Margin="0,0,0,20">
+                        <StackPanel>
+                            <TextBlock Text="Resumo do Pedido" FontSize="14" FontWeight="Bold"
+                                     Foreground="#111827" Margin="0,0,0,16"/>
+
+                            <StackPanel Orientation="Vertical">
+                                <!-- Subtotal -->
+                                <Grid Margin="0,0,0,12" >
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Subtotal" Foreground="#6B7280" FontSize="12"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding SubTotal, StringFormat=R$ 0.00}"
+                                             Foreground="#111827" FontSize="12"/>
+                                </Grid>
+
+                                <!-- Discounts -->
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Descontos" Foreground="#6B7280" FontSize="12"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding DiscountTotal, StringFormat=-R$ 0.00}"
+                                             Foreground="#EF4444" FontSize="12"/>
+                                </Grid>
+
+                                <!-- Taxes -->
+                                <Grid Margin="0,0,0,16" >
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Impostos" Foreground="#6B7280" FontSize="12"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding TaxTotal, StringFormat=R$ 0.00}"
+                                             Foreground="#111827" FontSize="12"/>
+                                </Grid>
+
+                                <!-- Total -->
+                                <Grid Margin="0,0,0,0"  Background="#F0F9FF" >
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Total" Foreground="#111827" FontSize="14" FontWeight="Bold"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Total, StringFormat=R$ 0.00}"
+                                             Foreground="#3B82F6" FontSize="18" FontWeight="Bold"/>
+                                </Grid>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Payment Card -->
+                    <Border Style="{StaticResource SalesCard}" Margin="0,0,0,20">
+                        <StackPanel>
+                            <TextBlock Text="Pagamento" FontSize="14" FontWeight="Bold"
+                                     Foreground="#111827" Margin="0,0,0,16"/>
+
+                            <!-- Payment Input -->
+                            <StackPanel Margin="0,0,0,12">
+                                <TextBlock Style="{StaticResource SalesLabel}" Text="Valor Recebido"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="100" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Style="{StaticResource SalesInputStyle}"
+                                            Text="{Binding PaidAmountInput, UpdateSourceTrigger=PropertyChanged}"
+                                            materialDesign:HintAssist.Hint="0,00"/>
+                                    <Button Grid.Column="1" Style="{StaticResource SuccessButton}"
+                                           Command="{Binding RegisterPaymentCommand}"
+                                           Margin="0,0,0,0">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <materialDesign:PackIcon Kind="Check" Width="16" Height="16" Margin="0,0,6,0"/>
+                                            <TextBlock Text="Registrar"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Payment Summary -->
+                            <StackPanel Orientation="Vertical">
+                                <Grid Margin="0,12,0,0" >
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Valor Pago" Foreground="#6B7280" FontSize="12" Margin="0,8,0,0"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding PaidAmount, StringFormat=R$ 0.00}"
+                                             Foreground="#111827" FontSize="12"/>
+                                </Grid>
+
+                                <Grid Margin="0,0,0,0" >
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Troco" Foreground="#6B7280" FontSize="12"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Change, StringFormat=R$ 0.00}"
+                                             Foreground="#10B981" FontSize="13" FontWeight="SemiBold"/>
+                                </Grid>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Payment Methods -->
+                    <Border Style="{StaticResource SalesCard}" Margin="0,0,0,20">
+                        <StackPanel>
+                            <TextBlock Text="Forma de Pagamento" FontSize="13" FontWeight="Bold"
+                                     Foreground="#111827" Margin="0,0,0,12"/>
+
+                            <StackPanel Orientation="Vertical">
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,0,8">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <materialDesign:PackIcon Kind="Cash" Width="16" Height="16" Margin="0,0,6,0"/>
+                                        <TextBlock Text="Dinheiro"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,0,8">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <materialDesign:PackIcon Kind="CreditCard" Width="16" Height="16" Margin="0,0,6,0"/>
+                                        <TextBlock Text="Cartao"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,0,8">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <materialDesign:PackIcon Kind="Cellphone" Width="16" Height="16" Margin="0,0,6,0"/>
+                                        <TextBlock Text="Movel"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Style="{StaticResource SecondaryButton}">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <materialDesign:PackIcon Kind="FileDocument" Width="16" Height="16" Margin="0,0,6,0"/>
+                                        <TextBlock Text="Cheque"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Action Buttons -->
+                    <StackPanel Orientation="Vertical">
+                        <Button Style="{StaticResource SuccessButton}" Margin="0,0,0,8"
+                                Command="{Binding FinalizeSaleCommand}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <materialDesign:PackIcon Kind="CheckCircle" Width="18" Height="18" Margin="0,0,8,0"/>
+                                <TextBlock Text="Finalizar Venda"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource SecondaryButton}"
+                                Command="{Binding PrintCommand}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <materialDesign:PackIcon Kind="Printer" Width="16" Height="16" Margin="0,0,6,0"/>
+                                <TextBlock Text="Imprimir Recibo"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- FOOTER -->
+        <Border Grid.Row="2" Background="White" BorderBrush="#E8EBF0" BorderThickness="0,1,0,0" Padding="24,12" Grid.ColumnSpan="2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="{Binding FooterText}" FontSize="11" Foreground="#6B7280"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <TextBlock Text="Versao 1.0.0" FontSize="11" Foreground="#9CA3AF" Margin="0,0,20,0"/>
+                    <TextBlock Text=" 2025 CommerceHub" FontSize="11" Foreground="#D1D5DB"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>
