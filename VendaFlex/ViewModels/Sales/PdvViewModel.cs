@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,9 +8,10 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
+using VendaFlex.Core.Services;
+using VendaFlex.Data.Entities;
 using VendaFlex.ViewModels.Base;
 using VendaFlex.ViewModels.Commands;
-using VendaFlex.Data.Entities;
 
 namespace VendaFlex.ViewModels.Sales
 {
@@ -202,7 +204,7 @@ namespace VendaFlex.ViewModels.Sales
                 OnPropertyChanged(nameof(RemainingAmount));
                 OnPropertyChanged(nameof(ChangeDue));
                 // garantir reavaliação do botão Finalizar
-                ((AsyncCommand)FinalizeSaleCommand).RaiseCanExecuteChanged();
+                ((AsyncCommand)FinalizeSaleCommand!).RaiseCanExecuteChanged();
             }, _ => SelectedPaymentType != null && PaymentAmount > 0);
 
             RemovePaymentCommand = new RelayCommand(entry =>
@@ -214,7 +216,7 @@ namespace VendaFlex.ViewModels.Sales
                     OnPropertyChanged(nameof(RemainingAmount));
                     OnPropertyChanged(nameof(ChangeDue));
                     // garantir reavaliação do botão Finalizar
-                    ((AsyncCommand)FinalizeSaleCommand).RaiseCanExecuteChanged();
+                    ((AsyncCommand)FinalizeSaleCommand!).RaiseCanExecuteChanged();
                 }
             });
 
@@ -843,10 +845,10 @@ namespace VendaFlex.ViewModels.Sales
         }
         #endregion
 
-        #region Finalização da venda
+        #region Finalização da venda && (SelectedCustomer != null || _allowAnonymousInvoice)
         private bool CanFinalizeSale()
         {
-            return !IsBusy && CartItems.Any() && (SelectedCustomer != null || _allowAnonymousInvoice) && AmountPaid >= GrandTotal;
+            return !IsBusy && CartItems.Any()  && AmountPaid >= GrandTotal;
         }
 
         private async Task FinalizeSaleAsync()
@@ -855,35 +857,42 @@ namespace VendaFlex.ViewModels.Sales
             {
                 IsBusy = true;
                 StatusMessage = "Emitindo fatura...";
+                Debug.WriteLine("[FinalizeSaleAsync] Início da emissão de fatura");
 
                 // Garantir usuário logado
                 var userId = _sessionService.CurrentUser?.UserId ?? 0;
+                Debug.WriteLine($"[Login] UserId: {userId}");
                 if (userId <= 0)
                 {
                     StatusMessage = "Usuário não autenticado. Faça login para finalizar a venda.";
+                    Debug.WriteLine("[Login] Falha: usuário não autenticado");
                     return;
                 }
 
                 // Revalidação de estoque/validade antes de concluir
                 foreach (var ci in CartItems)
                 {
+                    Debug.WriteLine($"[Estoque] Validando produto ID {ci.ProductId}");
                     var prodResult = await _productService.GetByIdAsync(ci.ProductId);
                     if (!prodResult.Success || prodResult.Data == null)
                     {
                         StatusMessage = $"Produto ID {ci.ProductId} não encontrado.";
+                        Debug.WriteLine($"[Estoque] Produto não encontrado: {ci.ProductId}");
                         return;
                     }
 
-                    // Para itens já reservados, apenas verifica validade adicional caso tenha expirado agora
                     if (prodResult.Data.HasExpirationDate)
                     {
+                        Debug.WriteLine($"[Validade] Produto {prodResult.Data.Name} possui validade");
                         var expiredQty = await _expirationService.GetExpiredQuantityByProductAsync(ci.ProductId);
-                        // Heurística: se todas quantidades estiverem expiradas, bloquear
                         var available = await _stockService.GetAvailableQuantityAsync(ci.ProductId);
                         var sellable = Math.Max(available - Math.Max(expiredQty, 0), 0);
+                        Debug.WriteLine($"[Validade] Disponível: {available}, Expirado: {expiredQty}, Vendável: {sellable}");
+
                         if (sellable < ci.Quantity)
                         {
                             StatusMessage = $"Quantidade não vendável (validade) para o produto {prodResult.Data.Name}.";
+                            Debug.WriteLine($"[Validade] Bloqueado: {prodResult.Data.Name}");
                             return;
                         }
                     }
@@ -894,31 +903,42 @@ namespace VendaFlex.ViewModels.Sales
                 var invoiceNumber = numberResult.Success && !string.IsNullOrWhiteSpace(numberResult.Data)
                     ? numberResult.Data
                     : $"INV-{DateTime.Now:yyyyMMddHHmmss}";
+                Debug.WriteLine($"[Fatura] Número gerado: {invoiceNumber}");
 
-                // 2) Montar DTO da fatura
+                // 2) Montar DTO da fatura SelectedCustomer?.PersonId ?? 0
                 var invoice = new InvoiceDto
                 {
                     InvoiceNumber = invoiceNumber,
                     Date = DateTime.Now,
-                    PersonId = SelectedCustomer?.PersonId ?? 0,
+                    DueDate = DateTime.Now,
+                    PersonId = 101,
                     UserId = userId,
-                    Status = (int)InvoiceStatus.Paid,
+                    Status = InvoiceStatus.Paid,
                     SubTotal = SubTotal,
                     DiscountAmount = DiscountTotal,
                     TaxAmount = TaxTotal,
                     Total = GrandTotal,
-                    PaidAmount = AmountPaid
+                    PaidAmount = AmountPaid,
+                    ShippingCost = TaxTotal,
+                    Notes = "Teste de pagamento",
+                    InternalNotes = "Pagamento"
+
                 };
+                Debug.WriteLine("[Fatura] DTO montado");
 
                 // 3) Persistir fatura
                 var savedInvoice = await _invoiceService.AddAsync(invoice);
                 if (!savedInvoice.Success || savedInvoice.Data == null)
                 {
                     StatusMessage = savedInvoice.Message ?? "Falha ao salvar fatura.";
+                    if (savedInvoice.Errors?.Any() == true)
+                        StatusMessage += "\n• " + string.Join("\n• ", savedInvoice.Errors);
+                    Debug.WriteLine("[Fatura] Falha ao salvar: ", StatusMessage);
                     return;
                 }
 
                 var invoiceId = savedInvoice.Data.InvoiceId;
+                Debug.WriteLine($"[Fatura] Salva com ID: {invoiceId}");
 
                 // 4) Persistir itens
                 foreach (var item in CartItems)
@@ -937,9 +957,13 @@ namespace VendaFlex.ViewModels.Sales
                     };
 
                     var addItemResult = await _invoiceProductService.AddAsync(invItem);
+                    Debug.WriteLine($"[Item] Produto {item.ProductId} adicionado à fatura");
                     if (!addItemResult.Success)
                     {
                         StatusMessage = addItemResult.Message ?? "Falha ao salvar item de fatura.";
+                        if (addItemResult.Errors?.Any() == true)
+                            StatusMessage += "\n• " + string.Join("\n• ", addItemResult.Errors);
+                        Debug.WriteLine($"[Item] Falha ao salvar produto {item.ProductId}: Erro: ", StatusMessage);
                         return;
                     }
                 }
@@ -952,18 +976,24 @@ namespace VendaFlex.ViewModels.Sales
                         InvoiceId = invoiceId,
                         PaymentTypeId = p.PaymentTypeId,
                         Amount = p.Amount,
-                        PaymentDate = DateTime.Now
+                        PaymentDate = DateTime.Now,
+                        Notes = "Pagamento",
+                        Reference = invoiceNumber
                     };
 
                     var addPayResult = await _paymentService.AddAsync(payment);
+                    Debug.WriteLine($"[Pagamento] Tipo {p.PaymentTypeId}, Valor {p.Amount}");
                     if (!addPayResult.Success)
                     {
                         StatusMessage = addPayResult.Message ?? "Falha ao registrar pagamento.";
+                        if (addPayResult.Errors?.Any() == true)
+                            StatusMessage += "\n• " + string.Join("\n• ", addPayResult.Errors);
+                        Debug.WriteLine("[Pagamento] Falha ao registrar: ", StatusMessage);
                         return;
                     }
                 }
 
-                // 6) Atualizar estoque: reduzir quantidade e liberar reservas
+                // 6) Atualizar estoque
                 foreach (var item in CartItems)
                 {
                     var stockResult = await _stockService.GetByProductIdAsync(item.ProductId);
@@ -972,29 +1002,32 @@ namespace VendaFlex.ViewModels.Sales
                         var currentQty = stockResult.Data.Quantity;
                         var newQty = Math.Max(currentQty - item.Quantity, 0);
                         await _stockService.UpdateQuantityAsync(item.ProductId, newQty, userId);
+                        Debug.WriteLine($"[Estoque] Produto {item.ProductId} atualizado: {currentQty} → {newQty}");
 
                         await SafeReleaseReservationAsync(item.ProductId, item.Quantity);
                     }
                     else
                     {
+                        Debug.WriteLine($"[Estoque] Produto {item.ProductId} não encontrado para atualização");
                         await SafeReleaseReservationAsync(item.ProductId, item.Quantity);
                     }
                 }
 
-                // 7) Impressão conforme formato
+                // 7) Impressão
                 var cfgResult = await _companyConfigService.GetAsync();
                 if (cfgResult.Success && cfgResult.Data != null)
                 {
                     var cfg = cfgResult.Data;
-                    // Recarregar itens persistidos para valores finais
                     var itemsResult = await _invoiceProductService.GetByInvoiceIdAsync(invoiceId);
                     var items = itemsResult.Success && itemsResult.Data != null ? itemsResult.Data : Enumerable.Empty<InvoiceProductDto>();
+                    Debug.WriteLine($"[Impressão] Formato: {cfg.InvoiceFormat}");
                     await _printService.PrintAsync(cfg, savedInvoice.Data, items, cfg.InvoiceFormat.ToString());
                 }
 
                 StatusMessage = $"Fatura {invoiceNumber} emitida com sucesso.";
+                Debug.WriteLine("[Finalização] Venda concluída com sucesso");
 
-                // 8) Limpar carrinho e pagamentos
+                // 8) Limpar carrinho
                 CartItems.Clear();
                 Payments.Clear();
                 RecalculateTotals();
@@ -1005,12 +1038,16 @@ namespace VendaFlex.ViewModels.Sales
             catch (Exception ex)
             {
                 StatusMessage = $"Erro ao finalizar venda: {ex.Message}";
+                Debug.WriteLine($"[Erro] {ex}");
             }
             finally
             {
                 IsBusy = false;
+                Debug.WriteLine("[FinalizeSaleAsync] Fim do processo");
             }
         }
+
+
         #endregion
 
         // Poderíamos ter um método para parar timer quando necessário

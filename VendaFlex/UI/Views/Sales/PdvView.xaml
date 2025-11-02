@@ -75,6 +75,42 @@
             <!-- Converters -->
             <converters:HeightToScrollBarVisibilityConverter x:Key="HeightToScrollBarVisibilityConverter" />
 
+            <!-- Página: Estilo personalizado de ComboBox -->
+            <Style x:Key="PdvComboBoxItem" TargetType="ComboBoxItem">
+                <Setter Property="MinHeight" Value="36"/>
+                <Setter Property="Padding" Value="12,6"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                
+                <Setter Property="materialDesign:RippleAssist.Feedback" Value="{StaticResource PrimaryBrush}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{StaticResource SurfaceVariantBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                        <Setter Property="Foreground" Value="White"/>
+                    </Trigger>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="PdvComboBox" TargetType="ComboBox">
+                <Setter Property="Height" Value="48"/>
+                <Setter Property="MinWidth" Value="160"/>
+                <Setter Property="Padding" Value="12,0"/>
+                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderLightBrush}"/>
+                <Setter Property="BorderThickness" Value="2"/>
+                
+                <Setter Property="ItemContainerStyle" Value="{StaticResource PdvComboBoxItem}"/>
+            </Style>
+
         </ResourceDictionary>
     </Page.Resources>
 
@@ -141,7 +177,7 @@
                         <Border Background="{StaticResource SuccessBrush}" Opacity="0.15" 
                                Padding="12,6" CornerRadius="20" Margin="0,0,12,0">
                             <StackPanel Orientation="Horizontal">
-                                <Ellipse Width="8" Height="8" Fill="{StaticResource SuccessBrush}" 
+                                <Ellipse Width="8" Height="8" Fill="White" 
                                         Margin="0,0,8,0" VerticalAlignment="Center"/>
                                 <TextBlock Text="Sistema Online" FontSize="11" FontWeight="SemiBold"
                                          Foreground="{StaticResource SuccessBrush}" VerticalAlignment="Center"/>
@@ -234,18 +270,19 @@
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="Account" Width="24" Height="24"
                                        Foreground="{StaticResource PrimaryBrush}"
-                                       VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                       VerticalAlignment="Center" Margin="0,0,12,0"
+                                    />
                                     <TextBlock Text="Cliente" FontSize="17" FontWeight="Bold" 
-                         Foreground="{StaticResource TextPrimaryBrush}" 
-                         VerticalAlignment="Center"/>
+                                         Foreground="{StaticResource TextPrimaryBrush}" 
+                                         VerticalAlignment="Center"/>
                                 </StackPanel>
 
                                 <Button Content="Consumidor Final" 
-                   Style="{DynamicResource MaterialDesignFlatButton}"
-                   FontSize="12" Foreground="{StaticResource PrimaryBrush}"
-                   HorizontalAlignment="Right" Height="32" Padding="12,0"
-                   materialDesign:ButtonAssist.CornerRadius="8"
-                   Command="{Binding SelectAnonymousCustomerCommand}"/>
+                                   Style="{DynamicResource MaterialDesignFlatButton}"
+                                   FontSize="12" Foreground="{StaticResource PrimaryBrush}"
+                                   HorizontalAlignment="Right" Height="32" Padding="12,0"
+                                   materialDesign:ButtonAssist.CornerRadius="8"
+                                   Command="{Binding SelectAnonymousCustomerCommand}"/>
                             </Grid>
 
                             <Grid>
@@ -687,7 +724,7 @@
 
                             <StackPanel>
                                 <TextBlock Text="Forma de Pagamento" Style="{StaticResource ModernLabel}"/>
-                                <ComboBox Style="{StaticResource ModernComboBox}"
+                                <ComboBox Style="{StaticResource PdvComboBox}"
                                          ItemsSource="{Binding PaymentTypes}"
                                          SelectedItem="{Binding SelectedPaymentType}"
                                          DisplayMemberPath="Name" Margin="0,0,0,16"/>
@@ -881,7 +918,7 @@
                                     </Grid>
                                 </Border>
                                 <!-- Category Filter -->
-                                <ComboBox Grid.Column="2" Style="{StaticResource ModernComboBox}"
+                                <ComboBox Grid.Column="2" Style="{StaticResource PdvComboBox}"
                                      ItemsSource="{Binding CatalogCategories}"
                                      SelectedItem="{Binding SelectedCatalogCategory}"
                                      DisplayMemberPath="Name"

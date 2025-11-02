@@ -1,3 +1,5 @@
+using VendaFlex.Data.Entities;
+
 namespace VendaFlex.Core.DTOs
 {
     public class InvoiceDto
@@ -8,7 +10,7 @@ namespace VendaFlex.Core.DTOs
         public DateTime? DueDate { get; set; }
         public int PersonId { get; set; }
         public int UserId { get; set; }
-        public int Status { get; set; }
+        public InvoiceStatus Status { get; set; }
         public decimal SubTotal { get; set; }
         public decimal TaxAmount { get; set; }
         public decimal DiscountAmount { get; set; }

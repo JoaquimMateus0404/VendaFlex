@@ -1,5 +1,6 @@
 using AutoMapper;
 using FluentValidation;
+using System.Diagnostics;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
 using VendaFlex.Core.Utils;
@@ -47,6 +48,7 @@ namespace VendaFlex.Core.Services
             }
             catch (Exception ex)
             {
+                Debug.WriteLine("Erro na class de servico Invoice: ", ex.Message);
                 return OperationResult<InvoiceDto>.CreateFailure("Erro ao criar fatura.", new[] { ex.Message });
             }
         }

@@ -395,7 +395,7 @@ namespace VendaFlex.ViewModels.Dashboard
 
                 // Pagamentos Pendentes (Status Confirmed = 2 significa confirmado mas não totalmente pago)
                 var pendingInvoices = allInvoices
-                    .Where(i => i.Status == (int)InvoiceStatus.Confirmed)
+                    .Where(i => i.Status == InvoiceStatus.Confirmed)
                     .ToList();
 
                 var pendingAmount = pendingInvoices.Sum(i => i.Total - i.PaidAmount);

@@ -44,8 +44,7 @@ namespace VendaFlex.Core.DTOs.Validators
                 .WithMessage("Total deve ser igual a SubTotal + TaxAmount - DiscountAmount + ShippingCost.");
 
             RuleFor(x => x.PaidAmount)
-                .GreaterThanOrEqualTo(0).WithMessage("Valor pago não pode ser negativo.")
-                .LessThanOrEqualTo(x => x.Total).WithMessage("Valor pago não pode exceder o total.");
+                .GreaterThanOrEqualTo(0).WithMessage("Valor pago não pode ser negativo.");
 
             RuleFor(x => x.Notes)
                 .MaximumLength(1000).When(x => !string.IsNullOrWhiteSpace(x.Notes));

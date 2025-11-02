@@ -673,8 +673,8 @@ namespace VendaFlex.Data
                     Action = action,
                     EntityName = entry.Entity.GetType().Name,
                     EntityId = TryGetEntityId(entry),
-                    OldValues = oldValues.Count > 0 ? JsonSerializer.Serialize(oldValues) : null,
-                    NewValues = newValues.Count > 0 ? JsonSerializer.Serialize(newValues) : null,
+                    OldValues = oldValues.Count > 0 ? JsonSerializer.Serialize(oldValues) : "Null",
+                    NewValues = newValues.Count > 0 ? JsonSerializer.Serialize(newValues) : "Null",
                     Timestamp = utcNow,
                     IpAddress = GetLocalIpAddress(),
                     UserAgent = GetUserAgent()

@@ -1,7 +1,8 @@
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using VendaFlex.Data.Entities;
 
 namespace VendaFlex.Data.Repositories
@@ -42,9 +43,17 @@ namespace VendaFlex.Data.Repositories
 
         public async Task<Invoice> AddAsync(Invoice entity)
         {
-            await _context.Invoices.AddAsync(entity);
-            await _context.SaveChangesAsync();
-            return entity;
+            try
+            {
+                await _context.Invoices.AddAsync(entity);
+                await _context.SaveChangesAsync();
+                return entity;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Erro no Repositorio Invoice: ", ex.Message);
+                throw;
+            }
         }
 
         public async Task<Invoice> UpdateAsync(Invoice entity)
