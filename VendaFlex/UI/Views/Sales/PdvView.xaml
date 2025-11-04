@@ -73,6 +73,7 @@
       </Style>
   <!-- Converters -->
   <converters:HeightToScrollBarVisibilityConverter x:Key="HeightToScrollBarVisibilityConverter"/>
+  <infconv:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
   <infconv:DecimalZeroWhenEmptyConverter x:Key="DecimalZeroWhenEmptyConverter"/>
   <infconv:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
       <!-- Página: Estilo personalizado de ComboBox -->
@@ -243,7 +244,31 @@
                           <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <materialDesign:PackIcon Grid.Column="0" Kind="Magnify" Width="22" Height="22" Foreground="{StaticResource TextTertiaryBrush}" Margin="16,0,12,0" VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="1" Style="{StaticResource ModernTextBox}" Tag="Buscar cliente por nome, NIF..." Text="{Binding CustomerSearchTerm, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" Margin="0" FontSize="14" Height="Auto"/>
+                        <TextBox Grid.Column="1" x:Name="CustomerSearchBox" Style="{StaticResource ModernTextBox}" Tag="Buscar cliente por nome, NIF..." Text="{Binding CustomerSearchTerm, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" Margin="0" FontSize="14" Height="Auto"/>
+                        <!-- Popup de Sugestões de Clientes -->
+                        <Popup IsOpen="{Binding CustomerSuggestions.Count, Mode=OneWay, Converter={StaticResource CountToBoolConverter}}"
+                               PlacementTarget="{Binding ElementName=CustomerSearchBox}"
+                               Placement="Bottom" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Slide">
+                          <Border Background="{StaticResource PdvSurfaceLightAlt}" CornerRadius="8" BorderThickness="1" BorderBrush="{StaticResource PdvBorderLightAlt}" MaxHeight="300" MinWidth="400" Effect="{DynamicResource MaterialDesignShadowDepth2}">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                              <ItemsControl ItemsSource="{Binding CustomerSuggestions}">
+                                <ItemsControl.ItemTemplate>
+                                  <DataTemplate>
+                                    <Button Command="{Binding DataContext.SelectCustomerFromSuggestionsCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                            CommandParameter="{Binding}"
+                                            Style="{DynamicResource MaterialDesignFlatButton}"
+                                            Padding="1" HorizontalContentAlignment="Left">
+                                      <StackPanel>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding TaxId}" FontSize="15" Foreground="#64748B"/>
+                                      </StackPanel>
+                                    </Button>
+                                  </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                              </ItemsControl>
+                            </ScrollViewer>
+                          </Border>
+                        </Popup>
                       </Grid>
                     </Border>
                     <!-- Exibir Cliente Selecionado -->
@@ -256,6 +281,9 @@
                   </Grid>
                 </StackPanel>
               </Border>
+              
+              
+
               <!-- Quick Product Add -->
               <Border Grid.Row="1" Style="{StaticResource GlassCard}" Margin="0,0,0,16" Background="{StaticResource PdvSurfaceLight}" BorderBrush="{StaticResource PdvBorderLightAlt}">
                 <Grid>
@@ -954,6 +982,25 @@
               </ItemsControl.ItemTemplate>
             </ItemsControl>
           </ScrollViewer>
+          
+          <!-- Catalog Toast Feedback -->
+          <Border Grid.RowSpan="3" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,24"
+                  Background="#10B981" CornerRadius="22" Padding="16,10" Panel.ZIndex="100">
+            <Border.Style>
+              <Style TargetType="Border">
+                <Setter Property="Visibility" Value="Collapsed"/>
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsCatalogToastVisible}" Value="True">
+                    <Setter Property="Visibility" Value="Visible"/>
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Border.Style>
+            <StackPanel Orientation="Horizontal">
+              <materialDesign:PackIcon Kind="CheckCircle" Width="20" Height="20" Foreground="White"/>
+              <TextBlock Text="{Binding CatalogToastMessage}" Margin="8,0,0,0" Foreground="White" FontWeight="SemiBold"/>
+            </StackPanel>
+          </Border>
         </Grid>
       </Border>
     </Grid>

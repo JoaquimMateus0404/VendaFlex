@@ -96,9 +96,9 @@ namespace VendaFlex.Data.Entities
 
     public enum PersonType
     {
-        Customer = 1,
-        Supplier = 2,
-        Employee = 3,
+        Customer = 1, /// Cliente
+        Supplier = 2, /// Fornecedor
+        Employee = 3, /// Funcionário
         Both = 4  // Cliente e Fornecedor
     }
 }

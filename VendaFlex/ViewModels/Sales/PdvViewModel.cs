@@ -41,6 +41,7 @@ namespace VendaFlex.ViewModels.Sales
         // Cliente
         private PersonDto? _selectedCustomer;
         private string _customerSearchTerm = string.Empty;
+    private ObservableCollection<PersonDto> _customerSuggestions = new();
 
         // Produto / Busca rápida
         private string _productSearchTerm = string.Empty;
@@ -68,6 +69,10 @@ namespace VendaFlex.ViewModels.Sales
         private ObservableCollection<PaymentTypeDto> _paymentTypes = new();
         private PaymentTypeDto? _selectedPaymentType;
         private decimal _paymentAmount;
+        
+    // Feedback do Catálogo
+    private string _catalogToastMessage = string.Empty;
+    private bool _isCatalogToastVisible;
 
         // Estado UI
         private bool _isBusy;
@@ -116,12 +121,22 @@ namespace VendaFlex.ViewModels.Sales
             // Catálogo
             OpenCatalogCommand = new AsyncCommand(OpenCatalogAsync, () => !IsBusy);
             CloseCatalogCommand = new RelayCommand(_ => IsCatalogOpen = false);
+            SelectCustomerFromSuggestionsCommand = new RelayCommand(async p =>
+            {
+                if (p is PersonDto person)
+                {
+                    SelectedCustomer = person;
+                    CustomerSearchTerm = person.Name;
+                    CustomerSuggestions.Clear();
+                    await Task.CompletedTask;
+                }
+            });
             AddProductFromCatalogCommand = new RelayCommand(async p =>
             {
                 if (p is ProductDto prod)
                 {
                     await AddProductToCartAsync(prod, 1);
-                    IsCatalogOpen = false;
+                    _ = ShowCatalogToastAsync($"{prod.Name} adicionado ao carrinho");
                 }
             });
 
@@ -217,7 +232,7 @@ namespace VendaFlex.ViewModels.Sales
 
             FinalizeSaleCommand = new AsyncCommand(FinalizeSaleAsync, CanFinalizeSale);
 
-            SelectAnonymousCustomerCommand = new RelayCommand(_ => SelectAnonymousCustomer());
+            SelectAnonymousCustomerCommand = new RelayCommand(async _ => await SelectAnonymousCustomerAsync());
 
             // Inicialização imediata
             _ = InitializeAsync();
@@ -306,7 +321,18 @@ namespace VendaFlex.ViewModels.Sales
         public string CustomerSearchTerm
         {
             get => _customerSearchTerm;
-            set => Set(ref _customerSearchTerm, value);
+            set
+            {
+                if (Set(ref _customerSearchTerm, value))
+                {
+                    _ = SearchCustomersAsync();
+                }
+            }
+        }
+        public ObservableCollection<PersonDto> CustomerSuggestions
+        {
+            get => _customerSuggestions;
+            set => Set(ref _customerSuggestions, value);
         }
 
         // Produto
@@ -423,6 +449,18 @@ namespace VendaFlex.ViewModels.Sales
             set => Set(ref _paymentAmount, value);
         }
 
+        // Feedback do Catálogo (toast)
+        public string CatalogToastMessage
+        {
+            get => _catalogToastMessage;
+            set => Set(ref _catalogToastMessage, value);
+        }
+        public bool IsCatalogToastVisible
+        {
+            get => _isCatalogToastVisible;
+            set => Set(ref _isCatalogToastVisible, value);
+        }
+
         public decimal AmountPaid => Payments.Sum(p => p.Amount);
         public decimal RemainingAmount => Math.Max(GrandTotal - AmountPaid, 0);
         public decimal ChangeDue => AmountPaid > GrandTotal ? AmountPaid - GrandTotal : 0;
@@ -434,9 +472,10 @@ namespace VendaFlex.ViewModels.Sales
         public ICommand AddProductByCodeCommand { get; }
         public ICommand AddSelectedSuggestionCommand { get; }
 
-        public ICommand OpenCatalogCommand { get; }
+    public ICommand OpenCatalogCommand { get; }
         public ICommand CloseCatalogCommand { get; }
         public ICommand AddProductFromCatalogCommand { get; }
+    public ICommand SelectCustomerFromSuggestionsCommand { get; }
 
         public ICommand IncreaseItemQtyCommand { get; }
         public ICommand DecreaseItemQtyCommand { get; }
@@ -477,7 +516,7 @@ namespace VendaFlex.ViewModels.Sales
 
                 if (_allowAnonymousInvoice)
                 {
-                    SelectAnonymousCustomer();
+                    await SelectAnonymousCustomerAsync();
                 }
 
                 InitializeClock();
@@ -517,6 +556,21 @@ namespace VendaFlex.ViewModels.Sales
             catch
             {
                 UserName = "Admin User";
+            }
+        }
+
+        private async Task ShowCatalogToastAsync(string message)
+        {
+            CatalogToastMessage = message;
+            IsCatalogToastVisible = true;
+            try
+            {
+                await Task.Delay(1800);
+            }
+            catch { /* ignore */ }
+            finally
+            {
+                IsCatalogToastVisible = false;
             }
         }
 
@@ -856,23 +910,74 @@ namespace VendaFlex.ViewModels.Sales
         #endregion
 
         #region Cliente
-        private void SelectAnonymousCustomer()
+        private async Task SearchCustomersAsync()
         {
-            // Prepara um "cliente anônimo" (Consumidor Final)
-            SelectedCustomer = new PersonDto
+            try
             {
-                PersonId = 0,
-                Name = "Consumidor Final",
-                Type = PersonType.Customer,
-                IsActive = true
-            };
+                var term = CustomerSearchTerm?.Trim();
+                if (string.IsNullOrWhiteSpace(term))
+                {
+                    CustomerSuggestions.Clear();
+                    return;
+                }
+
+                var result = await _personService.SearchAsync(term);
+                IEnumerable<PersonDto> items = Enumerable.Empty<PersonDto>();
+                if (result.Success && result.Data != null)
+                {
+                    items = result.Data.Where(p => p.IsActive && p.Type == PersonType.Customer);
+                }
+
+                CustomerSuggestions = new ObservableCollection<PersonDto>(items.Take(10));
+            }
+            catch
+            {
+                CustomerSuggestions.Clear();
+            }
+        }
+
+        private async Task SelectAnonymousCustomerAsync()
+        {
+            const int anonymousId = 1;
+            try
+            {
+                var res = await _personService.GetByIdAsync(anonymousId);
+                if (res.Success && res.Data != null)
+                {
+                    SelectedCustomer = res.Data;
+                }
+                else
+                {
+                    SelectedCustomer = new PersonDto
+                    {
+                        PersonId = anonymousId,
+                        Name = "Consumidor Final",
+                        Type = PersonType.Customer,
+                        IsActive = true
+                    };
+                }
+                CustomerSearchTerm = string.Empty;
+                CustomerSuggestions.Clear();
+            }
+            catch
+            {
+                SelectedCustomer = new PersonDto
+                {
+                    PersonId = anonymousId,
+                    Name = "Consumidor Final",
+                    Type = PersonType.Customer,
+                    IsActive = true
+                };
+                CustomerSearchTerm = string.Empty;
+                CustomerSuggestions.Clear();
+            }
         }
         #endregion
 
-        #region Finalização da venda && (SelectedCustomer != null || _allowAnonymousInvoice)
+        #region Finalização da venda
         private bool CanFinalizeSale()
         {
-            return !IsBusy && CartItems.Any()  && AmountPaid >= GrandTotal;
+            return !IsBusy && CartItems.Any()  && AmountPaid >= GrandTotal && (SelectedCustomer != null || _allowAnonymousInvoice);
         }
 
         private async Task FinalizeSaleAsync()
@@ -929,13 +1034,13 @@ namespace VendaFlex.ViewModels.Sales
                     : $"INV-{DateTime.Now:yyyyMMddHHmmss}";
                 Debug.WriteLine($"[Fatura] Número gerado: {invoiceNumber}");
 
-                // 2) Montar DTO da fatura SelectedCustomer?.PersonId ?? 0
+                // 2) Montar DTO da fatura
                 var invoice = new InvoiceDto
                 {
                     InvoiceNumber = invoiceNumber,
                     Date = DateTime.Now,
                     DueDate = DateTime.Now,
-                    PersonId = 101,
+                    PersonId = SelectedCustomer?.PersonId ?? 1,
                     UserId = userId,
                     Status = InvoiceStatus.Paid,
                     SubTotal = SubTotal,

@@ -15,17 +15,19 @@ namespace VendaFlex.Infrastructure.Services
     public class ReceiptPrintService : IReceiptPrintService
     {
         private readonly IProductService _productService;
+        private readonly IPersonService _personService;
 
-        public ReceiptPrintService(IProductService productService)
+        public ReceiptPrintService(IProductService productService, IPersonService personService)
         {
             _productService = productService;
+            _personService = personService;
         }
 
         // Imprimir fatura
-        // Carregar dados necessários e construir o documento
+        // Carregar dados necessï¿½rios e construir o documento
         public async Task PrintAsync(CompanyConfigDto cfg, InvoiceDto invoice, IEnumerable<InvoiceProductDto> items, string format)
         {
-            // Carregar mapa de produtos para nomes/descrições (mínimo de chamadas)
+            // Carregar mapa de produtos para nomes/descriï¿½ï¿½es (mï¿½nimo de chamadas)
             var productMap = new Dictionary<int, ProductDto>();
             foreach (var pid in items.Select(i => i.ProductId).Distinct())
             {
@@ -43,15 +45,33 @@ namespace VendaFlex.Infrastructure.Services
                 }
             }
 
+            // Buscar dados do cliente somente se a configuraÃ§Ã£o exigir
+            PersonDto? customer = null;
+            if (cfg.IncludeCustomerData && invoice.PersonId > 0)
+            {
+                try
+                {
+                    var pres = await _personService.GetByIdAsync(invoice.PersonId);
+                    if (pres.Success && pres.Data != null)
+                    {
+                        customer = pres.Data;
+                    }
+                }
+                catch
+                {
+                    // Ignorar falhas ao obter cliente
+                }
+            }
+
             FlowDocument doc;
             var formatType = ParseFormat(format);
             if (formatType == CompanyConfig.InvoiceFormatType.Rolo)
             {
-                doc = BuildRollDocument(cfg, invoice, items, productMap);
+                doc = BuildRollDocument(cfg, invoice, items, productMap, customer);
             }
             else
             {
-                doc = BuildA4Document(cfg, invoice, items, productMap);
+                doc = BuildA4Document(cfg, invoice, items, productMap, customer);
             }
 
             await Application.Current.Dispatcher.InvokeAsync(() =>
@@ -80,7 +100,7 @@ namespace VendaFlex.Infrastructure.Services
         }
 
         // Construir documento para formato A4
-        private FlowDocument BuildA4Document(CompanyConfigDto cfg, InvoiceDto invoice, IEnumerable<InvoiceProductDto> items, IDictionary<int, ProductDto> productMap)
+        private FlowDocument BuildA4Document(CompanyConfigDto cfg, InvoiceDto invoice, IEnumerable<InvoiceProductDto> items, IDictionary<int, ProductDto> productMap, PersonDto? customer)
         {
             var doc = new FlowDocument
             {
@@ -90,7 +110,7 @@ namespace VendaFlex.Infrastructure.Services
                 ColumnWidth = double.PositiveInfinity
             };
 
-            // Cabeçalho
+            // Cabeï¿½alho
             var header = new Paragraph
             {
                 TextAlignment = TextAlignment.Center,
@@ -108,19 +128,39 @@ namespace VendaFlex.Infrastructure.Services
             invInfo.Inlines.Add(new Run($"Fatura: {invoice.InvoiceNumber}    Data: {invoice.Date:dd/MM/yyyy HH:mm}"));
             doc.Blocks.Add(invInfo);
 
+            // Dados do cliente (opcional)
+            if (customer != null)
+            {
+                var cust = new Paragraph { Margin = new Thickness(0, 0, 0, 10) };
+                cust.Inlines.Add(new Run($"Cliente: {customer.Name}"));
+                if (!string.IsNullOrWhiteSpace(customer.TaxId))
+                    cust.Inlines.Add(new Run($"    NIF: {customer.TaxId}"));
+                if (!string.IsNullOrWhiteSpace(customer.PhoneNumber))
+                    cust.Inlines.Add(new Run($"    Tel: {customer.PhoneNumber}"));
+                if (!string.IsNullOrWhiteSpace(customer.Address))
+                {
+                    var addrLine = $"EndereÃ§o: {customer.Address}";
+                    if (!string.IsNullOrWhiteSpace(customer.City)) addrLine += $", {customer.City}";
+                    if (!string.IsNullOrWhiteSpace(customer.State)) addrLine += $" - {customer.State}";
+                    if (!string.IsNullOrWhiteSpace(customer.PostalCode)) addrLine += $"  CEP: {customer.PostalCode}";
+                    cust.Inlines.Add(new Run($"\n{addrLine}"));
+                }
+                doc.Blocks.Add(cust);
+            }
+
             // Tabela de Itens
             var table = new Table();
             table.Columns.Add(new TableColumn { Width = new GridLength(50) });   // Qtd
-            table.Columns.Add(new TableColumn { Width = new GridLength(300) });  // Descrição
-            table.Columns.Add(new TableColumn { Width = new GridLength(100) });  // Preço
+            table.Columns.Add(new TableColumn { Width = new GridLength(300) });  // Descriï¿½ï¿½o
+            table.Columns.Add(new TableColumn { Width = new GridLength(100) });  // Preï¿½o
             table.Columns.Add(new TableColumn { Width = new GridLength(100) });  // Desc
             table.Columns.Add(new TableColumn { Width = new GridLength(120) });  // Total
 
             var headerGroup = new TableRowGroup();
             var headerRow = new TableRow();
             headerRow.Cells.Add(HeaderCell("Qtd"));
-            headerRow.Cells.Add(HeaderCell("Descrição"));
-            headerRow.Cells.Add(HeaderCell("Preço"));
+            headerRow.Cells.Add(HeaderCell("Descriï¿½ï¿½o"));
+            headerRow.Cells.Add(HeaderCell("Preï¿½o"));
             headerRow.Cells.Add(HeaderCell("Desc"));
             headerRow.Cells.Add(HeaderCell("Total"));
             headerGroup.Rows.Add(headerRow);
@@ -174,7 +214,7 @@ namespace VendaFlex.Infrastructure.Services
         }
 
         // Construir documento para formato rolo (80mm)
-        private FlowDocument BuildRollDocument(CompanyConfigDto cfg, InvoiceDto invoice, IEnumerable<InvoiceProductDto> items, IDictionary<int, ProductDto> productMap)
+        private FlowDocument BuildRollDocument(CompanyConfigDto cfg, InvoiceDto invoice, IEnumerable<InvoiceProductDto> items, IDictionary<int, ProductDto> productMap, PersonDto? customer)
         {
             // 80mm ~ 302 DIP (96 dpi)
             const double rollWidth = 302;
@@ -196,8 +236,28 @@ namespace VendaFlex.Infrastructure.Services
             invInfo.Inlines.Add(new Run($"Fatura: {invoice.InvoiceNumber}\n{invoice.Date:dd/MM/yyyy HH:mm}"));
             doc.Blocks.Add(invInfo);
 
-            // Cabeçalho simples
-            doc.Blocks.Add(new Paragraph(new Run("QTD  DESCRIÇÃO              TOTAL")) { FontWeight = FontWeights.Bold });
+            // Dados do cliente (opcional)
+            if (customer != null)
+            {
+                var cust = new Paragraph { TextAlignment = TextAlignment.Left, Margin = new Thickness(0, 0, 0, 5) };
+                cust.Inlines.Add(new Run($"Cliente: {customer.Name}"));
+                if (!string.IsNullOrWhiteSpace(customer.TaxId))
+                    cust.Inlines.Add(new Run($"\nNIF: {customer.TaxId}"));
+                if (!string.IsNullOrWhiteSpace(customer.PhoneNumber))
+                    cust.Inlines.Add(new Run($"\nTel: {customer.PhoneNumber}"));
+                if (!string.IsNullOrWhiteSpace(customer.Address))
+                {
+                    var addrLine = customer.Address;
+                    if (!string.IsNullOrWhiteSpace(customer.City)) addrLine += $", {customer.City}";
+                    if (!string.IsNullOrWhiteSpace(customer.State)) addrLine += $" - {customer.State}";
+                    if (!string.IsNullOrWhiteSpace(customer.PostalCode)) addrLine += $"  CEP: {customer.PostalCode}";
+                    cust.Inlines.Add(new Run($"\nEndereÃ§o: {addrLine}"));
+                }
+                doc.Blocks.Add(cust);
+            }
+
+            // Cabeï¿½alho simples
+            doc.Blocks.Add(new Paragraph(new Run("QTD  DESCRIï¿½ï¿½O              TOTAL")) { FontWeight = FontWeights.Bold });
             doc.Blocks.Add(new Paragraph(new Run(new string('-', 34))) { Margin = new Thickness(0, 0, 0, 2) });
 
             foreach (var it in items)
