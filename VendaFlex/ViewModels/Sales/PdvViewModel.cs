@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Threading;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
-using VendaFlex.Core.Services;
 using VendaFlex.Data.Entities;
 using VendaFlex.ViewModels.Base;
 using VendaFlex.ViewModels.Commands;
@@ -859,7 +854,7 @@ namespace VendaFlex.ViewModels.Sales
                 StatusMessage = "Emitindo fatura...";
                 Debug.WriteLine("[FinalizeSaleAsync] Início da emissão de fatura");
 
-                // Garantir usuário logado
+                // Garantir usuário logado 
                 var userId = _sessionService.CurrentUser?.UserId ?? 0;
                 Debug.WriteLine($"[Login] UserId: {userId}");
                 if (userId <= 0)
