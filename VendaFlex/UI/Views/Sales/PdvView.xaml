@@ -163,7 +163,7 @@
               <Border Background="{StaticResource SuccessBrush}" Opacity="0.15" Padding="12,6" CornerRadius="20" Margin="0,0,12,0">
                 <StackPanel Orientation="Horizontal">
                   <Ellipse Width="8" Height="8" Fill="White" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                  <TextBlock Text="Sistema Online" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource SuccessBrush}" VerticalAlignment="Center"/>
+                  <TextBlock Text="Sistema Online" FontSize="11" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
                 </StackPanel>
               </Border>
               <Border Background="{StaticResource SurfaceVariantBrush}" Padding="12,6" CornerRadius="8" BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="1">
@@ -244,7 +244,7 @@
                           <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <materialDesign:PackIcon Grid.Column="0" Kind="Magnify" Width="22" Height="22" Foreground="{StaticResource TextTertiaryBrush}" Margin="16,0,12,0" VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="1" x:Name="CustomerSearchBox" Style="{StaticResource ModernTextBox}" Tag="Buscar cliente por nome, NIF..." Text="{Binding CustomerSearchTerm, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" Margin="0" FontSize="14" Height="Auto"/>
+                        <TextBox Grid.Column="1" x:Name="CustomerSearchBox"  Tag="Buscar cliente por nome, NIF..." Text="{Binding CustomerSearchTerm, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" Margin="0" FontSize="14" Height="Auto"/>
                         <!-- Popup de Sugestões de Clientes -->
                         <Popup IsOpen="{Binding CustomerSuggestions.Count, Mode=OneWay, Converter={StaticResource CountToBoolConverter}}"
                                PlacementTarget="{Binding ElementName=CustomerSearchBox}"
@@ -315,7 +315,7 @@
                         </Grid.ColumnDefinitions>
                         <materialDesign:PackIcon Grid.Column="0" Kind="Magnify" Width="22" Height="22" Foreground="{StaticResource TextTertiaryBrush}" Margin="16,0,12,0" VerticalAlignment="Center"/>
                         <TextBox Grid.Column="1" x:Name="ProductSearchBox"
- Style="{StaticResource ModernTextBox}" Tag="Código de Barras / SKU / Nome..." Text="{Binding ProductSearchTerm, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" Margin="0" FontSize="14" Height="Auto">
+  Tag="Código de Barras / SKU / Nome..." Text="{Binding ProductSearchTerm, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" Margin="0" FontSize="14" Height="Auto">
                           <TextBox.InputBindings>
                             <KeyBinding Key="Enter" Command="{Binding AddProductByCodeCommand}"/>
                           </TextBox.InputBindings>
@@ -380,7 +380,19 @@
                   </Grid>
                   <!-- Cart Items DataGrid with Modern Styling -->
                   <Border Grid.Row="1" Background="{StaticResource PdvSurfaceLightAlt}" CornerRadius="12" BorderBrush="{StaticResource PdvBorderLightAlt}" BorderThickness="1">
-                    <DataGrid ItemsSource="{Binding CartItems}" AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Single" RowHeaderWidth="0" GridLinesVisibility="None" Background="Transparent" Foreground="{StaticResource TextTertiaryBrush}" BorderThickness="0" VerticalScrollBarVisibility="Auto">
+                    <DataGrid ItemsSource="{Binding CartItems}"
+                              AutoGenerateColumns="False"
+                              HeadersVisibility="Column"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              SelectionMode="Single"
+                              RowHeaderWidth="0"
+                              GridLinesVisibility="None"
+                              Background="Transparent"
+                              Foreground="{StaticResource TextTertiaryBrush}"
+                              BorderThickness="0"
+                              AlternatingRowBackground="{StaticResource PdvSurfaceVariantLight}"
+                              VerticalScrollBarVisibility="Auto">
                       <DataGrid.ColumnHeaderStyle>
                         <Style TargetType="DataGridColumnHeader">
                           <Setter Property="Background" Value="{StaticResource PdvSurfaceVariantLight}"/>
@@ -396,11 +408,18 @@
                         <Style TargetType="DataGridRow">
                           <Setter Property="Height" Value="56"/>
                           <Setter Property="Background" Value="Transparent"/>
+                          <Setter Property="SnapsToDevicePixels" Value="True"/>
                           <Setter Property="BorderBrush" Value="{StaticResource DividerBrush}"/>
                           <Setter Property="BorderThickness" Value="0,0,0,1"/>
                           <Style.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                               <Setter Property="Background" Value="{StaticResource PdvSurfaceVariantLight}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                              <Setter Property="Background" Value="White"/>
+                              <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                              <Setter Property="BorderBrush" Value="{StaticResource PrimaryLightBrush}"/>
+                              <Setter Property="BorderThickness" Value="3,0,0,1"/>
                             </Trigger>
                           </Style.Triggers>
                         </Style>
@@ -428,23 +447,26 @@
                             </Style>
                           </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <!-- Quantity Column with Increment/Decrement Buttons -->
-                        <DataGridTemplateColumn Header="Qtd" Width="140">
+                        <!-- Quantity Column editable + botões -->
+                        <DataGridTemplateColumn Header="Qtd" Width="120">
                           <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                               <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Button Style="{DynamicResource MaterialDesignIconButton}" Width="28" Height="28" Padding="0" Command="{Binding DataContext.DecreaseItemQtyCommand, 
-                               RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">
+                                <Button Style="{DynamicResource MaterialDesignIconButton}" Width="28" Height="28" Padding="0" Command="{Binding DataContext.DecreaseItemQtyCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">
                                   <materialDesign:PackIcon Kind="Minus" Width="16" Height="16"/>
                                 </Button>
-                                <TextBlock Text="{Binding Quantity}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0" MinWidth="30" TextAlignment="Center"/>
-                                <Button Style="{DynamicResource MaterialDesignIconButton}" Width="28" Height="28" Padding="0" Command="{Binding DataContext.IncreaseItemQtyCommand, 
-                               RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">
+                                <TextBox Text="{Binding Quantity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="48" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontWeight="SemiBold" Margin="8,0"/>
+                                <Button Style="{DynamicResource MaterialDesignIconButton}" Width="28" Height="28" Padding="0" Command="{Binding DataContext.IncreaseItemQtyCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">
                                   <materialDesign:PackIcon Kind="Plus" Width="16" Height="16"/>
                                 </Button>
                               </StackPanel>
                             </DataTemplate>
                           </DataGridTemplateColumn.CellTemplate>
+                          <DataGridTemplateColumn.CellEditingTemplate>
+                            <DataTemplate>
+                              <TextBox Text="{Binding Quantity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            </DataTemplate>
+                          </DataGridTemplateColumn.CellEditingTemplate>
                         </DataGridTemplateColumn>
                         <!-- Unit Price Column -->
                         <DataGridTextColumn Header="Preço Unit." Binding="{Binding UnitPrice, StringFormat=Kz {0:N2}}" Width="120" IsReadOnly="True">
@@ -455,6 +477,19 @@
                             </Style>
                           </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
+                        <!-- Discount Column (editable, valor absoluto) -->
+                        <DataGridTemplateColumn Header="Desconto" Width="120">
+                          <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                              <TextBlock Text="{Binding Discount, StringFormat=Kz {0:N2}}" HorizontalAlignment="Right"/>
+                            </DataTemplate>
+                          </DataGridTemplateColumn.CellTemplate>
+                          <DataGridTemplateColumn.CellEditingTemplate>
+                            <DataTemplate>
+                              <TextBox Text="{Binding Discount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalZeroWhenEmptyConverter}, StringFormat=N2}" HorizontalContentAlignment="Right"/>
+                            </DataTemplate>
+                          </DataGridTemplateColumn.CellEditingTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="Total" Binding="{Binding LineTotal, StringFormat=Kz {0:N2}}" Width="140" IsReadOnly="True">
                           <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
@@ -465,7 +500,7 @@
                             </Style>
                           </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTemplateColumn Header="Ações" Width="100">
+                        <DataGridTemplateColumn Header="Ações" Width="90">
                           <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                               <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -924,8 +959,7 @@
                     <ColumnDefinition Width="*"/>
                   </Grid.ColumnDefinitions>
                   <materialDesign:PackIcon Grid.Column="0" Kind="Magnify" Width="22" Height="22" Foreground="{StaticResource TextTertiaryBrush}" Margin="16,0,12,0" VerticalAlignment="Center"/>
-                  <TextBox Grid.Column="1" x:Name="CatalogSearchBox"
- Style="{StaticResource ModernTextBox}" Tag="Pesquisar produtos por nome, código..." BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" Margin="0" FontSize="14" Height="Auto" Text="{Binding CatalogSearchTerm, UpdateSourceTrigger=PropertyChanged}"/>
+                  <TextBox Grid.Column="1" x:Name="CatalogSearchBox" Tag="Pesquisar produtos por nome, código..." BorderThickness="0"  Foreground="White" Background="Transparent" VerticalContentAlignment="Center" Margin="0" FontSize="14" Height="Auto" Text="{Binding CatalogSearchTerm, UpdateSourceTrigger=PropertyChanged}"/>
                 </Grid>
               </Border>
               <!-- Category Filter -->

@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Windows.Input;
 using System.Windows.Threading;
 using VendaFlex.Core.DTOs;
@@ -236,6 +238,9 @@ namespace VendaFlex.ViewModels.Sales
 
             // Inicialização imediata
             _ = InitializeAsync();
+
+            // Monitorar alterações no carrinho para recalcular totais quando Quantity/Discount mudarem
+            CartItems.CollectionChanged += CartItems_CollectionChanged;
         }
 
         #region Propriedades públicas
@@ -402,7 +407,20 @@ namespace VendaFlex.ViewModels.Sales
         public ObservableCollection<CartItemViewModel> CartItems
         {
             get => _cartItems;
-            set => Set(ref _cartItems, value);
+            set
+            {
+                if (Set(ref _cartItems, value))
+                {
+                    // Reanexar handlers
+                    CartItems.CollectionChanged += CartItems_CollectionChanged;
+                    foreach (var item in CartItems)
+                    {
+                        item.PropertyChanged -= CartItem_PropertyChanged;
+                        item.PropertyChanged += CartItem_PropertyChanged;
+                    }
+                    RecalculateTotals();
+                }
+            }
         }
 
         // Totais
@@ -1188,6 +1206,51 @@ namespace VendaFlex.ViewModels.Sales
                 _clockTimer = null;
             }
         }
+
+        // Handlers para recalcular totais ao editar Qtd/Desconto
+        private void CartItems_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems != null)
+        {
+            foreach (var obj in e.NewItems)
+            {
+                if (obj is CartItemViewModel ci)
+                {
+                    ci.PropertyChanged -= CartItem_PropertyChanged;
+                    ci.PropertyChanged += CartItem_PropertyChanged;
+                }
+            }
+        }
+        if (e.OldItems != null)
+        {
+            foreach (var obj in e.OldItems)
+            {
+                if (obj is CartItemViewModel ci)
+                {
+                    ci.PropertyChanged -= CartItem_PropertyChanged;
+                }
+            }
+        }
+        if (e.Action == NotifyCollectionChangedAction.Reset)
+        {
+            foreach (var ci in CartItems)
+            {
+                ci.PropertyChanged -= CartItem_PropertyChanged;
+                ci.PropertyChanged += CartItem_PropertyChanged;
+            }
+        }
+        RecalculateTotals();
+    }
+
+        private void CartItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(CartItemViewModel.Quantity) ||
+            e.PropertyName == nameof(CartItemViewModel.Discount) ||
+            e.PropertyName == nameof(CartItemViewModel.UnitPrice))
+        {
+            RecalculateTotals();
+        }
+    }
     }
 
     #region Tipos auxiliares

@@ -31,13 +31,33 @@ namespace VendaFlex.Infrastructure.Navigation
             _logger.LogInformation("Janela atual definida: {WindowType}", window.GetType().Name);
         }
 
+        #region  View Navigations
         public void NavigateToLogin()
         {
             _logger.LogInformation("Navegando para tela de Login");
 
             try
             {
-                NavigateToPage < LoginView, LoginViewModel>("VendaFlex - Login", 1000, 700, closeCurrent: true);
+                NavigateToPage<LoginView, LoginViewModel>(
+                    "VendaFlex - Login",
+                    new NavigationOptions
+                    {
+                        // Login deve substituir a tela anterior e ser a MainWindow
+                        Mode = NavigationMode.Replace,
+                        SetAsMainWindow = true,
+
+                        // Apar√™ncia padr√£o mais limpa para Login
+                        Title = "VendaFlex - Login",
+                        Width = 1000,
+                        Height = 700,
+                        WindowStyle = WindowStyle.None,
+                        ResizeMode = ResizeMode.NoResize,
+                        WindowState = WindowState.Normal,
+                        StartupLocation = WindowStartupLocation.CenterScreen,
+                        ShowInTaskbar = true,
+                        Topmost = false
+                    }
+                );
             }
             catch (Exception ex)
             {
@@ -51,7 +71,23 @@ namespace VendaFlex.Infrastructure.Navigation
             _logger.LogInformation("Navegando para tela de Setup");
             try
             {
-                NavigateToPage<InitialSetupView, InitialSetupViewModel>("VendaFlex - ConfiguraÁ„o Inicial", 1000, 700, closeCurrent: true);
+                NavigateToPage<InitialSetupView, InitialSetupViewModel>(
+                    "VendaFlex - Configura√ß√£o Inicial",
+                    new NavigationOptions
+                    {
+                        // Setup como di√°logo modal para impedir intera√ß√£o com a chamadora
+                        Mode = NavigationMode.Replace,
+                        Title = "VendaFlex - Configura√ß√£o Inicial",
+                        Width = 1000,
+                        Height = 700,
+                        WindowStyle = WindowStyle.SingleBorderWindow,
+                        ResizeMode = ResizeMode.CanResize,
+                        WindowState = WindowState.Normal,
+                        StartupLocation = WindowStartupLocation.CenterOwner,
+                        ShowInTaskbar = false,
+                        Topmost = false
+                    }
+                );
             }
             catch (Exception ex)
             {
@@ -66,7 +102,24 @@ namespace VendaFlex.Infrastructure.Navigation
 
             try
             {
-                NavigateToPage<DashboardView, DashboardViewModel>("VendaFlex - DashBoard", 1000, 700, closeCurrent: true);
+                NavigateToPage<DashboardView, DashboardViewModel>(
+                    "VendaFlex - DashBoard",
+                    new NavigationOptions
+                    {
+                        // Dashboard substitui a anterior e vira a MainWindow
+                        Mode = NavigationMode.Replace,
+                        SetAsMainWindow = true,
+                        Title = "VendaFlex - DashBoard",
+                        Width = 1200,
+                        Height = 800,
+                        WindowStyle = WindowStyle.SingleBorderWindow,
+                        ResizeMode = ResizeMode.CanResize,
+                        WindowState = WindowState.Maximized,
+                        StartupLocation = WindowStartupLocation.CenterScreen,
+                        ShowInTaskbar = true,
+                        Topmost = false
+                    }
+                );
             }
             catch (Exception ex)
             {
@@ -75,59 +128,152 @@ namespace VendaFlex.Infrastructure.Navigation
             }
         }
 
-        public void NavigateToPage<TView, TViewModel>(string title, double width = 1000, double height = 700, bool closeCurrent = true)
+        public void NavigateToPdv()
+        {
+            //implementar agora
+            _logger.LogInformation("Navegando para tela de Ponto de Venda");
+            try
+            {
+                NavigateToPage<PdvView, PdvViewModel>(
+                    "VendaFlex - Ponto de Venda",
+                    new NavigationOptions
+                    {
+                        Mode = NavigationMode.Stack,
+                        Width = 1200,
+                        Height = 800,
+                        WindowState = WindowState.Maximized 
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao navegar para PDV");
+                throw;
+            }
+
+        }
+        #endregion
+        public void NavigateToPage<TView, TViewModel>(string title, double width = 1000, double height = 700, bool closeCurrent = false)
+            where TView : System.Windows.Controls.Page
+            where TViewModel : class
+        {
+            // Redireciona para a nova API baseada em op√ß√µes mantendo compatibilidade
+            var options = new NavigationOptions
+            {
+                Title = title,
+                Width = width,
+                Height = height,
+                Mode = closeCurrent ? NavigationMode.Replace : NavigationMode.Stack,
+                WindowStyle = WindowStyle.SingleBorderWindow,
+                ResizeMode = ResizeMode.CanResize,
+                WindowState = WindowState.Normal,
+                StartupLocation = WindowStartupLocation.CenterScreen,
+                ShowInTaskbar = true,
+                Topmost = false,
+                SetAsMainWindow = closeCurrent
+            };
+
+            NavigateToPage<TView, TViewModel>(title, options);
+        }
+
+        public void NavigateToPage<TView, TViewModel>(string title, NavigationOptions options)
             where TView : System.Windows.Controls.Page
             where TViewModel : class
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
-                var splash = Application.Current.MainWindow;
-                if (splash == null)
-                {
-                    _logger.LogWarning("MainWindow n„o encontrada. Abortando navegaÁ„o para p·gina.");
-                    return;
-                }
+                var previous = Application.Current.MainWindow;
 
                 // Resolver Page e ViewModel do container
                 var page = _serviceProvider.GetService(typeof(TView)) as System.Windows.Controls.Page;
                 if (page == null)
                 {
-                    _logger.LogError("Nenhum serviÁo registrado para a View {ViewType}", typeof(TView).FullName);
+                    _logger.LogError("Nenhum servi√ßo registrado para a View {ViewType}", typeof(TView).FullName);
                     throw new InvalidOperationException($"No service registered for view {typeof(TView).FullName}");
                 }
 
                 var viewModel = _serviceProvider.GetService(typeof(TViewModel)) as object;
                 if (viewModel == null)
                 {
-                    _logger.LogError("Nenhum serviÁo registrado para o ViewModel {ViewModelType}", typeof(TViewModel).FullName);
+                    _logger.LogError("Nenhum servi√ßo registrado para o ViewModel {ViewModelType}", typeof(TViewModel).FullName);
                     throw new InvalidOperationException($"No service registered for viewmodel {typeof(TViewModel).FullName}");
+                }
+
+                // Se for para focar existente, tentar localizar
+                if (options.Mode == NavigationMode.FocusExisting)
+                {
+                    foreach (Window w in Application.Current.Windows)
+                    {
+                        if (w.Content?.GetType() == typeof(TView))
+                        {
+                            _logger.LogInformation("Focando janela existente de {View}", typeof(TView).Name);
+                            w.Show();
+                            w.Activate();
+                            w.Focus();
+                            _currentWindow = w;
+                            return;
+                        }
+                    }
+
+                    // N√£o achou existente: cair para Stack por padr√£o
+                    options.Mode = NavigationMode.Stack;
                 }
 
                 page.DataContext = viewModel;
 
                 var navWindow = new Window
                 {
-                    Title = title,
+                    Title = options.Title ?? title,
                     Content = page,
-                    Width = width,
-                    Height = height,
-                    WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                    ShowInTaskbar = true,
-                    WindowStyle = WindowStyle.SingleBorderWindow,
-                    ResizeMode = ResizeMode.CanResize
+                    Width = options.Width,
+                    Height = options.Height,
+                    WindowStartupLocation = options.StartupLocation,
+                    ShowInTaskbar = options.ShowInTaskbar ?? true,
+                    WindowStyle = options.WindowStyle ?? WindowStyle.SingleBorderWindow,
+                    ResizeMode = options.ResizeMode ?? ResizeMode.CanResize,
+                    Topmost = options.Topmost ?? false,
                 };
 
-                Application.Current.MainWindow = navWindow;
-
-                if (closeCurrent)
+                if (options.WindowState.HasValue)
                 {
+                    navWindow.WindowState = options.WindowState.Value;
+                }
+
+                // Comportamento por modo
+                if (options.Mode == NavigationMode.Dialog)
+                {
+                    if (previous != null)
+                    {
+                        navWindow.Owner = previous;
+                        navWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                    }
+
+                    _logger.LogInformation("Abrindo janela como di√°logo: {Title}", navWindow.Title);
+                    navWindow.ShowInTaskbar = false; // di√°logos normalmente n√£o aparecem na taskbar
+                    _currentWindow = navWindow;
+                    navWindow.ShowDialog();
+                    return;
+                }
+
+                // Replace: define como MainWindow e fecha a anterior
+                if (options.Mode == NavigationMode.Replace)
+                {
+                    Application.Current.MainWindow = navWindow;
                     try
                     {
-                        splash.Close();
+                        previous?.Close();
                     }
                     catch (Exception closeEx)
                     {
-                        _logger.LogWarning(closeEx, "Falha ao fechar janela atual");
+                        _logger.LogWarning(closeEx, "Falha ao fechar janela anterior");
+                    }
+                }
+                else
+                {
+                    // Stack: manter anterior aberta, n√£o alterar MainWindow (a menos que explicitamente pedido)
+                    if (options.SetAsMainWindow)
+                    {
+                        Application.Current.MainWindow = navWindow;
                     }
                 }
 
@@ -136,7 +282,7 @@ namespace VendaFlex.Infrastructure.Navigation
                 navWindow.Focus();
 
                 _currentWindow = navWindow;
-                _logger.LogInformation("NavegaÁ„o concluÌda. Janela atual: {WindowType}", navWindow.GetType().Name);
+                _logger.LogInformation("Navega√ß√£o conclu√≠da. Janela atual: {WindowType}", navWindow.GetType().Name);
             });
         }
 
@@ -158,20 +304,7 @@ namespace VendaFlex.Infrastructure.Navigation
             }
         }
 
-        public void NavigateToPdv()
-        {
-            //implementar agora
-            _logger.LogInformation("Navegando para tela de Ponto de Venda - N„o implementado");
-            try
-            {
-                NavigateToPage<PdvView, PdvViewModel>("VendaFlex - Ponto de Venda", 1000, 700, closeCurrent: true);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao navegar para PDV");
-                throw;
-            }
+       
 
-        }
     }
 }

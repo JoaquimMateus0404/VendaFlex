@@ -10,7 +10,7 @@ namespace VendaFlex.Infrastructure.Navigation
         void NavigateToLogin();
 
         /// <summary>
-        /// Navega para a tela de configura��o inicial
+        /// Navega para a tela de configuração inicial
         /// </summary>
         void NavigateToSetup();
 
@@ -24,6 +24,7 @@ namespace VendaFlex.Infrastructure.Navigation
         /// </summary>
         void NavigateToPdv();
 
+
         /// <summary>
         /// Fecha a janela atual
         /// </summary>
@@ -35,10 +36,9 @@ namespace VendaFlex.Infrastructure.Navigation
         void SetCurrentWindow(Window window);
 
         /// <summary>
-        /// Navega para uma Page hospedada em uma nova Window.
-        /// TView deve ser um System.Windows.Controls.Page e TViewModel o seu ViewModel.
+        /// Navega para uma Page hospedada em uma nova Window com opções avançadas.
         /// </summary>
-        void NavigateToPage<TView, TViewModel>(string title, double width = 1000, double height = 700, bool closeCurrent = true)
+        void NavigateToPage<TView, TViewModel>(string title, NavigationOptions options)
             where TView : System.Windows.Controls.Page
             where TViewModel : class;
     }
