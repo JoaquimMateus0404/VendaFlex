@@ -28,5 +28,9 @@ namespace VendaFlex.Core.DTOs
         public bool HasExpirationDate { get; set; }
         public int? ExpirationDays { get; set; }
         public int? ExpirationWarningDays { get; set; }
+        /// <summary>
+        /// Quantidade atual disponível para venda (preenchida na camada de apresentação).
+        /// </summary>
+        public int CurrentStock { get; set; }
     }
 }

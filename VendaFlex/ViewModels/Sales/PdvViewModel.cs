@@ -566,22 +566,23 @@ namespace VendaFlex.ViewModels.Sales
         {
             try
             {
+                IEnumerable<ProductDto> products = Enumerable.Empty<ProductDto>();
+
                 if (SelectedCatalogCategory != null && SelectedCatalogCategory.CategoryId > 0)
                 {
                     var byCat = await _productService.GetByCategoryIdAsync(SelectedCatalogCategory.CategoryId);
                     if (byCat.Success && byCat.Data != null)
-                    {
-                        CatalogProducts = new ObservableCollection<ProductDto>(byCat.Data);
-                    }
+                        products = byCat.Data;
                 }
                 else
                 {
                     var productsResult = await _productService.GetAllAsync();
                     if (productsResult.Success && productsResult.Data != null)
-                    {
-                        CatalogProducts = new ObservableCollection<ProductDto>(productsResult.Data);
-                    }
+                        products = productsResult.Data;
                 }
+
+                // Enriquecer com estoque antes de publicar a coleção (evita necessidade de INotifyPropertyChanged no DTO)
+                CatalogProducts = await EnrichWithStockAsync(products);
             }
             catch (Exception ex)
             {
@@ -620,12 +621,40 @@ namespace VendaFlex.ViewModels.Sales
                     );
                 }
 
-                CatalogProducts = new ObservableCollection<ProductDto>(products);
+                CatalogProducts = await EnrichWithStockAsync(products);
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Erro na busca: {ex.Message}";
             }
+        }
+
+        private async Task<ObservableCollection<ProductDto>> EnrichWithStockAsync(IEnumerable<ProductDto> products)
+        {
+            var list = new List<ProductDto>();
+            foreach (var p in products)
+            {
+                if (p == null)
+                    continue;
+
+                if (p.ControlsStock)
+                {
+                    try
+                    {
+                        p.CurrentStock = await _stockService.GetAvailableQuantityAsync(p.ProductId);
+                    }
+                    catch
+                    {
+                        p.CurrentStock = 0;
+                    }
+                }
+                else
+                {
+                    p.CurrentStock = 0;
+                }
+                list.Add(p);
+            }
+            return new ObservableCollection<ProductDto>(list);
         }
         #endregion
 
