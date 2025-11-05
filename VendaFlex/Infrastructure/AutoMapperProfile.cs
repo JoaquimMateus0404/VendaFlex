@@ -21,19 +21,34 @@ namespace VendaFlex.Infrastructure
             CreateMap<UserPrivilege, UserPrivilegeDto>().ReverseMap();
 
             // Category
-            CreateMap<Category, CategoryDto>().ReverseMap();
+            CreateMap<Category, CategoryDto>()
+                .ForMember(d => d.ProductCount, o => o.MapFrom(s => s.Products != null ? s.Products.Count : 0))
+                .ReverseMap();
 
             // Product
-            CreateMap<Product, ProductDto>().ReverseMap();
+            CreateMap<Product, ProductDto>()
+                .ForMember(d => d.Code, o => o.MapFrom(s => s.Barcode))
+                .ForMember(d => d.CategoryName, o => o.MapFrom(s => s.Category != null ? s.Category.Name : string.Empty))
+                .ForMember(d => d.CurrentStock, o => o.MapFrom(s => s.Stock != null ? s.Stock.Quantity : 0))
+                .ReverseMap();
 
             // Stock
-            CreateMap<Stock, StockDto>().ReverseMap();
+            CreateMap<Stock, StockDto>()
+                .ForMember(d => d.ProductName, o => o.MapFrom(s => s.Product != null ? s.Product.Name : string.Empty))
+                .ForMember(d => d.MinimumStock, o => o.MapFrom(s => s.Product != null ? s.Product.MinimumStock : null))
+                .ForMember(d => d.ReorderPoint, o => o.MapFrom(s => s.Product != null ? s.Product.ReorderPoint : null))
+                .ReverseMap();
 
             // StockMovement
-            CreateMap<StockMovement, StockMovementDto>().ReverseMap();
+            CreateMap<StockMovement, StockMovementDto>()
+                .ForMember(d => d.ProductName, o => o.MapFrom(s => s.Product != null ? s.Product.Name : string.Empty))
+                .ForMember(d => d.UserName, o => o.MapFrom(s => s.User != null && s.User.Person != null ? s.User.Person.Name : string.Empty))
+                .ReverseMap();
 
             // Expiration
-            CreateMap<Expiration, ExpirationDto>().ReverseMap();
+            CreateMap<Expiration, ExpirationDto>()
+                .ForMember(d => d.ProductName, o => o.MapFrom(s => s.Product != null ? s.Product.Name : string.Empty))
+                .ReverseMap();
 
             // Invoice
             CreateMap<Invoice, InvoiceDto>().ReverseMap();
@@ -63,7 +78,9 @@ namespace VendaFlex.Infrastructure
                 .ForMember(d => d.InvoiceFormat, o => o.MapFrom(s => (CompanyConfig.InvoiceFormatType)s.InvoiceFormat));
 
             // PriceHistory
-            CreateMap<PriceHistory, PriceHistoryDto>().ReverseMap();
+            CreateMap<PriceHistory, PriceHistoryDto>()
+                .ForMember(d => d.ProductName, o => o.MapFrom(s => s.Product != null ? s.Product.Name : string.Empty))
+                .ReverseMap();
         }
     }
 }

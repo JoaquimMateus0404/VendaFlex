@@ -50,6 +50,7 @@ namespace VendaFlex.Data.Repositories
             return await _context.StockMovements
                 .Include(sm => sm.Product)
                 .Include(sm => sm.User)
+                    .ThenInclude(u => u.Person)
                 .OrderByDescending(sm => sm.Date)
                 .AsNoTracking()
                 .ToListAsync();

@@ -29,6 +29,10 @@ namespace VendaFlex.Infrastructure.Navigation
         /// </summary>
         void NavigateToCompanyConfig();
 
+        /// <summary>
+        /// Navega para a tela de gerenciamento de produtos
+        /// </summary>
+        void NavigateToProductManagement();
 
         /// <summary>
         /// Fecha a janela atual

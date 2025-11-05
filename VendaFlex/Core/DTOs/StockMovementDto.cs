@@ -16,5 +16,9 @@ namespace VendaFlex.Core.DTOs
         public string Reference { get; set; }
         public decimal? UnitCost { get; set; }
         public decimal? TotalCost { get; set; }
+        
+        // Propriedades adicionais para exibição
+        public string ProductName { get; set; }
+        public string UserName { get; set; }
     }
 }

@@ -10,5 +10,8 @@ namespace VendaFlex.Core.DTOs
         public decimal NewCostPrice { get; set; }
         public string Reason { get; set; }
         public DateTime ChangeDate { get; set; }
+        
+        // Propriedade adicional para exibição
+        public string ProductName { get; set; }
     }
 }

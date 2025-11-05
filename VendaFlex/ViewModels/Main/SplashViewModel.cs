@@ -47,7 +47,7 @@ namespace VendaFlex.ViewModels.Main
             _syncService = syncService;
             _logger = logger;
 
-            _minSplashMs = configuration.GetValue("UI:SplashMinMilliseconds", 3000);
+            _minSplashMs = configuration.GetValue("UI:SplashMinMilliseconds", 200);
             ConfigureLogCapture();
 
             _ = InitializeApplicationAsync();
@@ -78,7 +78,7 @@ namespace VendaFlex.ViewModels.Main
 
             try
             {
-                await MostrarStatusAsync("Iniciando VendaFlex", delay: 2000);
+                await MostrarStatusAsync("Iniciando VendaFlex", delay: 200);
 
                 await VerificarBancosAsync();
                 await SincronizarDadosAsync();
@@ -108,26 +108,26 @@ namespace VendaFlex.ViewModels.Main
         private async Task VerificarBancosAsync()
         {
             StatusMessage = "Verificando bancos de dados...";
-            await MostrarStatusAsync("Verificando status dos bancos de dados...", 2000);
+            await MostrarStatusAsync("Verificando status dos bancos de dados...", 200);
 
             await _dbStatus.RefreshStatusAsync();
             ProgressText = BuildStatusText();
-            await Task.Delay(3000);
+            await Task.Delay(200);
         }
 
         private async Task SincronizarDadosAsync()
         {
             StatusMessage = "Sincronizando dados...";
-            await MostrarStatusAsync("Verificando sincronização de dados...", 2000);
+            await MostrarStatusAsync("Verificando sincronização de dados...", 200);
 
             if (await _syncService.HasPendingChangesAsync())
             {
-                await MostrarStatusAsync("Enviando alterações locais para o servidor...", 2000);
+                await MostrarStatusAsync("Enviando alterações locais para o servidor...", 200);
                 await _syncService.SyncToSqlServerAsync();
             }
             else
             {
-                await MostrarStatusAsync("Nenhuma alteração pendente. Sincronizando SQLite...", 2000);
+                await MostrarStatusAsync("Nenhuma alteração pendente. Sincronizando SQLite...", 200);
                 await _syncService.SyncToSqliteAsync();
             }
         }
@@ -135,12 +135,12 @@ namespace VendaFlex.ViewModels.Main
         private async Task VerificarConfiguracoesAsync()
         {
             StatusMessage = "Verificando configuração...";
-            await MostrarStatusAsync("Carregando configuração da empresa...", 2000);
+            await MostrarStatusAsync("Carregando configuração da empresa...", 200);
 
             var isConfig = await _companyConfigService.IsConfiguredAsync();
 
             StatusMessage = "Verificando usuários Admin...";
-            await MostrarStatusAsync("Verificando existência de usuários Administradores...", 2000);    
+            await MostrarStatusAsync("Verificando existência de usuários Administradores...", 200);    
             var hasAdmins = await _userService.HasAdminsAsync();
 
 
@@ -158,7 +158,7 @@ namespace VendaFlex.ViewModels.Main
             });
 
             // Garante que o binding atualiza antes de navegar
-            await Task.Delay(3000);
+            await Task.Delay(200);
 
             if (precisaSetup)
                 _navigationService.NavigateToSetup();

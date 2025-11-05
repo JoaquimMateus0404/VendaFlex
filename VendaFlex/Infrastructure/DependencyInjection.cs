@@ -16,11 +16,13 @@ using VendaFlex.UI.Views.Dashboard;
 using VendaFlex.UI.Views.Sales;
 using VendaFlex.UI.Views.Setup;
 using VendaFlex.UI.Views.Settings;
+using VendaFlex.UI.Views.Products;
 using VendaFlex.ViewModels.Authentication;
 using VendaFlex.ViewModels.Dashboard;
 using VendaFlex.ViewModels.Sales;
 using VendaFlex.ViewModels.Setup;
 using VendaFlex.ViewModels.Settings;
+using VendaFlex.ViewModels.Products;
 
 namespace VendaFlex.Infrastructure
 {
@@ -81,6 +83,8 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<IPaymentService, PaymentService>();
             services.AddScoped<IPaymentTypeService, PaymentTypeService>();
             services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<IPriceHistoryService, PriceHistoryService>();
+            services.AddScoped<IStockMovementService, StockMovementService>();
 
             // Validadores
             services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
@@ -118,6 +122,9 @@ namespace VendaFlex.Infrastructure
             services.AddTransient<CompanyConfigView>();
             services.AddTransient<CompanyConfigViewModel>();
 
+            // ProductManagement precisa ser Scoped porque usa múltiplos serviços que compartilham o DbContext
+            services.AddTransient<ProductManagementView>();
+            services.AddScoped<ProductManagementViewModel>();
 
             //
             return services;

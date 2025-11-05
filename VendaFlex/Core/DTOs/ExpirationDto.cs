@@ -8,5 +8,9 @@ namespace VendaFlex.Core.DTOs
         public int Quantity { get; set; }
         public string BatchNumber { get; set; }
         public string Notes { get; set; }
+        
+        // Propriedades adicionais para exibição
+        public string ProductName { get; set; }
+        public bool IsExpired => ExpirationDate < DateTime.Now;
     }
 }

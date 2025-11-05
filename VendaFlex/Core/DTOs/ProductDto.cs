@@ -1,3 +1,5 @@
+using VendaFlex.Data.Entities;
+
 namespace VendaFlex.Core.DTOs
 {
     public class ProductDto
@@ -17,7 +19,8 @@ namespace VendaFlex.Core.DTOs
         public decimal? DiscountPercentage { get; set; }
         public decimal? TaxRate { get; set; }
         public string PhotoUrl { get; set; }
-        public int Status { get; set; }
+        public ProductStatus Status { get; set; }
+
         public bool IsFeatured { get; set; }
         public bool AllowBackorder { get; set; }
         public int DisplayOrder { get; set; }
@@ -32,5 +35,9 @@ namespace VendaFlex.Core.DTOs
         /// Quantidade atual disponível para venda (preenchida na camada de apresentação).
         /// </summary>
         public int CurrentStock { get; set; }
+        
+        // Propriedades adicionais para exibição
+        public string Code { get; set; }
+        public string CategoryName { get; set; }
     }
 }

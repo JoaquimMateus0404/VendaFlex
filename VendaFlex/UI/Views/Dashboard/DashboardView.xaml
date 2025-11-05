@@ -211,7 +211,8 @@
                         </Button>
 
                         <!-- Produtos -->
-                        <Button Style="{StaticResource SidebarButtonStyle}">
+                        <Button Style="{StaticResource SidebarButtonStyle}"
+                        Click="ProductsButton_Click">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="Package" Width="24" Height="24" Margin="0,0,12,0"/>
                                 <TextBlock Text="Produtos" VerticalAlignment="Center"/>

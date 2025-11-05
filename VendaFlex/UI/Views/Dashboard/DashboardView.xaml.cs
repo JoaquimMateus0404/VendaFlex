@@ -120,6 +120,11 @@ namespace VendaFlex.UI.Views.Dashboard
             _navigationService.NavigateToCompanyConfig();
         }
 
+        private void ProductsButton_Click(object sender, RoutedEventArgs e)
+        {
+            _navigationService.NavigateToProductManagement();
+        }
+
         #region Popup Handlers
 
         /// <summary>

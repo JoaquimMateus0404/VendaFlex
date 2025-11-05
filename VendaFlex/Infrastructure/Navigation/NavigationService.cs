@@ -1,4 +1,3 @@
-using System;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -7,11 +6,13 @@ using VendaFlex.UI.Views.Dashboard;
 using VendaFlex.UI.Views.Sales;
 using VendaFlex.UI.Views.Setup;
 using VendaFlex.UI.Views.Settings;
+using VendaFlex.UI.Views.Products;
 using VendaFlex.ViewModels.Authentication;
 using VendaFlex.ViewModels.Dashboard;
 using VendaFlex.ViewModels.Sales;
 using VendaFlex.ViewModels.Setup;
 using VendaFlex.ViewModels.Settings;
+using VendaFlex.ViewModels.Products;
 
 namespace VendaFlex.Infrastructure.Navigation
 {
@@ -182,6 +183,34 @@ namespace VendaFlex.Infrastructure.Navigation
                 throw;
             }
         }
+
+        public void NavigateToProductManagement()
+        {
+            _logger.LogInformation("Navegando para tela de Gerenciamento de Produtos");
+            try
+            {
+                NavigateToPage<ProductManagementView, ProductManagementViewModel>(
+                    "VendaFlex - Gerenciamento de Produtos",
+                    new NavigationOptions
+                    {
+                        Mode = NavigationMode.Stack,
+                        Width = 1400,
+                        Height = 900,
+                        WindowStyle = WindowStyle.SingleBorderWindow,
+                        ResizeMode = ResizeMode.CanResize,
+                        WindowState = WindowState.Maximized,
+                        StartupLocation = WindowStartupLocation.CenterScreen,
+                        ShowInTaskbar = true,
+                        Topmost = false
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao navegar para Gerenciamento de Produtos");
+                throw;
+            }
+        }
         #endregion
         public void NavigateToPage<TView, TViewModel>(string title, double width = 1000, double height = 700, bool closeCurrent = false)
             where TView : System.Windows.Controls.Page
@@ -214,17 +243,23 @@ namespace VendaFlex.Infrastructure.Navigation
             {
                 var previous = Application.Current.MainWindow;
 
-                // Resolver Page e ViewModel do container
-                var page = _serviceProvider.GetService(typeof(TView)) as System.Windows.Controls.Page;
+                // Criar um novo escopo para resolver serviços Scoped
+                var scope = _serviceProvider.CreateScope();
+                var scopedProvider = scope.ServiceProvider;
+
+                // Resolver Page e ViewModel do escopo
+                var page = scopedProvider.GetService(typeof(TView)) as System.Windows.Controls.Page;
                 if (page == null)
                 {
+                    scope.Dispose();
                     _logger.LogError("Nenhum serviço registrado para a View {ViewType}", typeof(TView).FullName);
                     throw new InvalidOperationException($"No service registered for view {typeof(TView).FullName}");
                 }
 
-                var viewModel = _serviceProvider.GetService(typeof(TViewModel)) as object;
+                var viewModel = scopedProvider.GetService(typeof(TViewModel)) as object;
                 if (viewModel == null)
                 {
+                    scope.Dispose();
                     _logger.LogError("Nenhum serviço registrado para o ViewModel {ViewModelType}", typeof(TViewModel).FullName);
                     throw new InvalidOperationException($"No service registered for viewmodel {typeof(TViewModel).FullName}");
                 }
@@ -236,6 +271,7 @@ namespace VendaFlex.Infrastructure.Navigation
                     {
                         if (w.Content?.GetType() == typeof(TView))
                         {
+                            scope.Dispose();
                             _logger.LogInformation("Focando janela existente de {View}", typeof(TView).Name);
                             w.Show();
                             w.Activate();
@@ -262,6 +298,17 @@ namespace VendaFlex.Infrastructure.Navigation
                     WindowStyle = options.WindowStyle ?? WindowStyle.SingleBorderWindow,
                     ResizeMode = options.ResizeMode ?? ResizeMode.CanResize,
                     Topmost = options.Topmost ?? false,
+                };
+
+                // Armazenar o escopo na janela para descartá-lo quando fechar
+                navWindow.Tag = scope;
+                navWindow.Closed += (s, e) =>
+                {
+                    if (navWindow.Tag is IServiceScope windowScope)
+                    {
+                        windowScope.Dispose();
+                        _logger.LogInformation("Escopo de serviços descartado para janela: {Title}", navWindow.Title);
+                    }
                 };
 
                 if (options.WindowState.HasValue)

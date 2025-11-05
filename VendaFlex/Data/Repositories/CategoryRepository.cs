@@ -46,6 +46,7 @@ namespace VendaFlex.Data.Repositories
         public async Task<IEnumerable<Category>> GetAllAsync()
         {
             return await _context.Categories
+                .Include(c => c.Products)
                 .AsNoTracking()
                 .OrderBy(c => c.DisplayOrder)
                 .ThenBy(c => c.Name)

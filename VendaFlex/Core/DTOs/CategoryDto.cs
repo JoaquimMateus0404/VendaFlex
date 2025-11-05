@@ -10,5 +10,8 @@ namespace VendaFlex.Core.DTOs
         public string ImageUrl { get; set; }
         public bool IsActive { get; set; }
         public int DisplayOrder { get; set; }
+        
+        // Propriedade adicional para exibição
+        public int ProductCount { get; set; }
     }
 }
