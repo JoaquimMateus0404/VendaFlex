@@ -115,6 +115,11 @@ namespace VendaFlex.UI.Views.Dashboard
             _navigationService.NavigateToPdv();
         }
 
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            _navigationService.NavigateToCompanyConfig();
+        }
+
         #region Popup Handlers
 
         /// <summary>

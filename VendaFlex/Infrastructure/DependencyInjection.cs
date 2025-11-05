@@ -15,10 +15,12 @@ using VendaFlex.UI.Views.Authentication;
 using VendaFlex.UI.Views.Dashboard;
 using VendaFlex.UI.Views.Sales;
 using VendaFlex.UI.Views.Setup;
+using VendaFlex.UI.Views.Settings;
 using VendaFlex.ViewModels.Authentication;
 using VendaFlex.ViewModels.Dashboard;
 using VendaFlex.ViewModels.Sales;
 using VendaFlex.ViewModels.Setup;
+using VendaFlex.ViewModels.Settings;
 
 namespace VendaFlex.Infrastructure
 {
@@ -113,6 +115,8 @@ namespace VendaFlex.Infrastructure
             services.AddTransient<PdvView>();
             services.AddTransient<PdvViewModel>();
 
+            services.AddTransient<CompanyConfigView>();
+            services.AddTransient<CompanyConfigViewModel>();
 
 
             //

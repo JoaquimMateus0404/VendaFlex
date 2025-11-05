@@ -243,7 +243,7 @@
                         </Button>
 
                         <!-- Configurações -->
-                        <Button Style="{StaticResource SidebarButtonStyle}" Margin="12,40,12,8">
+                        <Button Style="{StaticResource SidebarButtonStyle}" Margin="12,40,12,8" Click="SettingsButton_Click">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="Cog" Width="24" Height="24" Margin="0,0,12,0"/>
                                 <TextBlock Text="Configurações" VerticalAlignment="Center"/>

@@ -6,10 +6,12 @@ using VendaFlex.UI.Views.Authentication;
 using VendaFlex.UI.Views.Dashboard;
 using VendaFlex.UI.Views.Sales;
 using VendaFlex.UI.Views.Setup;
+using VendaFlex.UI.Views.Settings;
 using VendaFlex.ViewModels.Authentication;
 using VendaFlex.ViewModels.Dashboard;
 using VendaFlex.ViewModels.Sales;
 using VendaFlex.ViewModels.Setup;
+using VendaFlex.ViewModels.Settings;
 
 namespace VendaFlex.Infrastructure.Navigation
 {
@@ -151,6 +153,34 @@ namespace VendaFlex.Infrastructure.Navigation
                 throw;
             }
 
+        }
+
+        public void NavigateToCompanyConfig()
+        {
+            _logger.LogInformation("Navegando para tela de Configurações da Empresa");
+            try
+            {
+                NavigateToPage<CompanyConfigView, CompanyConfigViewModel>(
+                    "VendaFlex - Configurações da Empresa",
+                    new NavigationOptions
+                    {
+                        Mode = NavigationMode.Stack,
+                        Width = 1200,
+                        Height = 800,
+                        WindowStyle = WindowStyle.SingleBorderWindow,
+                        ResizeMode = ResizeMode.CanResize,
+                        WindowState = WindowState.Maximized,
+                        StartupLocation = WindowStartupLocation.CenterScreen,
+                        ShowInTaskbar = true,
+                        Topmost = false
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao navegar para Configurações da Empresa");
+                throw;
+            }
         }
         #endregion
         public void NavigateToPage<TView, TViewModel>(string title, double width = 1000, double height = 700, bool closeCurrent = false)
