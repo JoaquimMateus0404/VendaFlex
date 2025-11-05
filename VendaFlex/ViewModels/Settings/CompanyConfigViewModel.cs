@@ -1,12 +1,15 @@
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Microsoft.Win32;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
+using VendaFlex.Infrastructure.Interfaces;
 using VendaFlex.ViewModels.Base;
 using VendaFlex.ViewModels.Commands;
 
@@ -20,6 +23,8 @@ namespace VendaFlex.ViewModels.Settings
     {
         private readonly ICompanyConfigService _companyConfigService;
         private readonly ICurrentUserContext _currentUserContext;
+        private readonly IFileStorageService _fileStorageService;
+        private readonly DispatcherTimer _statusMessageTimer;
         private int _originalConfigId;
 
         #region Properties - Informações Gerais
@@ -488,10 +493,23 @@ namespace VendaFlex.ViewModels.Settings
 
         public CompanyConfigViewModel(
             ICompanyConfigService companyConfigService,
-            ICurrentUserContext currentUserContext)
+            ICurrentUserContext currentUserContext,
+            IFileStorageService fileStorageService)
         {
             _companyConfigService = companyConfigService ?? throw new ArgumentNullException(nameof(companyConfigService));
             _currentUserContext = currentUserContext ?? throw new ArgumentNullException(nameof(currentUserContext));
+            _fileStorageService = fileStorageService ?? throw new ArgumentNullException(nameof(fileStorageService));
+
+            // Initialize status message timer
+            _statusMessageTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(5)
+            };
+            _statusMessageTimer.Tick += (s, e) =>
+            {
+                StatusMessage = null;
+                _statusMessageTimer.Stop();
+            };
 
             // Initialize commands
             LoadCommand = new RelayCommand(async _ => await LoadAsync());
@@ -671,7 +689,7 @@ namespace VendaFlex.ViewModels.Settings
             };
         }
 
-        private void UploadLogo()
+        private async void UploadLogo()
         {
             try
             {
@@ -683,15 +701,37 @@ namespace VendaFlex.ViewModels.Settings
 
                 if (openFileDialog.ShowDialog() == true)
                 {
-                    // TODO: Implementar upload real do arquivo
-                    // Por enquanto, apenas armazena o caminho local
-                    LogoUrl = openFileDialog.FileName;
-                    ShowStatusMessage("Logo selecionado. Não esqueça de salvar as configurações.", false);
+                    var sourceFilePath = openFileDialog.FileName;
+
+                    // Validar se é uma imagem válida
+                    if (!_fileStorageService.IsValidImage(sourceFilePath))
+                    {
+                        ShowStatusMessage("O arquivo selecionado não é uma imagem válida.", true);
+                        return;
+                    }
+                    // Remover imagem anterior se existir
+                    if (!string.IsNullOrEmpty(LogoUrl) && File.Exists(LogoUrl))
+                    {
+                        await _fileStorageService.DeleteFileAsync(LogoUrl);
+                    }
+                                       
+                    // Fazer upload do arquivo
+                    var savedPath = await _fileStorageService.SaveLogoAsync(sourceFilePath);
+
+                    if (!string.IsNullOrEmpty(savedPath))
+                    {
+                        LogoUrl = savedPath;
+                        ShowStatusMessage("Logo carregado com sucesso! Não esqueça de salvar as configurações.", false);
+                    }
+                    else
+                    {
+                        ShowStatusMessage("Erro ao salvar o logo.", true);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                ShowStatusMessage($"Erro ao selecionar logo: {ex.Message}", true);
+                ShowStatusMessage($"Erro ao carregar logo: {ex.Message}", true);
             }
         }
 
@@ -707,6 +747,13 @@ namespace VendaFlex.ViewModels.Settings
             {
                 try
                 {
+                    // Deletar o arquivo físico se existir
+                    if (!string.IsNullOrEmpty(LogoUrl))
+                    {
+                        await _fileStorageService.DeleteFileAsync(LogoUrl);
+                    }
+
+                    // Remover do banco de dados
                     var removeResult = await _companyConfigService.RemoveLogoAsync();
                     if (removeResult.Success)
                     {
@@ -816,6 +863,10 @@ namespace VendaFlex.ViewModels.Settings
         {
             StatusMessage = message;
             IsStatusError = isError;
+
+            // Reiniciar o timer para esconder a mensagem após 5 segundos
+            _statusMessageTimer.Stop();
+            _statusMessageTimer.Start();
         }
 
         #endregion
