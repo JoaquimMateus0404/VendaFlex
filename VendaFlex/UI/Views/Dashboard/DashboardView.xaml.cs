@@ -124,6 +124,10 @@ namespace VendaFlex.UI.Views.Dashboard
         {
             _navigationService.NavigateToProductManagement();
         }
+        private void StockButton_Click(object sender, RoutedEventArgs e)
+        {
+            _navigationService.NavigateToStockManagement();
+        }
 
         #region Popup Handlers
 

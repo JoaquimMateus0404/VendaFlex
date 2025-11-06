@@ -23,6 +23,8 @@ using VendaFlex.ViewModels.Sales;
 using VendaFlex.ViewModels.Setup;
 using VendaFlex.ViewModels.Settings;
 using VendaFlex.ViewModels.Products;
+using VendaFlex.UI.Views.Stock;
+using VendaFlex.ViewModels.Stock;
 
 namespace VendaFlex.Infrastructure
 {
@@ -41,10 +43,10 @@ namespace VendaFlex.Infrastructure
 
             // Serviços de infraestrutura
             services.AddSingleton<INavigationService, NavigationService>();
-            // Contexto de usuário atual (por escopo)
-            services.AddScoped<ICurrentUserContext, CurrentUserContext>();
-            // Sessão também escopo para alinhar com UserContext e evitar resolução antes do DbContext em escopos globais
-            services.AddScoped<ISessionService, SessionService>();
+            // ⚠️ IMPORTANTE: Em WPF, CurrentUserContext DEVE ser Singleton para compartilhar o mesmo usuário logado em toda a aplicação
+            services.AddSingleton<ICurrentUserContext, CurrentUserContext>();
+            // Sessão também Singleton para alinhar com UserContext
+            services.AddSingleton<ISessionService, SessionService>();
             services.AddSingleton<ICredentialManager, WindowsCredentialManager>();
             services.AddScoped<IDatabaseStatusService, DatabaseStatusService>();
             services.AddScoped<IDatabaseSyncService, DatabaseSyncService>();
@@ -85,6 +87,11 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IPriceHistoryService, PriceHistoryService>();
             services.AddScoped<IStockMovementService, StockMovementService>();
+            
+            // Serviço de auditoria de estoque (usando Lazy para evitar dependência circular)
+            services.AddScoped<StockAuditService>();
+            services.AddScoped<Lazy<StockAuditService>>(provider => 
+                new Lazy<StockAuditService>(() => provider.GetRequiredService<StockAuditService>()));
 
             // Validadores
             services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
@@ -125,6 +132,10 @@ namespace VendaFlex.Infrastructure
             // ProductManagement precisa ser Scoped porque usa múltiplos serviços que compartilham o DbContext
             services.AddTransient<ProductManagementView>();
             services.AddScoped<ProductManagementViewModel>();
+
+            // StockManagement precisa ser Scoped porque usa múltiplos serviços que compartilham o DbContext
+            services.AddTransient<StockManagementView>();
+            services.AddScoped<StockManagementViewModel>();
 
             //
             return services;

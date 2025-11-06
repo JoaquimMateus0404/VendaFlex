@@ -35,6 +35,11 @@ namespace VendaFlex.Infrastructure.Navigation
         void NavigateToProductManagement();
 
         /// <summary>
+        /// Navega para a tela de gerenciamento de estoque
+        /// </summary>
+        void NavigateToStockManagement();
+
+        /// <summary>
         /// Fecha a janela atual
         /// </summary>
         void CloseCurrentWindow();

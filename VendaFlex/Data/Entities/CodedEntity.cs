@@ -13,6 +13,7 @@ namespace VendaFlex.Data.Entities
         [Column(TypeName = "varchar(50)")]
         public string InternalCode { get; set; }
 
+        [Required]
         [StringLength(100)]
         public string ExternalCode { get; set; }
     }

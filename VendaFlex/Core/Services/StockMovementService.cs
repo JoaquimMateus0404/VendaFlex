@@ -8,6 +8,11 @@ using VendaFlex.Data.Repositories;
 
 namespace VendaFlex.Core.Services
 {
+    /// <summary>
+    /// Serviço para consulta de movimentações de estoque.
+    /// ATENÇÃO: As movimentações são criadas AUTOMATICAMENTE pelo sistema através do StockAuditService.
+    /// Este serviço é apenas para CONSULTA, não permitindo criação manual de movimentações.
+    /// </summary>
     public class StockMovementService : IStockMovementService
     {
         private readonly StockMovementRepository _stockMovementRepository;
@@ -24,6 +29,11 @@ namespace VendaFlex.Core.Services
             _mapper = mapper;
         }
 
+        /// <summary>
+        /// MÉTODO INTERNO - Não deve ser usado pela UI.
+        /// As movimentações são criadas automaticamente pelo StockAuditService.
+        /// </summary>
+        [Obsolete("Movimentações são criadas automaticamente pelo sistema. Use apenas para migração de dados.")]
         public async Task<OperationResult<StockMovementDto>> AddAsync(StockMovementDto movement)
         {
             try
@@ -53,16 +63,14 @@ namespace VendaFlex.Core.Services
             }
         }
 
+        /// <summary>
+        /// MÉTODO BLOQUEADO - Movimentações não devem ser deletadas pois são auditoria.
+        /// </summary>
+        [Obsolete("Movimentações não podem ser deletadas pois fazem parte da auditoria do sistema.")]
         public async Task<bool> DeleteAsync(int id)
         {
-            try
-            {
-                return await _stockMovementRepository.DeleteAsync(id);
-            }
-            catch
-            {
-                return false;
-            }
+            // Movimentações não devem ser deletadas - são histórico de auditoria
+            return false;
         }
 
         public async Task<OperationResult<IEnumerable<StockMovementDto>>> GetAllAsync()
@@ -248,37 +256,15 @@ namespace VendaFlex.Core.Services
             }
         }
 
+        /// <summary>
+        /// MÉTODO BLOQUEADO - Movimentações não devem ser atualizadas pois são auditoria.
+        /// </summary>
+        [Obsolete("Movimentações não podem ser alteradas pois fazem parte da auditoria do sistema.")]
         public async Task<OperationResult<StockMovementDto>> UpdateAsync(StockMovementDto movement)
         {
-            try
-            {
-                if (movement == null)
-                    return OperationResult<StockMovementDto>.CreateFailure("Movimentação é obrigatória.");
-
-                var validation = await _validator.ValidateAsync(movement);
-                if (!validation.IsValid)
-                {
-                    return OperationResult<StockMovementDto>.CreateFailure(
-                        "Dados inválidos.",
-                        validation.Errors.Select(e => e.ErrorMessage));
-                }
-
-                var existing = await _stockMovementRepository.GetByIdAsync(movement.StockMovementId);
-                if (existing == null)
-                    return OperationResult<StockMovementDto>.CreateFailure("Movimentação não encontrada.");
-
-                _mapper.Map(movement, existing);
-                var updated = await _stockMovementRepository.UpdateAsync(existing);
-                var resultDto = _mapper.Map<StockMovementDto>(updated);
-
-                return OperationResult<StockMovementDto>.CreateSuccess(resultDto, "Movimentação atualizada com sucesso.");
-            }
-            catch (Exception ex)
-            {
-                return OperationResult<StockMovementDto>.CreateFailure(
-                    "Erro ao atualizar movimentação.",
-                    new[] { ex.Message });
-            }
+            // Movimentações não devem ser alteradas - são histórico imutável de auditoria
+            return OperationResult<StockMovementDto>.CreateFailure(
+                "Movimentações não podem ser alteradas pois fazem parte da auditoria do sistema.");
         }
     }
 }

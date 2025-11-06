@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using VendaFlex.Data.Entities;
+using VendaFlex.Core.Interfaces;
 
 namespace VendaFlex.Data.Repositories
 {
@@ -14,10 +15,17 @@ namespace VendaFlex.Data.Repositories
     public class StockRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly Lazy<VendaFlex.Core.Services.StockAuditService> _auditService;
+        private readonly ICurrentUserContext _currentUserContext;
 
-        public StockRepository(ApplicationDbContext context)
+        public StockRepository(
+            ApplicationDbContext context,
+            Lazy<VendaFlex.Core.Services.StockAuditService> auditService,
+            ICurrentUserContext currentUserContext)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _auditService = auditService ?? throw new ArgumentNullException(nameof(auditService));
+            _currentUserContext = currentUserContext ?? throw new ArgumentNullException(nameof(currentUserContext));
         }
 
         #region Basic CRUD
@@ -74,8 +82,19 @@ namespace VendaFlex.Data.Repositories
             if (entity == null)
                 throw new ArgumentNullException(nameof(entity));
 
+            var currentUserId = _currentUserContext.UserId; // Sempre usar o userId do contexto atual
+            entity.LastStockUpdateByUserId = currentUserId;
+
             await _context.Stocks.AddAsync(entity);
             await _context.SaveChangesAsync();
+
+            // Registrar auditoria de criação
+            await _auditService.Value.LogStockCreationAsync(
+                entity.ProductId,
+                entity.Quantity,
+                currentUserId,
+                "Criação inicial de estoque");
+
             return entity;
         }
 
@@ -87,9 +106,30 @@ namespace VendaFlex.Data.Repositories
             if (entity == null)
                 throw new ArgumentNullException(nameof(entity));
 
+            // Buscar estado anterior para auditoria
+            var previousStock = await _context.Stocks
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.ProductId == entity.ProductId);
+
+            var currentUserId = _currentUserContext.UserId; // Sempre usar o userId do contexto atual
+
             entity.LastStockUpdate = DateTime.UtcNow;
+            entity.LastStockUpdateByUserId = currentUserId;
             _context.Stocks.Update(entity);
             await _context.SaveChangesAsync();
+
+            // Registrar auditoria de mudança
+            if (previousStock != null && previousStock.Quantity != entity.Quantity)
+            {
+                await _auditService.Value.LogQuantityChangeAsync(
+                    entity.ProductId,
+                    previousStock.Quantity,
+                    entity.Quantity,
+                    currentUserId,
+                    VendaFlex.Data.Entities.StockMovementType.Adjustment,
+                    "Atualização de estoque");
+            }
+
             return entity;
         }
 
@@ -120,11 +160,73 @@ namespace VendaFlex.Data.Repositories
             if (stock == null)
                 return false;
 
+            var previousQuantity = stock.Quantity;
+            var currentUserId = _currentUserContext.UserId; // Sempre usar o userId do contexto atual
+
             stock.Quantity = quantity;
             stock.LastStockUpdate = DateTime.UtcNow;
-            stock.LastStockUpdateByUserId = userId;
+            stock.LastStockUpdateByUserId = currentUserId;
 
             await _context.SaveChangesAsync();
+
+            // Registrar auditoria (tipo será determinado automaticamente)
+            await _auditService.Value.LogQuantityChangeAsync(
+                productId,
+                previousQuantity,
+                quantity,
+                currentUserId,
+                VendaFlex.Data.Entities.StockMovementType.Adjustment,
+                "Atualização de quantidade");
+
+            return true;
+        }
+
+        /// <summary>
+        /// Atualiza a quantidade de estoque de um produto com nota personalizada.
+        /// </summary>
+        public async Task<bool> UpdateQuantityAsync(int productId, int quantity, int? userId, string? notes)
+        {
+            System.Diagnostics.Debug.WriteLine($"[REPOSITORY DEBUG] UpdateQuantityAsync - INICIADO");
+            System.Diagnostics.Debug.WriteLine($"[REPOSITORY DEBUG] ProductId: {productId}");
+            System.Diagnostics.Debug.WriteLine($"[REPOSITORY DEBUG] Nova Quantidade: {quantity}");
+            System.Diagnostics.Debug.WriteLine($"[REPOSITORY DEBUG] UserId recebido: {userId}");
+            System.Diagnostics.Debug.WriteLine($"[REPOSITORY DEBUG] Notes: {notes}");
+
+            var stock = await _context.Stocks.FindAsync(productId);
+            if (stock == null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[REPOSITORY DEBUG] ERRO: Stock não encontrado!");
+                return false;
+            }
+
+            var previousQuantity = stock.Quantity;
+            var currentUserId = _currentUserContext.UserId; // Sempre usar o userId do contexto atual
+
+            System.Diagnostics.Debug.WriteLine($"[REPOSITORY DEBUG] Quantidade anterior: {previousQuantity}");
+            System.Diagnostics.Debug.WriteLine($"[REPOSITORY DEBUG] UserId do contexto: {currentUserId}");
+
+            stock.Quantity = quantity;
+            stock.LastStockUpdate = DateTime.UtcNow;
+            stock.LastStockUpdateByUserId = currentUserId;
+
+            await _context.SaveChangesAsync();
+            System.Diagnostics.Debug.WriteLine($"[REPOSITORY DEBUG] SaveChanges CONCLUÍDO");
+
+            // Registrar auditoria (tipo será determinado automaticamente)
+            System.Diagnostics.Debug.WriteLine($"[REPOSITORY DEBUG] Chamando LogQuantityChangeAsync...");
+            System.Diagnostics.Debug.WriteLine($"[REPOSITORY DEBUG] Diferença: {quantity - previousQuantity}");
+            
+            await _auditService.Value.LogQuantityChangeAsync(
+                productId,
+                previousQuantity,
+                quantity,
+                currentUserId,
+                VendaFlex.Data.Entities.StockMovementType.Adjustment,
+                notes);
+
+            System.Diagnostics.Debug.WriteLine($"[REPOSITORY DEBUG] LogQuantityChangeAsync CONCLUÍDO");
+            System.Diagnostics.Debug.WriteLine($"[REPOSITORY DEBUG] UpdateQuantityAsync - FINALIZADO COM SUCESSO");
+
             return true;
         }
 
@@ -140,10 +242,23 @@ namespace VendaFlex.Data.Repositories
             if (stock.AvailableQuantity < quantity)
                 return false;
 
+            var availableBefore = stock.AvailableQuantity;
+            var currentUserId = _currentUserContext.UserId; // Sempre usar o userId do contexto atual
+
             stock.ReservedQuantity = (stock.ReservedQuantity ?? 0) + quantity;
             stock.LastStockUpdate = DateTime.UtcNow;
+            stock.LastStockUpdateByUserId = currentUserId;
 
             await _context.SaveChangesAsync();
+
+            // Registrar auditoria
+            await _auditService.Value.LogReserveAsync(
+                productId,
+                quantity,
+                availableBefore,
+                currentUserId,
+                $"Reserva de {quantity} unidades");
+
             return true;
         }
 
@@ -160,10 +275,23 @@ namespace VendaFlex.Data.Repositories
             if (currentReserved < quantity)
                 return false;
 
+            var availableBefore = stock.AvailableQuantity;
+            var currentUserId = _currentUserContext.UserId; // Sempre usar o userId do contexto atual
+
             stock.ReservedQuantity = currentReserved - quantity;
             stock.LastStockUpdate = DateTime.UtcNow;
+            stock.LastStockUpdateByUserId = currentUserId;
 
             await _context.SaveChangesAsync();
+
+            // Registrar auditoria
+            await _auditService.Value.LogReleaseAsync(
+                productId,
+                quantity,
+                availableBefore,
+                currentUserId,
+                $"Liberação de {quantity} unidades reservadas");
+
             return true;
         }
 

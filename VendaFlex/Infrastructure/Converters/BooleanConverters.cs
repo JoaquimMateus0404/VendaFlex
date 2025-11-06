@@ -197,4 +197,58 @@ namespace VendaFlex.Infrastructure.Converters
             throw new NotImplementedException();
         }
     }
+
+    /// <summary>
+    /// Converte ProductStatus para cor
+    /// </summary>
+    public class ProductStatusToColorConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is VendaFlex.Data.Entities.ProductStatus status)
+            {
+                return status switch
+                {
+                    VendaFlex.Data.Entities.ProductStatus.Active => "#4CAF50",      // Verde
+                    VendaFlex.Data.Entities.ProductStatus.Inactive => "#9E9E9E",    // Cinza
+                    VendaFlex.Data.Entities.ProductStatus.Discontinued => "#F44336", // Vermelho
+                    VendaFlex.Data.Entities.ProductStatus.OutOfStock => "#FF9800",  // Laranja
+                    _ => "#9E9E9E"
+                };
+            }
+            return "#9E9E9E";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Converte ProductStatus para texto traduzido
+    /// </summary>
+    public class ProductStatusToStringConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is VendaFlex.Data.Entities.ProductStatus status)
+            {
+                return status switch
+                {
+                    VendaFlex.Data.Entities.ProductStatus.Active => "Ativo",
+                    VendaFlex.Data.Entities.ProductStatus.Inactive => "Inativo",
+                    VendaFlex.Data.Entities.ProductStatus.Discontinued => "Descontinuado",
+                    VendaFlex.Data.Entities.ProductStatus.OutOfStock => "Sem Estoque",
+                    _ => status.ToString()
+                };
+            }
+            return value?.ToString() ?? string.Empty;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

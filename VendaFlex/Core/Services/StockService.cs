@@ -9,7 +9,7 @@ using VendaFlex.Data.Repositories;
 namespace VendaFlex.Core.Services
 {
     /// <summary>
-    /// Serviço para controle e movimentação de estoque.
+    /// Serviï¿½o para controle e movimentaï¿½ï¿½o de estoque.
     /// </summary>
     public class StockService : IStockService
     {
@@ -32,19 +32,19 @@ namespace VendaFlex.Core.Services
             try
             {
                 if (stock == null)
-                    return OperationResult<StockDto>.CreateFailure("Estoque é obrigatório.");
+                    return OperationResult<StockDto>.CreateFailure("Estoque ï¿½ obrigatï¿½rio.");
 
                 var validation = await _stockValidator.ValidateAsync(stock);
                 if (!validation.IsValid)
                 {
                     return OperationResult<StockDto>.CreateFailure(
-                        "Dados inválidos.",
+                        "Dados invï¿½lidos.",
                         validation.Errors.Select(e => e.ErrorMessage));
                 }
 
                 var exists = await _stockRepository.ExistsAsync(stock.ProductId);
                 if (exists)
-                    return OperationResult<StockDto>.CreateFailure("Já existe registro de estoque para este produto.");
+                    return OperationResult<StockDto>.CreateFailure("Jï¿½ existe registro de estoque para este produto.");
 
                 var entity = _mapper.Map<Stock>(stock);
                 var created = await _stockRepository.AddAsync(entity);
@@ -117,11 +117,11 @@ namespace VendaFlex.Core.Services
             try
             {
                 if (productId <= 0)
-                    return OperationResult<StockDto>.CreateFailure("Produto inválido.");
+                    return OperationResult<StockDto>.CreateFailure("Produto invï¿½lido.");
 
                 var entity = await _stockRepository.GetByProductIdAsync(productId);
                 if (entity == null)
-                    return OperationResult<StockDto>.CreateFailure("Estoque não encontrado.");
+                    return OperationResult<StockDto>.CreateFailure("Estoque nï¿½o encontrado.");
 
                 var dto = _mapper.Map<StockDto>(entity);
                 return OperationResult<StockDto>.CreateSuccess(dto, "Estoque encontrado com sucesso.");
@@ -201,19 +201,19 @@ namespace VendaFlex.Core.Services
             try
             {
                 if (stock == null)
-                    return OperationResult<StockDto>.CreateFailure("Estoque é obrigatório.");
+                    return OperationResult<StockDto>.CreateFailure("Estoque ï¿½ obrigatï¿½rio.");
 
                 var validation = await _stockValidator.ValidateAsync(stock);
                 if (!validation.IsValid)
                 {
                     return OperationResult<StockDto>.CreateFailure(
-                        "Dados inválidos.",
+                        "Dados invï¿½lidos.",
                         validation.Errors.Select(e => e.ErrorMessage));
                 }
 
                 var existing = await _stockRepository.GetByProductIdAsync(stock.ProductId);
                 if (existing == null)
-                    return OperationResult<StockDto>.CreateFailure("Estoque não encontrado.");
+                    return OperationResult<StockDto>.CreateFailure("Estoque nï¿½o encontrado.");
 
                 _mapper.Map(stock, existing);
                 var updated = await _stockRepository.UpdateAsync(existing);
@@ -237,6 +237,21 @@ namespace VendaFlex.Core.Services
                     return false;
 
                 return await _stockRepository.UpdateQuantityAsync(productId, quantity, userId);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateQuantityAsync(int productId, int quantity, int? userId, string? notes)
+        {
+            try
+            {
+                if (productId <= 0 || quantity < 0)
+                    return false;
+
+                return await _stockRepository.UpdateQuantityAsync(productId, quantity, userId, notes);
             }
             catch
             {

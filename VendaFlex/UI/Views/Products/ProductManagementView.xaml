@@ -14,10 +14,16 @@
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
+        <materialDesign:BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <converters:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
         <converters:BoolToStringConverter x:Key="BoolToStringConverter"/>
         <converters:BoolToIconConverter x:Key="BoolToIconConverter"/>
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
         <converters:GreaterThanZeroToVisibilityConverter x:Key="GreaterThanZeroToVisibilityConverter"/>
+        <converters:ProductStatusToColorConverter x:Key="ProductStatusToColorConverter"/>
+        <converters:ProductStatusToStringConverter x:Key="ProductStatusToStringConverter"/>
+        <converters:DaysFromNowConverter x:Key="DaysFromNowConverter"/>
 
         <!-- Product Status to String Converter -->
         <converters:EnumToStringConverter x:Key="ProductStatusConverter"/>
@@ -197,6 +203,7 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <!-- Filters and Actions -->
@@ -219,7 +226,7 @@
                                              Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                              materialDesign:HintAssist.Hint="Buscar por nome, código de barras ou SKU..."
                                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                             Margin="0,0,16,0">
+                                             Margin="0,0,16,0" >
                                         <TextBox.InputBindings>
                                             <KeyBinding Key="Escape" Command="{Binding ClearFiltersCommand}"/>
                                         </TextBox.InputBindings>
@@ -312,12 +319,12 @@
                                       SelectedItem="{Binding SelectedProduct}"
                                       AutoGenerateColumns="False"
                                       CanUserAddRows="False"
-                                      IsReadOnly="True"
+                                      IsReadOnly="False"
                                       SelectionMode="Single"
                                       materialDesign:DataGridAssist.CellPadding="8"
                                       materialDesign:DataGridAssist.ColumnHeaderPadding="8">
                                 <DataGrid.Columns>
-                                    <DataGridTemplateColumn Header="Foto" Width="80">
+                                    <DataGridTemplateColumn Header="Foto" Width="80" IsReadOnly="True">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Border Width="50" Height="50" 
@@ -332,56 +339,83 @@
 
                                     <DataGridTextColumn Header="Código" 
                                                         Binding="{Binding Code}" 
-                                                        Width="100"/>
+                                                        Width="100"
+                                                        IsReadOnly="True"/>
 
                                     <DataGridTextColumn Header="Nome" 
                                                         Binding="{Binding Name}" 
                                                         Width="*"
-                                                        MinWidth="200"/>
+                                                        MinWidth="200"
+                                                        IsReadOnly="True"/>
 
                                     <DataGridTextColumn Header="Categoria" 
                                                         Binding="{Binding CategoryName}" 
-                                                        Width="150"/>
+                                                        Width="150"
+                                                        IsReadOnly="True"/>
 
                                     <DataGridTextColumn Header="SKU" 
                                                         Binding="{Binding SKU}" 
-                                                        Width="120"/>
+                                                        Width="120"
+                                                        IsReadOnly="True"/>
 
                                     <DataGridTextColumn Header="Código de Barras" 
                                                         Binding="{Binding Barcode}" 
-                                                        Width="140"/>
+                                                        Width="140"
+                                                        IsReadOnly="True"/>
 
                                     <DataGridTextColumn Header="Preço de Custo" 
                                                         Binding="{Binding CostPrice, StringFormat=C2}" 
-                                                        Width="120"/>
+                                                        Width="120"
+                                                        IsReadOnly="True"/>
 
                                     <DataGridTextColumn Header="Preço de Venda" 
                                                         Binding="{Binding SalePrice, StringFormat=C2}" 
-                                                        Width="120"/>
+                                                        Width="120"
+                                                        IsReadOnly="True"/>
 
                                     <DataGridTextColumn Header="Estoque" 
                                                         Binding="{Binding CurrentStock}" 
-                                                        Width="80"/>
+                                                        Width="80"
+                                                        IsReadOnly="True"/>
 
-                                    <DataGridTemplateColumn Header="Status" Width="120">
+                                    <DataGridTemplateColumn Header="Status" Width="150">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <materialDesign:PackIcon Kind="{Binding Status, Converter={StaticResource BoolToIconConverter}, ConverterParameter=CheckCircle|CloseCircle}"
-                                                                         Foreground="{Binding Status, Converter={StaticResource BoolToColorConverter}, ConverterParameter=#4CAF50|#F44336}"/>
+                                                <Border Background="{Binding Status, Converter={StaticResource ProductStatusToColorConverter}}"
+                                                        CornerRadius="12" Padding="8,4">
+                                                    <TextBlock Text="{Binding Status, Converter={StaticResource ProductStatusToStringConverter}}" 
+                                                               Foreground="White"
+                                                               HorizontalAlignment="Center"
+                                                               FontSize="11"
+                                                               FontWeight="Bold"/>
+                                                </Border>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
+                                        <DataGridTemplateColumn.CellEditingTemplate>
+                                            <DataTemplate>
+                                                <ComboBox SelectedItem="{Binding Status, UpdateSourceTrigger=PropertyChanged}"
+                                                          materialDesign:HintAssist.IsFloating="False">
+                                                    <entities:ProductStatus>Active</entities:ProductStatus>
+                                                    <entities:ProductStatus>Inactive</entities:ProductStatus>
+                                                    <entities:ProductStatus>Discontinued</entities:ProductStatus>
+                                                    <entities:ProductStatus>OutOfStock</entities:ProductStatus>
+                                                </ComboBox>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellEditingTemplate>
                                     </DataGridTemplateColumn>
 
-                                    <DataGridTemplateColumn Header="Ações" Width="150">
+                                    <DataGridTemplateColumn Header="Ações" Width="150" IsReadOnly="True">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                     <Button Command="{Binding DataContext.EditProductCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                            CommandParameter="{Binding}"
                                                             Style="{StaticResource MaterialDesignIconButton}"
                                                             ToolTip="Editar">
                                                         <materialDesign:PackIcon Kind="Pencil"/>
                                                     </Button>
                                                     <Button Command="{Binding DataContext.DeleteProductCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                            CommandParameter="{Binding}"
                                                             Style="{StaticResource MaterialDesignIconButton}"
                                                             ToolTip="Excluir"
                                                             Foreground="{DynamicResource ValidationErrorBrush}">
@@ -396,7 +430,7 @@
                         </materialDesign:Card>
 
                         <!-- Pagination -->
-                        <materialDesign:Card Grid.Row="1" Padding="16" Margin="0,8,0,0">
+                        <materialDesign:Card Grid.Row="2" Padding="16" Margin="0,8,0,0">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -678,35 +712,60 @@
                                     <DataGridTextColumn Header="Produto" 
                                                         Binding="{Binding ProductName}" 
                                                         Width="*"
-                                                        MinWidth="200"/>
+                                                        MinWidth="180"/>
 
                                     <DataGridTextColumn Header="Lote" 
                                                         Binding="{Binding BatchNumber}" 
-                                                        Width="120"/>
+                                                        Width="100"/>
 
                                     <DataGridTextColumn Header="Data de Validade" 
                                                         Binding="{Binding ExpirationDate, StringFormat=dd/MM/yyyy}" 
-                                                        Width="140"/>
+                                                        Width="120"/>
+
+                                    <DataGridTextColumn Header="Dias Restantes" 
+                                                        Width="120">
+                                        <DataGridTextColumn.Binding>
+                                            <Binding Path="DaysUntilExpiration">
+                                                <Binding.StringFormat>{0} dias</Binding.StringFormat>
+                                            </Binding>
+                                        </DataGridTextColumn.Binding>
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsExpired}" Value="True">
+                                                        <Setter Property="Foreground" Value="#F44336"/>
+                                                        <Setter Property="FontWeight" Value="Bold"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsNearExpiration}" Value="True">
+                                                        <Setter Property="Foreground" Value="#FF9800"/>
+                                                        <Setter Property="FontWeight" Value="Bold"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
 
                                     <DataGridTextColumn Header="Quantidade" 
                                                         Binding="{Binding Quantity}" 
-                                                        Width="100"/>
+                                                        Width="90"/>
 
-                                    <DataGridTemplateColumn Header="Status" Width="150">
+                                    <DataGridTemplateColumn Header="Status" Width="140">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <Border Background="{Binding IsExpired, Converter={StaticResource BoolToColorConverter}, ConverterParameter=#F44336|#4CAF50}"
+                                                <Border Background="{Binding StatusColor}"
                                                         CornerRadius="12" Padding="8,4">
-                                                    <TextBlock Text="{Binding IsExpired, Converter={StaticResource BoolToStringConverter}, ConverterParameter=Vencido|Válido}" 
+                                                    <TextBlock Text="{Binding StatusText}" 
                                                                Foreground="White"
                                                                HorizontalAlignment="Center"
+                                                               FontWeight="SemiBold"
                                                                FontSize="11"/>
                                                 </Border>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
 
-                                    <DataGridTemplateColumn Header="Ações" Width="150">
+                                    <DataGridTemplateColumn Header="Ações" Width="120">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -1123,24 +1182,92 @@
                         <!-- Imagem -->
                         <TextBlock Text="Imagem do Produto" 
                                    Style="{StaticResource SectionHeaderStyle}"/>
-                        
-                        <Grid Margin="0,0,0,16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
 
-                            <TextBox Grid.Column="0"
-                                     Text="{Binding ProductPhotoUrl}"
-                                     materialDesign:HintAssist.Hint="URL da Foto"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     Margin="0,0,8,0"/>
+                            <Border >
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                            <Button Grid.Column="1"
-                                    Command="{Binding UploadPhotoCommand}"
-                                    Style="{StaticResource MaterialDesignRaisedButton}"
-                                    Content="Escolher Arquivo"/>
-                        </Grid>
+                                    <!-- Logo Preview -->
+                                    <Border Grid.Column="0"
+                                           Width="120" 
+                                           Height="120"
+                                           Background="#F1F5F9"
+                                           CornerRadius="12"
+                                           BorderBrush="#E2E8F0"
+                                           BorderThickness="2"
+                                           Margin="0,0,24,0">
+                                        <Grid>
+                                            <!-- Placeholder -->
+                                            <StackPanel VerticalAlignment="Center" 
+                                                       HorizontalAlignment="Center"
+                                                       Visibility="{Binding HasImage, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                                                <materialDesign:PackIcon Kind="ImageOutline" 
+                                                                        Width="48" 
+                                                                        Height="48"
+                                                                        Foreground="#94A3B8"/>
+                                                <TextBlock Text="Sem Imagem" 
+                                                          FontSize="11" 
+                                                          Foreground="#94A3B8"
+                                                          HorizontalAlignment="Center"
+                                                          Margin="0,8,0,0"/>
+                                            </StackPanel>
+
+                                            <!-- Logo Image -->
+                                            <Image Source="{Binding ProductPhotoUrl, Converter={StaticResource StringToImageSourceConverter}}"
+                                                  Stretch="Uniform"
+                                                  Visibility="{Binding HasImage, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Logo Actions -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="Imagem do produto" 
+                                                  Margin="0,0,0,8"/>
+                                        <TextBlock Text="Adicione a imagem do produto"
+                                                  FontSize="13"
+                                                  Foreground="#64748B"
+                                                  TextWrapping="Wrap"
+                                                  Margin="0,0,0,16"/>
+
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Command="{Binding  UploadProductPhotoCommand}"
+                                                   Style="{StaticResource MaterialDesignOutlinedButton}"
+                                                   Height="40"
+                                                   Padding="20,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="Upload" 
+                                                                            Width="18" 
+                                                                            Height="18"
+                                                                            VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Selecionar Logo" 
+                                                              Margin="8,0,0,0"
+                                                              VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding RemoveProductPhotoCommand}"
+                                                   Style="{StaticResource MaterialDesignOutlinedButton}"
+                                                   Height="40"
+                                                   Padding="20,0"
+                                                   Margin="12,0,0,0"
+                                                   Visibility="{Binding HasLogo, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="Delete" 
+                                                                            Width="18" 
+                                                                            Height="18"
+                                                                            VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Remover" 
+                                                              Margin="8,0,0,0"
+                                                              VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
 
                         <!-- Opções Adicionais -->
                         <TextBlock Text="Opções Adicionais" 
@@ -1266,7 +1393,22 @@
                     <DatePicker SelectedDate="{Binding ExpirationDate}"
                                 materialDesign:HintAssist.Hint="Data de Validade*"
                                 Style="{StaticResource MaterialDesignOutlinedDatePicker}"
-                                Margin="0,0,0,16"/>
+                                Margin="0,0,0,8"/>
+
+                    <!-- Calculadora de dias -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                        <materialDesign:PackIcon Kind="CalendarClock" 
+                                                 VerticalAlignment="Center"
+                                                 Margin="0,0,8,0"
+                                                 Foreground="#757575"/>
+                        <TextBlock VerticalAlignment="Center" Foreground="#757575" FontSize="12">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}Vence em {0} dias a partir de hoje">
+                                    <Binding Path="ExpirationDate" Converter="{StaticResource DaysFromNowConverter}"/>
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </StackPanel>
 
                     <TextBox Text="{Binding ExpirationQuantity}"
                              materialDesign:HintAssist.Hint="Quantidade*"

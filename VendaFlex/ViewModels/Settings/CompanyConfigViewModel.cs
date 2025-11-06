@@ -17,7 +17,7 @@ namespace VendaFlex.ViewModels.Settings
 {
     /// <summary>
     /// ViewModel para gerenciamento das configurações da empresa.
-    /// Permite visualizar e editar todas as configurações globais do sistema.
+    /// Permite visualizar e editar todas as configurações globais do sistema. 
     /// </summary>
     public class CompanyConfigViewModel : BaseViewModel
     {

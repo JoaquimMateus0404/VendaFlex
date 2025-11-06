@@ -7,12 +7,14 @@ using VendaFlex.UI.Views.Sales;
 using VendaFlex.UI.Views.Setup;
 using VendaFlex.UI.Views.Settings;
 using VendaFlex.UI.Views.Products;
+using VendaFlex.UI.Views.Stock;
 using VendaFlex.ViewModels.Authentication;
 using VendaFlex.ViewModels.Dashboard;
 using VendaFlex.ViewModels.Sales;
 using VendaFlex.ViewModels.Setup;
 using VendaFlex.ViewModels.Settings;
 using VendaFlex.ViewModels.Products;
+using VendaFlex.ViewModels.Stock;
 
 namespace VendaFlex.Infrastructure.Navigation
 {
@@ -208,6 +210,34 @@ namespace VendaFlex.Infrastructure.Navigation
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Erro ao navegar para Gerenciamento de Produtos");
+                throw;
+            }
+        }
+
+        public void NavigateToStockManagement()
+        {
+            _logger.LogInformation("Navegando para tela de Gerenciamento de Estoque");
+            try
+            {
+                NavigateToPage<StockManagementView, StockManagementViewModel>(
+                    "VendaFlex - Gerenciamento de Estoque",
+                    new NavigationOptions
+                    {
+                        Mode = NavigationMode.Stack,
+                        Width = 1400,
+                        Height = 900,
+                        WindowStyle = WindowStyle.SingleBorderWindow,
+                        ResizeMode = ResizeMode.CanResize,
+                        WindowState = WindowState.Maximized,
+                        StartupLocation = WindowStartupLocation.CenterScreen,
+                        ShowInTaskbar = true,
+                        Topmost = false
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao navegar para Gerenciamento de Estoque");
                 throw;
             }
         }

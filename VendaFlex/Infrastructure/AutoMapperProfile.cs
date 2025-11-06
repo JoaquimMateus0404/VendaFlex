@@ -27,7 +27,9 @@ namespace VendaFlex.Infrastructure
 
             // Product
             CreateMap<Product, ProductDto>()
-                .ForMember(d => d.Code, o => o.MapFrom(s => s.Barcode))
+                .ForMember(d => d.Code, o => o.MapFrom(s => s.InternalCode))
+                .ForMember(d => d.InternalCode, o => o.MapFrom(s => s.InternalCode))
+                .ForMember(d => d.ExternalCode, o => o.MapFrom(s => s.ExternalCode))
                 .ForMember(d => d.CategoryName, o => o.MapFrom(s => s.Category != null ? s.Category.Name : string.Empty))
                 .ForMember(d => d.CurrentStock, o => o.MapFrom(s => s.Stock != null ? s.Stock.Quantity : 0))
                 .ReverseMap();
@@ -48,6 +50,10 @@ namespace VendaFlex.Infrastructure
             // Expiration
             CreateMap<Expiration, ExpirationDto>()
                 .ForMember(d => d.ProductName, o => o.MapFrom(s => s.Product != null ? s.Product.Name : string.Empty))
+                .ForMember(d => d.ExpirationWarningDays, o => o.MapFrom(s => s.Product != null ? s.Product.ExpirationWarningDays : null))
+                .ForMember(d => d.IsNearExpiration, o => o.MapFrom(s => 
+                    s.ExpirationDate.Date >= DateTime.Now.Date && 
+                    (s.ExpirationDate.Date - DateTime.Now.Date).Days <= (s.Product != null && s.Product.ExpirationWarningDays.HasValue ? s.Product.ExpirationWarningDays.Value : 30)))
                 .ReverseMap();
 
             // Invoice

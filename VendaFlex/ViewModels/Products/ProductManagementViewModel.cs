@@ -1,5 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -289,12 +291,20 @@ namespace VendaFlex.ViewModels.Products
             set => Set(ref _finalPrice, value);
         }
 
+
         private string? _productPhotoUrl;
         public string? ProductPhotoUrl
         {
             get => _productPhotoUrl;
-            set => Set(ref _productPhotoUrl, value);
+            set
+            {
+                if (Set(ref _productPhotoUrl, value))
+                {
+                    OnPropertyChanged(nameof(HasImage));
+                }
+            }
         }
+        public bool HasImage => !string.IsNullOrWhiteSpace(ProductPhotoUrl);
 
         private ProductStatus _productStatus = ProductStatus.Active;
         public ProductStatus ProductStatus
@@ -316,7 +326,7 @@ namespace VendaFlex.ViewModels.Products
             get => _productControlsStock;
             set => Set(ref _productControlsStock, value);
         }
-
+    
         private int? _productMinimumStock;
         public int? ProductMinimumStock
         {
@@ -828,7 +838,7 @@ namespace VendaFlex.ViewModels.Products
             DeleteProductCommand = new RelayCommand(async _ => await DeleteProductAsync(), _ => SelectedProduct != null);
             CancelProductCommand = new RelayCommand(_ => CancelProductForm());
             UploadProductPhotoCommand = new RelayCommand(_ => UploadProductPhoto());
-            RemoveProductPhotoCommand = new RelayCommand(_ => RemoveProductPhoto(), _ => !string.IsNullOrEmpty(ProductPhotoUrl));
+            RemoveProductPhotoCommand = new RelayCommand(_ => RemoveProductPhoto(), _ => HasImage);
 
             // Category Commands
             LoadCategoriesCommand = new RelayCommand(async _ => await LoadCategoriesAsync());
@@ -1121,6 +1131,8 @@ namespace VendaFlex.ViewModels.Products
                 {
                     ProductId = ProductId,
                     Code = ProductCode ?? string.Empty,
+                    InternalCode = ProductCode ?? $"PROD-{DateTime.Now:yyyyMMddHHmmss}",
+                    ExternalCode = ProductCode ?? $"EXT-{DateTime.Now:yyyyMMddHHmmss}",
                     Name = ProductName,
                     Description = ProductDescription ?? string.Empty,
                     ShortDescription = ProductShortDescription ?? string.Empty,
@@ -1162,11 +1174,13 @@ namespace VendaFlex.ViewModels.Products
                 {
                     var errorMsg = result.Errors?.FirstOrDefault() ?? result.Message ?? "Erro ao salvar produto";
                     ShowStatusMessage(errorMsg, true);
+                    Debug.WriteLine("Erro ==========: ", errorMsg);
                 }
             }
             catch (Exception ex)
             {
                 ShowStatusMessage($"Erro ao salvar produto: {ex.Message}", true);
+                 Debug.WriteLine("Erro2 ==========: ", ex.Message);
             }
             finally
             {
@@ -1263,7 +1277,11 @@ namespace VendaFlex.ViewModels.Products
                     ShowStatusMessage("O arquivo selecionado não é uma imagem válida.", true);
                     return;
                 }
-
+                //Remove a foto antiga se existir
+                if (!string.IsNullOrEmpty(ProductPhotoUrl) && File.Exists(ProductPhotoUrl))
+                {
+                    _fileStorageService.DeleteFileAsync(ProductPhotoUrl);
+                }
                 Task.Run(async () =>
                 {
                     try
@@ -1288,6 +1306,8 @@ namespace VendaFlex.ViewModels.Products
 
         private void RemoveProductPhoto()
         {
+            if (string.IsNullOrEmpty(ProductPhotoUrl)) return;
+            _fileStorageService.DeleteFileAsync(ProductPhotoUrl);
             ProductPhotoUrl = null;
         }
 
@@ -1657,6 +1677,9 @@ namespace VendaFlex.ViewModels.Products
                     TotalCost = MovementTotalCost,
                     Date = DateTime.UtcNow
                 };
+                Debug.WriteLine("============STOCK====================");
+                Debug.WriteLine($"Saving movement: ProductId={movementDto.ProductId}, Quantity={movementDto.Quantity}, Type={movementDto.Type}, UnitCost={movementDto.UnitCost}, TotalCost={movementDto.TotalCost}, User={movementDto.UserId}");
+                Debug.WriteLine("=======================================");
 
                 var result = await _stockMovementService.AddAsync(movementDto);
 

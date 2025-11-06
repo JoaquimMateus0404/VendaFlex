@@ -74,11 +74,29 @@ namespace VendaFlex.Data.Repositories
         /// </summary>
         public async Task<StockMovement> AddAsync(StockMovement entity)
         {
+            System.Diagnostics.Debug.WriteLine($"[MOVEMENT REPOSITORY DEBUG] AddAsync - INICIADO");
+            
             if (entity == null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MOVEMENT REPOSITORY DEBUG] ERRO: entity é NULL!");
                 throw new ArgumentNullException(nameof(entity));
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[MOVEMENT REPOSITORY DEBUG] Movimentação recebida:");
+            System.Diagnostics.Debug.WriteLine($"[MOVEMENT REPOSITORY DEBUG] - ProductId: {entity.ProductId}");
+            System.Diagnostics.Debug.WriteLine($"[MOVEMENT REPOSITORY DEBUG] - UserId: {entity.UserId}");
+            System.Diagnostics.Debug.WriteLine($"[MOVEMENT REPOSITORY DEBUG] - Quantity: {entity.Quantity}");
+            System.Diagnostics.Debug.WriteLine($"[MOVEMENT REPOSITORY DEBUG] - Type: {entity.Type}");
+            System.Diagnostics.Debug.WriteLine($"[MOVEMENT REPOSITORY DEBUG] - Notes: {entity.Notes}");
+            System.Diagnostics.Debug.WriteLine($"[MOVEMENT REPOSITORY DEBUG] - Reference: {entity.Reference}");
 
             await _context.StockMovements.AddAsync(entity);
+            System.Diagnostics.Debug.WriteLine($"[MOVEMENT REPOSITORY DEBUG] AddAsync concluído, chamando SaveChangesAsync...");
+            
             await _context.SaveChangesAsync();
+            System.Diagnostics.Debug.WriteLine($"[MOVEMENT REPOSITORY DEBUG] SaveChangesAsync CONCLUÍDO!");
+            System.Diagnostics.Debug.WriteLine($"[MOVEMENT REPOSITORY DEBUG] StockMovementId gerado: {entity.StockMovementId}");
+            
             return entity;
         }
 

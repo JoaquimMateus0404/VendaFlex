@@ -37,7 +37,9 @@ namespace VendaFlex.Core.DTOs
         public int CurrentStock { get; set; }
         
         // Propriedades adicionais para exibição
-        public string Code { get; set; }
+        public string Code { get; set; } // Código genérico (pode ser InternalCode ou ExternalCode)
+        public string InternalCode { get; set; }
+        public string ExternalCode { get; set; }
         public string CategoryName { get; set; }
     }
 }

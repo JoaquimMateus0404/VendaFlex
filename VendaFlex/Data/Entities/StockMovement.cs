@@ -11,6 +11,10 @@ namespace VendaFlex.Data.Entities
         [Required]
         public int ProductId { get; set; }
 
+        /// <summary>
+        /// ID do usuário que realizou a movimentação.
+        /// Sempre obrigatório - obtido do ICurrentUserContext.
+        /// </summary>
         [Required]
         public int UserId { get; set; }
 
@@ -28,10 +32,10 @@ namespace VendaFlex.Data.Entities
         public StockMovementType Type { get; set; }
 
         [StringLength(500)]
-        public string Notes { get; set; }
+        public string? Notes { get; set; }
 
         [StringLength(100)]
-        public string Reference { get; set; }
+        public string? Reference { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal? UnitCost { get; set; }
@@ -40,19 +44,19 @@ namespace VendaFlex.Data.Entities
         public decimal? TotalCost { get; set; }
 
         [ForeignKey(nameof(ProductId))]
-        public virtual Product Product { get; set; }
+        public virtual Product Product { get; set; } = null!;
 
         [ForeignKey(nameof(UserId))]
-        public virtual User User { get; set; }
+        public virtual User User { get; set; } = null!;
     }
 
     public enum StockMovementType
     {
-        Entry = 1,
-        Exit = 2,
-        Adjustment = 3,
-        Transfer = 4,
-        Return = 5,
-        Loss = 6
+        Entry = 1, //Entrada
+        Exit = 2, //Saída
+        Adjustment = 3, //Ajuste
+        Transfer = 4, //Transferência
+        Return = 5, //Retorno
+        Loss = 6 //Perda
     }
 }

@@ -77,6 +77,20 @@ namespace VendaFlex.Data.Repositories
             if (entity == null)
                 throw new ArgumentNullException(nameof(entity));
 
+            // Garantir que as navegações não sejam rastreadas se estiverem carregadas
+            if (entity.Category != null)
+            {
+                _context.Entry(entity.Category).State = EntityState.Unchanged;
+            }
+            if (entity.Supplier != null)
+            {
+                _context.Entry(entity.Supplier).State = EntityState.Unchanged;
+            }
+            if (entity.Stock != null)
+            {
+                _context.Entry(entity.Stock).State = EntityState.Unchanged;
+            }
+
             await _context.Products.AddAsync(entity);
             await _context.SaveChangesAsync();
             return entity;
@@ -90,7 +104,33 @@ namespace VendaFlex.Data.Repositories
             if (entity == null)
                 throw new ArgumentNullException(nameof(entity));
 
-            _context.Products.Update(entity);
+            // Marcar entidades relacionadas como Unchanged para não serem atualizadas
+            // Isso evita que o EF tente atualizar Category, Supplier ou Stock
+            if (entity.Category != null)
+            {
+                _context.Entry(entity.Category).State = EntityState.Unchanged;
+            }
+            if (entity.Supplier != null)
+            {
+                _context.Entry(entity.Supplier).State = EntityState.Unchanged;
+            }
+            if (entity.Stock != null)
+            {
+                _context.Entry(entity.Stock).State = EntityState.Unchanged;
+            }
+
+            // Usar Entry em vez de Update para ter mais controle
+            var entry = _context.Entry(entity);
+            if (entry.State == EntityState.Detached)
+            {
+                _context.Products.Attach(entity);
+                entry.State = EntityState.Modified;
+            }
+            else
+            {
+                entry.State = EntityState.Modified;
+            }
+
             await _context.SaveChangesAsync();
             return entity;
         }
