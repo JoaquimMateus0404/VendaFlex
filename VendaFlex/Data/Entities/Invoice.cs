@@ -80,7 +80,8 @@ namespace VendaFlex.Data.Entities
         Confirmed = 2,
         Paid = 3, // pago
         Cancelled = 4,
-        Refunded = 5 // reembolsado
+        Refunded = 5, // reembolsado
+        Pending = 6 // pendente
     }
     #endregion
 }

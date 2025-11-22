@@ -15,6 +15,10 @@ using VendaFlex.ViewModels.Setup;
 using VendaFlex.ViewModels.Settings;
 using VendaFlex.ViewModels.Products;
 using VendaFlex.ViewModels.Stock;
+using VendaFlex.UI.Views.Persons;
+using VendaFlex.ViewModels.Persons;
+using VendaFlex.UI.Views.Users;
+using VendaFlex.ViewModels.Users;
 
 namespace VendaFlex.Infrastructure.Navigation
 {
@@ -241,6 +245,118 @@ namespace VendaFlex.Infrastructure.Navigation
                 throw;
             }
         }
+        public void NavigateToUserProfile()
+        {
+            _logger.LogInformation("Navegando para tela de Perfil do Usuário");
+            try
+            {
+                NavigateToPage<UserProfileView, UserProfileViewModel>(
+                    "VendaFlex - Perfil do Usuário",
+                    new NavigationOptions
+                    {
+                        Mode = NavigationMode.Stack,
+                        Width = 1000,
+                        Height = 700,
+                        WindowStyle = WindowStyle.SingleBorderWindow,
+                        ResizeMode = ResizeMode.CanResize,
+                        WindowState = WindowState.Normal,
+                        StartupLocation = WindowStartupLocation.CenterScreen,
+                        ShowInTaskbar = true,
+                        Topmost = false
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao navegar para Perfil do Usuário");
+                throw;
+            }
+        }
+
+        public void NavigateToPersonManagement()
+        {
+            _logger.LogInformation("Navegando para tela de Gerenciamento de Pessoas");
+            try
+            {
+                NavigateToPage<PersonManagementView, PersonManagementViewModel>(
+                    "VendaFlex - Gerenciamento de Pessoas",
+                    new NavigationOptions
+                    {
+                        Mode = NavigationMode.Stack,
+                        Width = 1400,
+                        Height = 900,
+                        WindowStyle = WindowStyle.SingleBorderWindow,
+                        ResizeMode = ResizeMode.CanResize,
+                        WindowState = WindowState.Maximized,
+                        StartupLocation = WindowStartupLocation.CenterScreen,
+                        ShowInTaskbar = true,
+                        Topmost = false
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao navegar para Gerenciamento de Pessoas");
+                throw;
+            }
+        }
+
+        public void NavigateToUserManagement()
+        {
+            _logger.LogInformation("Navegando para tela de Gerenciamento de Usuários");
+            try
+            {
+                NavigateToPage<UserManagementView, UserManagementViewModel>(
+                    "VendaFlex - Gerenciamento de Usuários",
+                    new NavigationOptions
+                    {
+                        Mode = NavigationMode.Stack,
+                        Width = 1400,
+                        Height = 900,
+                        WindowStyle = WindowStyle.SingleBorderWindow,
+                        ResizeMode = ResizeMode.CanResize,
+                        WindowState = WindowState.Maximized,
+                        StartupLocation = WindowStartupLocation.CenterScreen,
+                        ShowInTaskbar = true,
+                        Topmost = false
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao navegar para Gerenciamento de Usuários");
+                throw;
+            }
+        }
+
+        public void NavigateToInvoiceManagement()
+        {
+            _logger.LogInformation("Navegando para tela de Gestão de Faturas");
+            try
+            {
+                NavigateToPage<InvoiceManagementView, InvoiceManagementViewModel>(
+                    "VendaFlex - Gestão de Faturas",
+                    new NavigationOptions
+                    {
+                        Mode = NavigationMode.Stack,
+                        Width = 1400,
+                        Height = 900,
+                        WindowStyle = WindowStyle.SingleBorderWindow,
+                        ResizeMode = ResizeMode.CanResize,
+                        WindowState = WindowState.Maximized,
+                        StartupLocation = WindowStartupLocation.CenterScreen,
+                        ShowInTaskbar = true,
+                        Topmost = false
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao navegar para Gestão de Faturas");
+                throw;
+            }
+        }
+
         #endregion
         public void NavigateToPage<TView, TViewModel>(string title, double width = 1000, double height = 700, bool closeCurrent = false)
             where TView : System.Windows.Controls.Page

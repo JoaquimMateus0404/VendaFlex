@@ -210,6 +210,14 @@
                             </StackPanel>
                         </Button>
 
+                        <!-- Gestão de Faturas -->
+                        <Button Style="{StaticResource SidebarButtonStyle}" Click="InvoiceManagementButton_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="FileDocumentEdit" Width="24" Height="24" Margin="0,0,12,0"/>
+                                <TextBlock Text="Gestão de Faturas" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
                         <!-- Produtos -->
                         <Button Style="{StaticResource SidebarButtonStyle}"
                         Click="ProductsButton_Click">
@@ -220,7 +228,7 @@
                         </Button>
 
                         <!-- Pessoas (Clientes/Fornecedores) -->
-                        <Button Style="{StaticResource SidebarButtonStyle}">
+                        <Button Style="{StaticResource SidebarButtonStyle}" Click="PersonButton_Click">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="AccountMultiple" Width="24" Height="24" Margin="0,0,12,0"/>
                                 <TextBlock Text="Pessoas" VerticalAlignment="Center"/>
@@ -252,11 +260,11 @@
                             </StackPanel>
                         </Button>
 
-                        <!-- Sair -->
-                        <Button Style="{StaticResource SidebarButtonStyle}">
+                        <!-- Usuários -->
+                        <Button Style="{StaticResource SidebarButtonStyle}" Click="UserManagementButton_Click">
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="Logout" Width="24" Height="24" Margin="0,0,12,0"/>
-                                <TextBlock Text="Sair" VerticalAlignment="Center"/>
+                                <materialDesign:PackIcon Kind="AccountGroup" Width="24" Height="24" Margin="0,0,12,0"/>
+                                <TextBlock Text="Usuários" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
@@ -450,7 +458,7 @@
                                         <!-- Menu Items -->
                                         <StackPanel>
                                             <Button Style="{DynamicResource MaterialDesignFlatButton}"
-                                                    Height="40" HorizontalContentAlignment="Left" Padding="12">
+                                                    Height="40" HorizontalContentAlignment="Left" Padding="12" Click="UserProfileButton_Click">
                                                 <StackPanel Orientation="Horizontal">
                                                     <materialDesign:PackIcon Kind="AccountCircle" 
                                                                        Width="20" Height="20" 

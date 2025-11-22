@@ -10,7 +10,7 @@ using VendaFlex.Data.Repositories;
 namespace VendaFlex.Core.Services
 {
     /// <summary>
-    /// Serviço para gestão de faturas e operações relacionadas.
+    /// Serviï¿½o para gestï¿½o de faturas e operaï¿½ï¿½es relacionadas.
     /// </summary>
     public class InvoiceService : IInvoiceService
     {
@@ -32,14 +32,14 @@ namespace VendaFlex.Core.Services
             try
             {
                 if (invoice == null)
-                    return OperationResult<InvoiceDto>.CreateFailure("Fatura é obrigatória.");
+                    return OperationResult<InvoiceDto>.CreateFailure("Fatura ï¿½ obrigatï¿½ria.");
 
                 var validation = await _invoiceValidator.ValidateAsync(invoice);
                 if (!validation.IsValid)
-                    return OperationResult<InvoiceDto>.CreateFailure("Dados inválidos.", validation.Errors.Select(e => e.ErrorMessage));
+                    return OperationResult<InvoiceDto>.CreateFailure("Dados invï¿½lidos.", validation.Errors.Select(e => e.ErrorMessage));
 
                 if (await _invoiceRepository.NumberExistsAsync(invoice.InvoiceNumber))
-                    return OperationResult<InvoiceDto>.CreateFailure("Número de fatura já está em uso.");
+                    return OperationResult<InvoiceDto>.CreateFailure("Nï¿½mero de fatura jï¿½ estï¿½ em uso.");
 
                 var entity = _mapper.Map<Invoice>(invoice);
                 var created = await _invoiceRepository.AddAsync(entity);
@@ -58,16 +58,16 @@ namespace VendaFlex.Core.Services
             try
             {
                 if (id <= 0)
-                    return OperationResult<bool>.CreateFailure("ID inválido.");
+                    return OperationResult<bool>.CreateFailure("ID invï¿½lido.");
 
                 var exists = await _invoiceRepository.ExistsAsync(id);
                 if (!exists)
-                    return OperationResult<bool>.CreateFailure("Fatura não encontrada.");
+                    return OperationResult<bool>.CreateFailure("Fatura nï¿½o encontrada.");
 
                 var deleted = await _invoiceRepository.DeleteAsync(id);
                 return deleted
                     ? OperationResult<bool>.CreateSuccess(true, "Fatura removida com sucesso.")
-                    : OperationResult<bool>.CreateFailure("Não foi possível remover a fatura.");
+                    : OperationResult<bool>.CreateFailure("Nï¿½o foi possï¿½vel remover a fatura.");
             }
             catch (Exception ex)
             {
@@ -99,15 +99,15 @@ namespace VendaFlex.Core.Services
             try
             {
                 if (startDate > endDate)
-                    return OperationResult<IEnumerable<InvoiceDto>>.CreateFailure("Data inicial não pode ser maior que a final.");
+                    return OperationResult<IEnumerable<InvoiceDto>>.CreateFailure("Data inicial nï¿½o pode ser maior que a final.");
 
                 var entities = await _invoiceRepository.GetByDateRangeAsync(startDate, endDate);
                 var dtos = _mapper.Map<IEnumerable<InvoiceDto>>(entities);
-                return OperationResult<IEnumerable<InvoiceDto>>.CreateSuccess(dtos, $"{dtos.Count()} fatura(s) no período.");
+                return OperationResult<IEnumerable<InvoiceDto>>.CreateSuccess(dtos, $"{dtos.Count()} fatura(s) no perï¿½odo.");
             }
             catch (Exception ex)
             {
-                return OperationResult<IEnumerable<InvoiceDto>>.CreateFailure("Erro ao buscar por período.", new[] { ex.Message });
+                return OperationResult<IEnumerable<InvoiceDto>>.CreateFailure("Erro ao buscar por perï¿½odo.", new[] { ex.Message });
             }
         }
 
@@ -116,11 +116,11 @@ namespace VendaFlex.Core.Services
             try
             {
                 if (id <= 0)
-                    return OperationResult<InvoiceDto>.CreateFailure("ID inválido.");
+                    return OperationResult<InvoiceDto>.CreateFailure("ID invï¿½lido.");
 
                 var entity = await _invoiceRepository.GetByIdAsync(id);
                 if (entity == null)
-                    return OperationResult<InvoiceDto>.CreateFailure("Fatura não encontrada.");
+                    return OperationResult<InvoiceDto>.CreateFailure("Fatura nï¿½o encontrada.");
 
                 var dto = _mapper.Map<InvoiceDto>(entity);
                 return OperationResult<InvoiceDto>.CreateSuccess(dto, "Fatura encontrada.");
@@ -136,18 +136,18 @@ namespace VendaFlex.Core.Services
             try
             {
                 if (string.IsNullOrWhiteSpace(invoiceNumber))
-                    return OperationResult<InvoiceDto>.CreateFailure("Número da fatura é obrigatório.");
+                    return OperationResult<InvoiceDto>.CreateFailure("Nï¿½mero da fatura ï¿½ obrigatï¿½rio.");
 
                 var entity = await _invoiceRepository.GetByNumberAsync(invoiceNumber);
                 if (entity == null)
-                    return OperationResult<InvoiceDto>.CreateFailure("Fatura não encontrada.");
+                    return OperationResult<InvoiceDto>.CreateFailure("Fatura nï¿½o encontrada.");
 
                 var dto = _mapper.Map<InvoiceDto>(entity);
                 return OperationResult<InvoiceDto>.CreateSuccess(dto, "Fatura encontrada.");
             }
             catch (Exception ex)
             {
-                return OperationResult<InvoiceDto>.CreateFailure("Erro ao buscar fatura por número.", new[] { ex.Message });
+                return OperationResult<InvoiceDto>.CreateFailure("Erro ao buscar fatura por nï¿½mero.", new[] { ex.Message });
             }
         }
 
@@ -156,7 +156,7 @@ namespace VendaFlex.Core.Services
             try
             {
                 if (personId <= 0)
-                    return OperationResult<IEnumerable<InvoiceDto>>.CreateFailure("Cliente inválido.");
+                    return OperationResult<IEnumerable<InvoiceDto>>.CreateFailure("Cliente invï¿½lido.");
 
                 var entities = await _invoiceRepository.GetByPersonIdAsync(personId);
                 var dtos = _mapper.Map<IEnumerable<InvoiceDto>>(entities);
@@ -187,13 +187,13 @@ namespace VendaFlex.Core.Services
             try
             {
                 if (pageNumber < 1)
-                    return OperationResult<IEnumerable<InvoiceDto>>.CreateFailure("Página deve ser >= 1.");
+                    return OperationResult<IEnumerable<InvoiceDto>>.CreateFailure("Pï¿½gina deve ser >= 1.");
                 if (pageSize < 1)
-                    return OperationResult<IEnumerable<InvoiceDto>>.CreateFailure("Tamanho da página deve ser > 0.");
+                    return OperationResult<IEnumerable<InvoiceDto>>.CreateFailure("Tamanho da pï¿½gina deve ser > 0.");
 
                 var entities = await _invoiceRepository.GetPagedAsync(pageNumber, pageSize);
                 var dtos = _mapper.Map<IEnumerable<InvoiceDto>>(entities);
-                return OperationResult<IEnumerable<InvoiceDto>>.CreateSuccess(dtos, $"Página {pageNumber} com {dtos.Count()} fatura(s).");
+                return OperationResult<IEnumerable<InvoiceDto>>.CreateSuccess(dtos, $"Pï¿½gina {pageNumber} com {dtos.Count()} fatura(s).");
             }
             catch (Exception ex)
             {
@@ -216,18 +216,18 @@ namespace VendaFlex.Core.Services
             try
             {
                 if (invoice == null)
-                    return OperationResult<InvoiceDto>.CreateFailure("Fatura é obrigatória.");
+                    return OperationResult<InvoiceDto>.CreateFailure("Fatura ï¿½ obrigatï¿½ria.");
 
                 var validation = await _invoiceValidator.ValidateAsync(invoice);
                 if (!validation.IsValid)
-                    return OperationResult<InvoiceDto>.CreateFailure("Dados inválidos.", validation.Errors.Select(e => e.ErrorMessage));
+                    return OperationResult<InvoiceDto>.CreateFailure("Dados invï¿½lidos.", validation.Errors.Select(e => e.ErrorMessage));
 
                 var existing = await _invoiceRepository.GetByIdAsync(invoice.InvoiceId);
                 if (existing == null)
-                    return OperationResult<InvoiceDto>.CreateFailure("Fatura não encontrada.");
+                    return OperationResult<InvoiceDto>.CreateFailure("Fatura nï¿½o encontrada.");
 
                 if (await _invoiceRepository.NumberExistsAsync(invoice.InvoiceNumber, invoice.InvoiceId))
-                    return OperationResult<InvoiceDto>.CreateFailure("Número de fatura já está em uso.");
+                    return OperationResult<InvoiceDto>.CreateFailure("Nï¿½mero de fatura jï¿½ estï¿½ em uso.");
 
                 _mapper.Map(invoice, existing);
                 var updated = await _invoiceRepository.UpdateAsync(existing);
@@ -237,6 +237,107 @@ namespace VendaFlex.Core.Services
             catch (Exception ex)
             {
                 return OperationResult<InvoiceDto>.CreateFailure("Erro ao atualizar fatura.", new[] { ex.Message });
+            }
+        }
+
+        public async Task<OperationResult<bool>> CancelAsync(int invoiceId, string reason)
+        {
+            try
+            {
+                if (invoiceId <= 0)
+                    return OperationResult<bool>.CreateFailure("ID invÃ¡lido.");
+
+                if (string.IsNullOrWhiteSpace(reason))
+                    return OperationResult<bool>.CreateFailure("Motivo do cancelamento Ã© obrigatÃ³rio.");
+
+                var invoice = await _invoiceRepository.GetByIdAsync(invoiceId);
+                if (invoice == null)
+                    return OperationResult<bool>.CreateFailure("Fatura nÃ£o encontrada.");
+
+                if (invoice.Status == InvoiceStatus.Cancelled)
+                    return OperationResult<bool>.CreateFailure("Fatura jÃ¡ estÃ¡ cancelada.");
+
+                // Atualizar status para cancelado
+                invoice.Status = InvoiceStatus.Cancelled;
+                // Adicionar razÃ£o nas notas internas
+                invoice.InternalNotes = $"Cancelado em {DateTime.Now:dd/MM/yyyy HH:mm}: {reason}. " + invoice.InternalNotes;
+
+                await _invoiceRepository.UpdateAsync(invoice);
+
+                return OperationResult<bool>.CreateSuccess(true, "Fatura cancelada com sucesso.");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<bool>.CreateFailure("Erro ao cancelar fatura.", new[] { ex.Message });
+            }
+        }
+
+        public async Task<OperationResult<bool>> ReopenAsync(int invoiceId)
+        {
+            try
+            {
+                if (invoiceId <= 0)
+                    return OperationResult<bool>.CreateFailure("ID invÃ¡lido.");
+
+                var invoice = await _invoiceRepository.GetByIdAsync(invoiceId);
+                if (invoice == null)
+                    return OperationResult<bool>.CreateFailure("Fatura nÃ£o encontrada.");
+
+                if (invoice.Status != InvoiceStatus.Cancelled)
+                    return OperationResult<bool>.CreateFailure("Apenas faturas canceladas podem ser reabertas.");
+
+                // Atualizar status para rascunho ou confirmado
+                invoice.Status = InvoiceStatus.Draft;
+                // Adicionar nota de reabertura
+                invoice.InternalNotes = $"Reaberto em {DateTime.Now:dd/MM/yyyy HH:mm}. " + invoice.InternalNotes;
+
+                await _invoiceRepository.UpdateAsync(invoice);
+
+                return OperationResult<bool>.CreateSuccess(true, "Fatura reaberta com sucesso.");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<bool>.CreateFailure("Erro ao reabrir fatura.", new[] { ex.Message });
+            }
+        }
+
+        public async Task<OperationResult<InvoiceDto>> DuplicateAsync(int invoiceId)
+        {
+            try
+            {
+                if (invoiceId <= 0)
+                    return OperationResult<InvoiceDto>.CreateFailure("ID invÃ¡lido.");
+
+                var originalInvoice = await _invoiceRepository.GetByIdAsync(invoiceId);
+                if (originalInvoice == null)
+                    return OperationResult<InvoiceDto>.CreateFailure("Fatura nÃ£o encontrada.");
+
+                // Criar nova fatura baseada na original
+                var newInvoice = new Invoice
+                {
+                    PersonId = originalInvoice.PersonId,
+                    UserId = originalInvoice.UserId,
+                    Date = DateTime.Now,
+                    InvoiceNumber = $"{originalInvoice.InvoiceNumber}-COPIA-{DateTime.Now:yyyyMMddHHmmss}",
+                    Status = InvoiceStatus.Draft,
+                    SubTotal = originalInvoice.SubTotal,
+                    TaxAmount = originalInvoice.TaxAmount,
+                    DiscountAmount = originalInvoice.DiscountAmount,
+                    ShippingCost = originalInvoice.ShippingCost,
+                    Total = originalInvoice.Total,
+                    PaidAmount = 0, // Nova fatura comeÃ§a sem pagamento
+                    Notes = $"CÃ³pia da fatura {originalInvoice.InvoiceNumber}",
+                    InternalNotes = originalInvoice.InternalNotes
+                };
+
+                var created = await _invoiceRepository.AddAsync(newInvoice);
+                var dto = _mapper.Map<InvoiceDto>(created);
+
+                return OperationResult<InvoiceDto>.CreateSuccess(dto, "Fatura duplicada com sucesso.");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<InvoiceDto>.CreateFailure("Erro ao duplicar fatura.", new[] { ex.Message });
             }
         }
     }

@@ -1,4 +1,4 @@
-﻿using System.Windows;
+﻿﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -127,6 +127,25 @@ namespace VendaFlex.UI.Views.Dashboard
         private void StockButton_Click(object sender, RoutedEventArgs e)
         {
             _navigationService.NavigateToStockManagement();
+        }
+        private void UserProfileButton_Click(object sender, RoutedEventArgs e)
+        {
+            _navigationService.NavigateToUserProfile();
+        }
+
+        private void PersonButton_Click(object sender, RoutedEventArgs e)
+        {
+            _navigationService.NavigateToPersonManagement();
+        }
+
+        private void UserManagementButton_Click(object sender, RoutedEventArgs e)
+        {
+            _navigationService.NavigateToUserManagement();
+        }
+
+        private void InvoiceManagementButton_Click(object sender, RoutedEventArgs e)
+        {
+            _navigationService.NavigateToInvoiceManagement();
         }
 
         #region Popup Handlers

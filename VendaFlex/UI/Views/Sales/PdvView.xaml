@@ -12,170 +12,10 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Styles/GlobalStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-
-            <!-- Color Palette - Soft & Professional -->
-            <SolidColorBrush x:Key="PdvBackground" Color="#F8F9FA"/>
-            <SolidColorBrush x:Key="PdvCardBg" Color="#FFFFFF"/>
-            <SolidColorBrush x:Key="PdvCardBorder" Color="#E9ECEF"/>
-            <SolidColorBrush x:Key="PdvHeaderBg" Color="#FFFFFF"/>
-            <SolidColorBrush x:Key="PdvPrimary" Color="#4F46E5"/>
-            <SolidColorBrush x:Key="PdvPrimaryHover" Color="#4338CA"/>
-            <SolidColorBrush x:Key="PdvSuccess" Color="#10B981"/>
-            <SolidColorBrush x:Key="PdvSuccessLight" Color="#D1FAE5"/>
-            <SolidColorBrush x:Key="PdvWarning" Color="#F59E0B"/>
-            <SolidColorBrush x:Key="PdvWarningLight" Color="#FEF3C7"/>
-            <SolidColorBrush x:Key="PdvError" Color="#EF4444"/>
-            <SolidColorBrush x:Key="PdvTextPrimary" Color="#1F2937"/>
-            <SolidColorBrush x:Key="PdvTextSecondary" Color="#6B7280"/>
-            <SolidColorBrush x:Key="PdvTextTertiary" Color="#9CA3AF"/>
-            <SolidColorBrush x:Key="PdvDivider" Color="#E5E7EB"/>
-            <SolidColorBrush x:Key="PdvInputBg" Color="#F9FAFB"/>
-            <SolidColorBrush x:Key="PdvInputBorder" Color="#D1D5DB"/>
-
-            <!-- Converters -->
             <converters:HeightToScrollBarVisibilityConverter x:Key="HeightToScrollBarVisibilityConverter"/>
             <infconv:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
             <infconv:DecimalZeroWhenEmptyConverter x:Key="DecimalZeroWhenEmptyConverter"/>
             <infconv:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
-
-            <!-- Modern Card Style -->
-            <Style x:Key="ModernCard" TargetType="Border">
-                <Setter Property="Background" Value="{StaticResource PdvCardBg}"/>
-                <Setter Property="BorderBrush" Value="{StaticResource PdvCardBorder}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="CornerRadius" Value="12"/>
-                <Setter Property="Padding" Value="20"/>
-                <Setter Property="Effect">
-                    <Setter.Value>
-                        <DropShadowEffect BlurRadius="12" ShadowDepth="0" Opacity="0.06" Color="#000000"/>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <!-- Primary Button Style -->
-            <Style x:Key="ModernPrimaryButton" TargetType="Button">
-                <Setter Property="Background" Value="{StaticResource PdvPrimary}"/>
-                <Setter Property="Foreground" Value="White"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Padding" Value="20,12"/>
-                <Setter Property="FontWeight" Value="SemiBold"/>
-                <Setter Property="FontSize" Value="14"/>
-                <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" 
-                      CornerRadius="10" 
-                      BorderThickness="0">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-                <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="{StaticResource PdvPrimaryHover}"/>
-                    </Trigger>
-                    <Trigger Property="IsEnabled" Value="False">
-                        <Setter Property="Opacity" Value="0.5"/>
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
-
-            <!-- Secondary Button Style -->
-            <Style x:Key="ModernSecondaryButton" TargetType="Button">
-                <Setter Property="Background" Value="{StaticResource PdvInputBg}"/>
-                <Setter Property="Foreground" Value="{StaticResource PdvTextSecondary}"/>
-                <Setter Property="BorderBrush" Value="{StaticResource PdvInputBorder}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Padding" Value="16,10"/>
-                <Setter Property="FontWeight" Value="Medium"/>
-                <Setter Property="FontSize" Value="13"/>
-                <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" 
-                      BorderBrush="{TemplateBinding BorderBrush}"
-                      BorderThickness="{TemplateBinding BorderThickness}"
-                      CornerRadius="8">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-                <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="#F3F4F6"/>
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
-
-            <!-- Modern TextBox Style -->
-            <Style x:Key="ModernTextBox" TargetType="TextBox">
-                <Setter Property="Background" Value="{StaticResource PdvInputBg}"/>
-                <Setter Property="Foreground" Value="{StaticResource PdvTextPrimary}"/>
-                <Setter Property="BorderBrush" Value="{StaticResource PdvInputBorder}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Padding" Value="12,10"/>
-                <Setter Property="FontSize" Value="14"/>
-                <Setter Property="VerticalContentAlignment" Value="Center"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="TextBox">
-                            <Border Background="{TemplateBinding Background}"
-                      BorderBrush="{TemplateBinding BorderBrush}"
-                      BorderThickness="{TemplateBinding BorderThickness}"
-                      CornerRadius="8">
-                                <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
-                            </Border>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-                <Style.Triggers>
-                    <Trigger Property="IsFocused" Value="True">
-                        <Setter Property="BorderBrush" Value="{StaticResource PdvPrimary}"/>
-                        <Setter Property="Background" Value="White"/>
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
-
-            <!-- Modern ComboBox Style -->
-            <Style x:Key="ModernComboBox" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignComboBox}">
-                <Setter Property="Background" Value="{StaticResource PdvInputBg}"/>
-                <Setter Property="Foreground" Value="{StaticResource PdvTextPrimary}"/>
-                <Setter Property="BorderBrush" Value="{StaticResource PdvInputBorder}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Padding" Value="12,10"/>
-                <Setter Property="FontSize" Value="14"/>
-                <Setter Property="Height" Value="44"/>
-            </Style>
-
-            <!-- Product Card in Catalog -->
-            <Style x:Key="ProductCard" TargetType="Border">
-                <Setter Property="Background" Value="{StaticResource PdvCardBg}"/>
-                <Setter Property="BorderBrush" Value="{StaticResource PdvCardBorder}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="CornerRadius" Value="12"/>
-                <Setter Property="Padding" Value="16"/>
-                <Setter Property="Margin" Value="8"/>
-                <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="Effect">
-                    <Setter.Value>
-                        <DropShadowEffect BlurRadius="8" ShadowDepth="0" Opacity="0.04" Color="#000000"/>
-                    </Setter.Value>
-                </Setter>
-                <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Effect">
-                            <Setter.Value>
-                                <DropShadowEffect BlurRadius="16" ShadowDepth="0" Opacity="0.1" Color="#4F46E5"/>
-                            </Setter.Value>
-                        </Setter>
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
-
         </ResourceDictionary>
     </Page.Resources>
 
@@ -186,7 +26,7 @@
         </Grid.RowDefinitions>
 
         <!-- Main Content -->
-        <Grid Grid.Row="0" Background="{StaticResource PdvBackground}">
+        <Grid Grid.Row="0" Background="{DynamicResource MaterialDesignPaper}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -194,11 +34,9 @@
                 </Grid.RowDefinitions>
 
                 <!-- Header -->
-                <Border Grid.Row="0" Background="{StaticResource PdvHeaderBg}" BorderBrush="{StaticResource PdvDivider}" BorderThickness="0,0,0,1">
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="8" ShadowDepth="0" Opacity="0.04" Color="#000000"/>
-                    </Border.Effect>
-                    <Grid Height="72" Margin="24,0">
+                <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryMid" Height="72" Padding="24,0"
+                                          materialDesign:ElevationAssist.Elevation="Dp2">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
@@ -207,68 +45,46 @@
 
                         <!-- Logo + Title -->
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Width="42" Height="42" CornerRadius="10" Background="{StaticResource PdvPrimary}" Margin="0,0,14,0">
-                                <materialDesign:PackIcon Kind="CashRegister" Width="24" Height="24" Foreground="White" 
-                                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                            <materialDesign:PackIcon Kind="CashRegister" Width="32" Height="32" 
+                                                     VerticalAlignment="Center" Margin="0,0,14,0"/>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Ponto de Venda" FontSize="18" FontWeight="SemiBold" 
-                          Foreground="{StaticResource PdvTextPrimary}"/>
-                                <TextBlock Text="Sistema de vendas" FontSize="12" 
-                          Foreground="{StaticResource PdvTextSecondary}"/>
+                                <TextBlock Text="Ponto de Venda" Style="{DynamicResource MaterialDesignHeadline6TextBlock}"/>
+                                <TextBlock Text="Sistema de vendas" Style="{DynamicResource MaterialDesignCaptionTextBlock}" Opacity="0.8"/>
                             </StackPanel>
                         </StackPanel>
 
                         <!-- Center - Time -->
-                        <Border Grid.Column="1" Background="{StaticResource PdvInputBg}" 
-                    CornerRadius="8" Padding="14,8" HorizontalAlignment="Center" VerticalAlignment="Center"
-                    BorderBrush="{StaticResource PdvCardBorder}" BorderThickness="1">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="Clock" Width="16" Height="16" 
-                                        Foreground="{StaticResource PdvTextSecondary}" 
-                                        VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock x:Name="CurrentTimeText" Text="{Binding CurrentTime}" 
-                          FontSize="13" FontWeight="Medium" 
-                          Foreground="{StaticResource PdvTextPrimary}" 
-                          VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
+                        <materialDesign:Chip Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                             Icon="{materialDesign:PackIcon Kind=Clock}">
+                            <TextBlock x:Name="CurrentTimeText" Text="{Binding CurrentTime}"/>
+                        </materialDesign:Chip>
 
                         <!-- Right - User & Actions -->
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="{StaticResource PdvInputBg}" CornerRadius="10" Padding="12,8" Margin="0,0,12,0"
-                      BorderBrush="{StaticResource PdvCardBorder}" BorderThickness="1">
-                                <StackPanel Orientation="Horizontal">
-                                    <Border Width="32" Height="32" CornerRadius="16" Margin="0,0,10,0"
-                          Background="{StaticResource PdvPrimary}">
-                                        <TextBlock x:Name="UserInitials" Text="{Binding UserInitials}" 
-                              FontSize="13" FontWeight="Bold" Foreground="White" 
-                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock x:Name="UserNameText" Text="{Binding UserName}" 
-                              FontSize="13" FontWeight="SemiBold" 
-                              Foreground="{StaticResource PdvTextPrimary}"/>
-                                        <TextBlock Text="Operador" FontSize="11" 
-                              Foreground="{StaticResource PdvTextSecondary}"/>
-                                    </StackPanel>
+                            <materialDesign:Chip HorizontalAlignment="Right" Margin="0,0,12,0">
+                                <materialDesign:Chip.Icon>
+                                    <TextBlock x:Name="UserInitials" Text="{Binding UserInitials}" 
+                                               FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </materialDesign:Chip.Icon>
+                                <StackPanel>
+                                    <TextBlock x:Name="UserNameText" Text="{Binding UserName}" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Operador" Style="{DynamicResource MaterialDesignCaptionTextBlock}"/>
                                 </StackPanel>
-                            </Border>
+                            </materialDesign:Chip>
 
-                            <Button x:Name="ProductCatalogButton" Width="42" Height="42" 
-                      Style="{DynamicResource MaterialDesignIconButton}" 
-                      ToolTip="Catálogo de Produtos" 
-                      Command="{Binding OpenCatalogCommand}">
-                                <materialDesign:PackIcon Kind="ViewGrid" Width="22" Height="22" 
-                                        Foreground="{StaticResource PdvPrimary}"/>
+                            <Button x:Name="ProductCatalogButton" 
+                                    Style="{DynamicResource MaterialDesignIconButton}" 
+                                    ToolTip="Catálogo de Produtos" 
+                                    Command="{Binding OpenCatalogCommand}">
+                                <materialDesign:PackIcon Kind="ViewGrid" Width="24" Height="24"/>
                             </Button>
                         </StackPanel>
                     </Grid>
-                </Border>
+                </materialDesign:ColorZone>
 
                 <!-- Main Content Area -->
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="{Binding ElementName=RootGrid, Path=ActualHeight, 
-                      Converter={StaticResource HeightToScrollBarVisibilityConverter}, ConverterParameter=720}">
+                              Converter={StaticResource HeightToScrollBarVisibilityConverter}, ConverterParameter=720}">
                     <Grid Margin="24,20" MinHeight="{Binding ElementName=RootGrid, Path=ActualHeight}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="2*"/>
@@ -285,7 +101,8 @@
                             </Grid.RowDefinitions>
 
                             <!-- Customer Selection -->
-                            <Border Grid.Row="0" Style="{StaticResource ModernCard}" Margin="0,0,0,16">
+                            <materialDesign:Card Grid.Row="0" Margin="0,0,0,16" Padding="20"
+                                                 materialDesign:ElevationAssist.Elevation="Dp2">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -295,14 +112,14 @@
                                     <Grid Grid.Row="0" Margin="0,0,0,14">
                                         <StackPanel Orientation="Horizontal">
                                             <materialDesign:PackIcon Kind="Account" Width="20" Height="20" 
-                                              Foreground="{StaticResource PdvPrimary}" 
-                                              VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                            <TextBlock Text="Cliente" FontSize="15" FontWeight="SemiBold" 
-                                Foreground="{StaticResource PdvTextPrimary}" VerticalAlignment="Center"/>
+                                                                     VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <TextBlock Text="Cliente" Style="{DynamicResource MaterialDesignSubtitle1TextBlock}" 
+                                                       VerticalAlignment="Center"/>
                                         </StackPanel>
-                                        <Button Content="Consumidor Final" Style="{StaticResource ModernSecondaryButton}" 
-                            FontSize="12" HorizontalAlignment="Right" Height="32" Padding="12,6"
-                            Command="{Binding SelectAnonymousCustomerCommand}"/>
+                                        <Button Content="Consumidor Final" 
+                                                Style="{DynamicResource MaterialDesignOutlinedButton}" 
+                                                HorizontalAlignment="Right" Height="32"
+                                                Command="{Binding SelectAnonymousCustomerCommand}"/>
                                     </Grid>
 
                                     <Grid Grid.Row="1">
@@ -313,54 +130,50 @@
                                         </Grid.ColumnDefinitions>
 
                                         <TextBox Grid.Column="0" x:Name="CustomerSearchBox" 
-                             Style="{StaticResource ModernTextBox}" Height="44"
-                             Tag="Buscar cliente por nome, NIF..." 
-                             Text="{Binding CustomerSearchTerm, UpdateSourceTrigger=PropertyChanged}"/>
+                                                 Style="{DynamicResource MaterialDesignOutlinedTextBox}"
+                                                 materialDesign:HintAssist.Hint="Buscar cliente por nome, NIF..." 
+                                                 Text="{Binding CustomerSearchTerm, UpdateSourceTrigger=PropertyChanged}"/>
 
                                         <Popup IsOpen="{Binding CustomerSuggestions.Count, Mode=OneWay, Converter={StaticResource CountToBoolConverter}}"
-                           PlacementTarget="{Binding ElementName=CustomerSearchBox}"
-                           Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
-                                            <Border Background="White" CornerRadius="8" BorderThickness="1" 
-                              BorderBrush="{StaticResource PdvCardBorder}" MaxHeight="300" MinWidth="400"
-                              Effect="{DynamicResource MaterialDesignShadowDepth2}">
+                                               PlacementTarget="{Binding ElementName=CustomerSearchBox}"
+                                               Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
+                                            <materialDesign:Card MaxHeight="300" MinWidth="400"
+                                                                 materialDesign:ElevationAssist.Elevation="Dp4">
                                                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                                                     <ItemsControl ItemsSource="{Binding CustomerSuggestions}">
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
                                                                 <Button Command="{Binding DataContext.SelectCustomerFromSuggestionsCommand, 
-                                        RelativeSource={RelativeSource AncestorType=Page}}"
-                                        CommandParameter="{Binding}" Style="{DynamicResource MaterialDesignFlatButton}"
-                                        Padding="5" HorizontalContentAlignment="Left">
+                                                                        RelativeSource={RelativeSource AncestorType=Page}}"
+                                                                        CommandParameter="{Binding}" 
+                                                                        Style="{DynamicResource MaterialDesignFlatButton}"
+                                                                        Padding="12" HorizontalContentAlignment="Left">
                                                                     <StackPanel>
-                                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
-                                                                        <TextBlock Text="{Binding TaxId}" FontSize="12" 
-                                              Foreground="{StaticResource PdvTextSecondary}"/>
+                                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                                        <TextBlock Text="{Binding TaxId}" 
+                                                                                   Style="{DynamicResource MaterialDesignCaptionTextBlock}"/>
                                                                     </StackPanel>
                                                                 </Button>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
                                                 </ScrollViewer>
-                                            </Border>
+                                            </materialDesign:Card>
                                         </Popup>
 
-                                        <Border Grid.Column="2" Background="{StaticResource PdvSuccessLight}" 
-                            CornerRadius="8" Padding="12" Height="44"
-                            Visibility="{Binding SelectedCustomer, Converter={StaticResource NullToVisibilityConverter}}"
-                            BorderBrush="{StaticResource PdvSuccess}" BorderThickness="1">
-                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <materialDesign:PackIcon Kind="CheckCircle" Width="18" Height="18" 
-                                                Foreground="{StaticResource PdvSuccess}" Margin="0,0,8,0"/>
-                                                <TextBlock Text="{Binding SelectedCustomer.Name}" FontWeight="SemiBold" FontSize="13" 
-                                  Foreground="{StaticResource PdvSuccess}"/>
-                                            </StackPanel>
-                                        </Border>
+                                        <materialDesign:Chip Grid.Column="2" 
+                                                             Icon="{materialDesign:PackIcon Kind=CheckCircle}"
+                                                             IconBackground="{DynamicResource PrimaryHueMidBrush}"
+                                                             Visibility="{Binding SelectedCustomer, Converter={StaticResource NullToVisibilityConverter}}">
+                                            <TextBlock Text="{Binding SelectedCustomer.Name}" FontWeight="SemiBold"/>
+                                        </materialDesign:Chip>
                                     </Grid>
                                 </Grid>
-                            </Border>
+                            </materialDesign:Card>
 
                             <!-- Quick Product Add -->
-                            <Border Grid.Row="1" Style="{StaticResource ModernCard}" Margin="0,0,0,16">
+                            <materialDesign:Card Grid.Row="1" Margin="0,0,0,16" Padding="20"
+                                                 materialDesign:ElevationAssist.Elevation="Dp2">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -370,41 +183,40 @@
                                     <Grid Grid.Row="0" Margin="0,0,0,14">
                                         <StackPanel Orientation="Horizontal">
                                             <materialDesign:PackIcon Kind="Barcode" Width="20" Height="20" 
-                                              Foreground="{StaticResource PdvPrimary}" 
-                                              VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                            <TextBlock Text="Adicionar Produto" FontSize="15" FontWeight="SemiBold" 
-                                Foreground="{StaticResource PdvTextPrimary}" VerticalAlignment="Center"/>
+                                                                     VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <TextBlock Text="Adicionar Produto" 
+                                                       Style="{DynamicResource MaterialDesignSubtitle1TextBlock}" 
+                                                       VerticalAlignment="Center"/>
                                         </StackPanel>
-                                        <Button Content="Catálogo →" Style="{StaticResource ModernSecondaryButton}" 
-                            FontSize="12" HorizontalAlignment="Right" Height="32" Padding="12,6"
-                            Command="{Binding OpenCatalogCommand}"/>
+                                        <Button Content="Catálogo →" 
+                                                Style="{DynamicResource MaterialDesignOutlinedButton}" 
+                                                HorizontalAlignment="Right" Height="32"
+                                                Command="{Binding OpenCatalogCommand}"/>
                                     </Grid>
 
                                     <Grid Grid.Row="1">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="12"/>
-                                            <ColumnDefinition Width="130"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
                                         <TextBox Grid.Column="0" x:Name="ProductSearchBox" 
-                             Style="{StaticResource ModernTextBox}" Height="44"
-                             Tag="Código / SKU / Nome..." 
-                             Text="{Binding ProductSearchTerm, UpdateSourceTrigger=PropertyChanged}">
+                                                 Style="{DynamicResource MaterialDesignOutlinedTextBox}"
+                                                 materialDesign:HintAssist.Hint="Código / SKU / Nome..." 
+                                                 Text="{Binding ProductSearchTerm, UpdateSourceTrigger=PropertyChanged}">
                                             <TextBox.InputBindings>
                                                 <KeyBinding Key="Enter" Command="{Binding AddProductByCodeCommand}"/>
                                             </TextBox.InputBindings>
                                         </TextBox>
 
                                         <Popup IsOpen="{Binding ProductSuggestions.Count, Mode=OneWay, Converter={StaticResource CountToBoolConverter}}"
-                           PlacementTarget="{Binding ElementName=ProductSearchBox}"
-                           Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
-                                            <Border Background="White" CornerRadius="8" BorderThickness="1" 
-                              BorderBrush="{StaticResource PdvCardBorder}" MaxHeight="300" MinWidth="400"
-                              Effect="{DynamicResource MaterialDesignShadowDepth2}">
+                                               PlacementTarget="{Binding ElementName=ProductSearchBox}"
+                                               Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
+                                            <materialDesign:Card MaxHeight="300" MinWidth="400"
+                                                                 materialDesign:ElevationAssist.Elevation="Dp4">
                                                 <ListBox ItemsSource="{Binding ProductSuggestions}" 
-                                SelectedItem="{Binding SelectedProductSuggestion}"
-                                BorderThickness="0" Background="Transparent">
+                                                         SelectedItem="{Binding SelectedProductSuggestion}">
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <Grid Margin="10">
@@ -413,13 +225,15 @@
                                                                     <ColumnDefinition Width="Auto"/>
                                                                 </Grid.ColumnDefinitions>
                                                                 <StackPanel Grid.Column="0">
-                                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
-                                                                    <TextBlock Text="{Binding Barcode}" FontSize="11" 
-                                            Foreground="{StaticResource PdvTextSecondary}"/>
+                                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                                    <TextBlock Text="{Binding Barcode}" 
+                                                                               Style="{DynamicResource MaterialDesignCaptionTextBlock}"/>
                                                                 </StackPanel>
-                                                                <TextBlock Grid.Column="1" Text="{Binding SalePrice, StringFormat=Kz {0:N2}}" 
-                                          FontWeight="Bold" FontSize="14" 
-                                          Foreground="{StaticResource PdvPrimary}" VerticalAlignment="Center"/>
+                                                                <TextBlock Grid.Column="1" 
+                                                                           Text="{Binding SalePrice, StringFormat=Kz {0:N2}}" 
+                                                                           FontWeight="Bold" 
+                                                                           Foreground="{DynamicResource PrimaryHueMidBrush}" 
+                                                                           VerticalAlignment="Center"/>
                                                             </Grid>
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -427,22 +241,24 @@
                                                         <KeyBinding Key="Enter" Command="{Binding AddSelectedSuggestionCommand}"/>
                                                     </ListBox.InputBindings>
                                                 </ListBox>
-                                            </Border>
+                                            </materialDesign:Card>
                                         </Popup>
 
-                                        <Button Grid.Column="2" Style="{StaticResource ModernPrimaryButton}" 
-                            Command="{Binding AddProductByCodeCommand}" Height="44">
+                                        <Button Grid.Column="2" 
+                                                Style="{DynamicResource MaterialDesignRaisedButton}" 
+                                                Command="{Binding AddProductByCodeCommand}">
                                             <StackPanel Orientation="Horizontal">
-                                                <materialDesign:PackIcon Kind="Plus" Width="18" Height="18" VerticalAlignment="Center"/>
+                                                <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center"/>
                                                 <TextBlock Text="Adicionar" Margin="8,0,0,0" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
                                     </Grid>
                                 </Grid>
-                            </Border>
+                            </materialDesign:Card>
 
                             <!-- Shopping Cart -->
-                            <Border Grid.Row="2" Style="{StaticResource ModernCard}">
+                            <materialDesign:Card Grid.Row="2" Padding="20"
+                                                 materialDesign:ElevationAssist.Elevation="Dp2">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -453,170 +269,124 @@
                                     <Grid Grid.Row="0" Margin="0,0,0,16">
                                         <StackPanel Orientation="Horizontal">
                                             <materialDesign:PackIcon Kind="Cart" Width="20" Height="20" 
-                                              Foreground="{StaticResource PdvPrimary}" 
-                                              VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                            <TextBlock Text="Carrinho de Compras" FontSize="15" FontWeight="SemiBold" 
-                                Foreground="{StaticResource PdvTextPrimary}" VerticalAlignment="Center"/>
+                                                                     VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <TextBlock Text="Carrinho de Compras" 
+                                                       Style="{DynamicResource MaterialDesignSubtitle1TextBlock}" 
+                                                       VerticalAlignment="Center"/>
                                         </StackPanel>
-                                        <Border Background="{StaticResource PdvInputBg}" CornerRadius="20" Padding="10,6" 
-                            HorizontalAlignment="Right" BorderBrush="{StaticResource PdvCardBorder}" BorderThickness="1">
-                                            <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PdvTextPrimary}">
-                        <Run Text="{Binding CartItems.Count, Mode=OneWay}"/>
-                        <Run Text="itens"/>
+                                        <materialDesign:Chip HorizontalAlignment="Right">
+                                            <TextBlock>
+                                                <Run Text="{Binding CartItems.Count, Mode=OneWay}"/>
+                                                <Run Text="itens"/>
                                             </TextBlock>
-                                        </Border>
+                                        </materialDesign:Chip>
                                     </Grid>
 
-                                    <Border Grid.Row="1" Background="{StaticResource PdvInputBg}" CornerRadius="10" 
-                          BorderBrush="{StaticResource PdvCardBorder}" BorderThickness="1">
-                                        <DataGrid ItemsSource="{Binding CartItems}"
-                              AutoGenerateColumns="False" HeadersVisibility="Column"
-                              CanUserAddRows="False" CanUserDeleteRows="False"
-                              SelectionMode="Single" RowHeaderWidth="0"
-                              GridLinesVisibility="None" Background="Transparent"
-                              Foreground="{StaticResource PdvTextPrimary}"
-                              BorderThickness="0" VerticalScrollBarVisibility="Auto">
-                                            <DataGrid.ColumnHeaderStyle>
-                                                <Style TargetType="DataGridColumnHeader">
-                                                    <Setter Property="Background" Value="Transparent"/>
-                                                    <Setter Property="Foreground" Value="{StaticResource PdvTextSecondary}"/>
-                                                    <Setter Property="FontSize" Value="12"/>
-                                                    <Setter Property="FontWeight" Value="SemiBold"/>
-                                                    <Setter Property="Padding" Value="12,10"/>
-                                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                                    <Setter Property="BorderBrush" Value="{StaticResource PdvDivider}"/>
-                                                </Style>
-                                            </DataGrid.ColumnHeaderStyle>
-                                            <DataGrid.RowStyle>
-                                                <Style TargetType="DataGridRow">
-                                                    <Setter Property="Height" Value="52"/>
-                                                    <Setter Property="Background" Value="Transparent"/>
-                                                    <Setter Property="BorderBrush" Value="{StaticResource PdvDivider}"/>
-                                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                                    <Style.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Background" Value="#F9FAFB"/>
-                                                        </Trigger>
-                                                        <Trigger Property="IsSelected" Value="True">
-                                                            <Setter Property="Background" Value="#EEF2FF"/>
-                                                        </Trigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </DataGrid.RowStyle>
-                                            <DataGrid.CellStyle>
-                                                <Style TargetType="DataGridCell">
-                                                    <Setter Property="Background" Value="Transparent"/>
-                                                    <Setter Property="BorderThickness" Value="0"/>
-                                                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                                                    <Setter Property="Padding" Value="12,0"/>
-                                                    <Style.Triggers>
-                                                        <Trigger Property="IsSelected" Value="True">
-                                                            <Setter Property="Background" Value="Transparent"/>
-                                                        </Trigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </DataGrid.CellStyle>
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header="Produto" Binding="{Binding Name}" Width="*" IsReadOnly="True">
-                                                    <DataGridTextColumn.ElementStyle>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="FontWeight" Value="Medium"/>
-                                                            <Setter Property="FontSize" Value="13"/>
-                                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                                        </Style>
-                                                    </DataGridTextColumn.ElementStyle>
-                                                </DataGridTextColumn>
-                                                <DataGridTemplateColumn Header="Qtd" Width="120">
-                                                    <DataGridTemplateColumn.CellTemplate>
-                                                        <DataTemplate>
-                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                                <Button Style="{DynamicResource MaterialDesignIconButton}" 
-                                        Width="26" Height="26" Padding="0"
-                                        Command="{Binding DataContext.DecreaseItemQtyCommand, 
-                                        RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                        CommandParameter="{Binding}">
-                                                                    <materialDesign:PackIcon Kind="Minus" Width="14" Height="14"/>
-                                                                </Button>
-                                                                <TextBox Text="{Binding Quantity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                        Width="44" HorizontalContentAlignment="Center" 
-                                        VerticalContentAlignment="Center" FontWeight="SemiBold" 
-                                        Margin="6,0" FontSize="13"/>
-                                                                <Button Style="{DynamicResource MaterialDesignIconButton}" 
-                                        Width="26" Height="26" Padding="0"
-                                        Command="{Binding DataContext.IncreaseItemQtyCommand, 
-                                        RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                        CommandParameter="{Binding}">
-                                                                    <materialDesign:PackIcon Kind="Plus" Width="14" Height="14"/>
-                                                                </Button>
-                                                            </StackPanel>
-                                                        </DataTemplate>
-                                                    </DataGridTemplateColumn.CellTemplate>
-                                                </DataGridTemplateColumn>
-                                                <DataGridTextColumn Header="Preço Unit." Binding="{Binding UnitPrice, StringFormat=Kz {0:N2}}" 
-                                           Width="110" IsReadOnly="True">
-                                                    <DataGridTextColumn.ElementStyle>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="TextAlignment" Value="Right"/>
-                                                            <Setter Property="FontSize" Value="13"/>
-                                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                                        </Style>
-                                                    </DataGridTextColumn.ElementStyle>
-                                                </DataGridTextColumn>
-                                                <DataGridTemplateColumn Header="Desconto" Width="110">
-                                                    <DataGridTemplateColumn.CellTemplate>
-                                                        <DataTemplate>
-                                                            <TextBlock Text="{Binding Discount, StringFormat=Kz {0:N2}}" 
-                                        HorizontalAlignment="Right" FontSize="13"/>
-                                                        </DataTemplate>
-                                                    </DataGridTemplateColumn.CellTemplate>
-                                                    <DataGridTemplateColumn.CellEditingTemplate>
-                                                        <DataTemplate>
-                                                            <TextBox Text="{Binding Discount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, 
-                                      Converter={StaticResource DecimalZeroWhenEmptyConverter}, StringFormat=N2}" 
-                                      HorizontalContentAlignment="Right" FontSize="13"/>
-                                                        </DataTemplate>
-                                                    </DataGridTemplateColumn.CellEditingTemplate>
-                                                </DataGridTemplateColumn>
-                                                <DataGridTextColumn Header="Total" Binding="{Binding LineTotal, StringFormat=Kz {0:N2}}" 
-                                           Width="120" IsReadOnly="True">
-                                                    <DataGridTextColumn.ElementStyle>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="TextAlignment" Value="Right"/>
-                                                            <Setter Property="FontWeight" Value="Bold"/>
-                                                            <Setter Property="FontSize" Value="14"/>
-                                                            <Setter Property="Foreground" Value="{StaticResource PdvPrimary}"/>
-                                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                                        </Style>
-                                                    </DataGridTextColumn.ElementStyle>
-                                                </DataGridTextColumn>
-                                                <DataGridTemplateColumn Header="Ações" Width="70">
-                                                    <DataGridTemplateColumn.CellTemplate>
-                                                        <DataTemplate>
+                                    <DataGrid Grid.Row="1" ItemsSource="{Binding CartItems}"
+                                              AutoGenerateColumns="False" HeadersVisibility="Column"
+                                              CanUserAddRows="False" CanUserDeleteRows="False"
+                                              SelectionMode="Single" RowHeaderWidth="0"
+                                              VerticalScrollBarVisibility="Auto">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Produto" Binding="{Binding Name}" Width="*" IsReadOnly="True">
+                                                <DataGridTextColumn.ElementStyle>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="FontWeight" Value="Medium"/>
+                                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    </Style>
+                                                </DataGridTextColumn.ElementStyle>
+                                            </DataGridTextColumn>
+                                            <DataGridTemplateColumn Header="Qtd" Width="120">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                             <Button Style="{DynamicResource MaterialDesignIconButton}" 
-                                      Width="30" Height="30" Padding="0"
-                                      Command="{Binding DataContext.RemoveItemCommand, 
-                                      RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                      CommandParameter="{Binding}" ToolTip="Remover">
-                                                                <materialDesign:PackIcon Kind="Delete" Width="16" Height="16" 
-                                                        Foreground="{StaticResource PdvError}"/>
+                                                                    Width="26" Height="26"
+                                                                    Command="{Binding DataContext.DecreaseItemQtyCommand, 
+                                                                    RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                                    CommandParameter="{Binding}">
+                                                                <materialDesign:PackIcon Kind="Minus" Width="14" Height="14"/>
                                                             </Button>
-                                                        </DataTemplate>
-                                                    </DataGridTemplateColumn.CellTemplate>
-                                                </DataGridTemplateColumn>
-                                            </DataGrid.Columns>
-                                        </DataGrid>
-                                    </Border>
+                                                            <TextBox Text="{Binding Quantity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                                     Width="44" HorizontalContentAlignment="Center" 
+                                                                     VerticalContentAlignment="Center" FontWeight="SemiBold" 
+                                                                     Margin="6,0"/>
+                                                            <Button Style="{DynamicResource MaterialDesignIconButton}" 
+                                                                    Width="26" Height="26"
+                                                                    Command="{Binding DataContext.IncreaseItemQtyCommand, 
+                                                                    RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                                    CommandParameter="{Binding}">
+                                                                <materialDesign:PackIcon Kind="Plus" Width="14" Height="14"/>
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTextColumn Header="Preço Unit." 
+                                                                Binding="{Binding UnitPrice, StringFormat=Kz {0:N2}}" 
+                                                                Width="110" IsReadOnly="True">
+                                                <DataGridTextColumn.ElementStyle>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="TextAlignment" Value="Right"/>
+                                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    </Style>
+                                                </DataGridTextColumn.ElementStyle>
+                                            </DataGridTextColumn>
+                                            <DataGridTemplateColumn Header="Desconto" Width="110">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Discount, StringFormat=Kz {0:N2}}" 
+                                                                   HorizontalAlignment="Right"/>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                                <DataGridTemplateColumn.CellEditingTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding Discount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, 
+                                                                 Converter={StaticResource DecimalZeroWhenEmptyConverter}, StringFormat=N2}" 
+                                                                 HorizontalContentAlignment="Right"/>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellEditingTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTextColumn Header="Total" 
+                                                                Binding="{Binding LineTotal, StringFormat=Kz {0:N2}}" 
+                                                                Width="120" IsReadOnly="True">
+                                                <DataGridTextColumn.ElementStyle>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="TextAlignment" Value="Right"/>
+                                                        <Setter Property="FontWeight" Value="Bold"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    </Style>
+                                                </DataGridTextColumn.ElementStyle>
+                                            </DataGridTextColumn>
+                                            <DataGridTemplateColumn Header="Ações" Width="70">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Button Style="{DynamicResource MaterialDesignIconButton}" 
+                                                                Width="30" Height="30"
+                                                                Command="{Binding DataContext.RemoveItemCommand, 
+                                                                RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                                CommandParameter="{Binding}" ToolTip="Remover">
+                                                            <materialDesign:PackIcon Kind="Delete" Width="16" Height="16" 
+                                                                                     Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"/>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
 
-                                    <Button Grid.Row="2" Style="{StaticResource ModernSecondaryButton}" 
-                          Width="140" Height="40" Margin="0,16,0,0"
-                          Command="{Binding ClearCartCommand}">
+                                    <Button Grid.Row="2" 
+                                            Style="{DynamicResource MaterialDesignOutlinedButton}" 
+                                            Width="140" Margin="0,16,0,0"
+                                            Command="{Binding ClearCartCommand}">
                                         <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="Delete" Width="16" Height="16"/>
+                                            <materialDesign:PackIcon Kind="Delete"/>
                                             <TextBlock Text="Limpar Tudo" Margin="8,0,0,0"/>
                                         </StackPanel>
                                     </Button>
                                 </Grid>
-                            </Border>
+                            </materialDesign:Card>
                         </Grid>
 
                         <!-- RIGHT PANEL -->
@@ -629,207 +399,195 @@
                             </Grid.RowDefinitions>
 
                             <!-- Order Summary -->
-                            <Border Grid.Row="0" Style="{StaticResource ModernCard}" Margin="0,0,0,16">
+                            <materialDesign:Card Grid.Row="0" Margin="0,0,0,16" Padding="20"
+                                                 materialDesign:ElevationAssist.Elevation="Dp2">
                                 <StackPanel>
-                                    <Grid Margin="0,0,0,16">
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="Receipt" Width="20" Height="20" 
-                                              Foreground="{StaticResource PdvPrimary}" 
-                                              VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                            <TextBlock Text="Resumo do Pedido" FontSize="15" FontWeight="SemiBold" 
-                                Foreground="{StaticResource PdvTextPrimary}" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Grid>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                        <materialDesign:PackIcon Kind="Receipt" Width="20" Height="20" 
+                                                                 VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Resumo do Pedido" 
+                                                   Style="{DynamicResource MaterialDesignSubtitle1TextBlock}" 
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
 
                                     <Grid Margin="0,0,0,10">
-                                        <TextBlock Text="Subtotal" FontSize="13" 
-                              Foreground="{StaticResource PdvTextSecondary}"/>
-                                        <TextBlock HorizontalAlignment="Right" FontSize="14" FontWeight="Medium" 
-                              Foreground="{StaticResource PdvTextPrimary}">
-                      <Run Text="Kz"/>
-                      <Run Text="{Binding SubTotal, Mode=OneWay, StringFormat={}{0:N2}}"/>
+                                        <TextBlock Text="Subtotal" Style="{DynamicResource MaterialDesignBody2TextBlock}"/>
+                                        <TextBlock HorizontalAlignment="Right" FontWeight="Medium">
+                                            <Run Text="Kz"/>
+                                            <Run Text="{Binding SubTotal, Mode=OneWay, StringFormat={}{0:N2}}"/>
                                         </TextBlock>
                                     </Grid>
 
                                     <Grid Margin="0,0,0,10">
-                                        <TextBlock Text="Descontos" FontSize="13" 
-                              Foreground="{StaticResource PdvTextSecondary}"/>
-                                        <TextBlock HorizontalAlignment="Right" FontSize="14" FontWeight="Medium" 
-                              Foreground="{StaticResource PdvError}">
-                      <Run Text="- Kz"/>
-                      <Run Text="{Binding DiscountTotal, Mode=OneWay, StringFormat={}{0:N2}}"/>
+                                        <TextBlock Text="Descontos" Style="{DynamicResource MaterialDesignBody2TextBlock}"/>
+                                        <TextBlock HorizontalAlignment="Right" FontWeight="Medium" 
+                                                   Foreground="{DynamicResource MaterialDesignValidationErrorBrush}">
+                                            <Run Text="- Kz"/>
+                                            <Run Text="{Binding DiscountTotal, Mode=OneWay, StringFormat={}{0:N2}}"/>
                                         </TextBlock>
                                     </Grid>
 
                                     <Grid Margin="0,0,0,14">
-                                        <TextBlock Text="Impostos" FontSize="13" 
-                              Foreground="{StaticResource PdvTextSecondary}"/>
-                                        <TextBlock HorizontalAlignment="Right" FontSize="14" FontWeight="Medium" 
-                              Foreground="{StaticResource PdvTextPrimary}">
-                      <Run Text="Kz"/>
-                      <Run Text="{Binding TaxTotal, Mode=OneWay, StringFormat={}{0:N2}}"/>
+                                        <TextBlock Text="Impostos" Style="{DynamicResource MaterialDesignBody2TextBlock}"/>
+                                        <TextBlock HorizontalAlignment="Right" FontWeight="Medium">
+                                            <Run Text="Kz"/>
+                                            <Run Text="{Binding TaxTotal, Mode=OneWay, StringFormat={}{0:N2}}"/>
                                         </TextBlock>
                                     </Grid>
 
-                                    <Border Height="1" Background="{StaticResource PdvDivider}" Margin="0,0,0,14"/>
+                                    <Separator Margin="0,0,0,14"/>
 
-                                    <Border Background="{StaticResource PdvPrimary}" CornerRadius="10" Padding="16,14">
-                                        <Grid>
-                                            <StackPanel>
-                                                <TextBlock Text="TOTAL A PAGAR" FontSize="10" FontWeight="Bold" 
-                                  Foreground="White" Opacity="0.8" Margin="0,0,0,4"/>
-                                                <TextBlock FontSize="28" FontWeight="Bold" Foreground="White">
-                          <Run Text="Kz"/>
-                          <Run Text="{Binding GrandTotal, Mode=OneWay, StringFormat={}{0:N2}}"/>
-                                                </TextBlock>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
+                                    <materialDesign:ColorZone Mode="PrimaryMid" CornerRadius="10" Padding="16,14">
+                                        <StackPanel>
+                                            <TextBlock Text="TOTAL A PAGAR" 
+                                                       Style="{DynamicResource MaterialDesignOverlineTextBlock}" 
+                                                       Opacity="0.8" Margin="0,0,0,4"/>
+                                            <TextBlock Style="{DynamicResource MaterialDesignHeadline4TextBlock}">
+                                                <Run Text="Kz"/>
+                                                <Run Text="{Binding GrandTotal, Mode=OneWay, StringFormat={}{0:N2}}"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </materialDesign:ColorZone>
                                 </StackPanel>
-                            </Border>
+                            </materialDesign:Card>
 
                             <!-- Payment Section -->
-                            <Border Grid.Row="1" Style="{StaticResource ModernCard}" Margin="0,0,0,16">
+                            <materialDesign:Card Grid.Row="1" Margin="0,0,0,16" Padding="20"
+                                                 materialDesign:ElevationAssist.Elevation="Dp2">
                                 <StackPanel>
-                                    <Grid Margin="0,0,0,16">
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="CreditCard" Width="20" Height="20" 
-                                              Foreground="{StaticResource PdvPrimary}" 
-                                              VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                            <TextBlock Text="Adicionar Pagamento" FontSize="15" FontWeight="SemiBold" 
-                                Foreground="{StaticResource PdvTextPrimary}" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Grid>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                        <materialDesign:PackIcon Kind="CreditCard" Width="20" Height="20" 
+                                                                 VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Adicionar Pagamento" 
+                                                   Style="{DynamicResource MaterialDesignSubtitle1TextBlock}" 
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
 
-                                    <TextBlock Text="Forma de Pagamento" FontSize="12" FontWeight="Medium" 
-                            Foreground="{StaticResource PdvTextSecondary}" Margin="0,0,0,6"/>
                                     <ComboBox ItemsSource="{Binding PaymentTypes}" 
-                           SelectedItem="{Binding SelectedPaymentType}" 
-                           DisplayMemberPath="Name" Style="{StaticResource ModernComboBox}"
-                           Margin="0,0,0,14"/>
+                                              SelectedItem="{Binding SelectedPaymentType}" 
+                                              DisplayMemberPath="Name" 
+                                              Style="{DynamicResource MaterialDesignOutlinedComboBox}"
+                                              materialDesign:HintAssist.Hint="Forma de Pagamento"
+                                              Margin="0,0,0,14"/>
 
-                                    <TextBlock Text="Valor do Pagamento" FontSize="12" FontWeight="Medium" 
-                            Foreground="{StaticResource PdvTextSecondary}" Margin="0,0,0,6"/>
                                     <TextBox Text="{Binding PaymentAmount, UpdateSourceTrigger=PropertyChanged, 
-                          Converter={StaticResource DecimalZeroWhenEmptyConverter}, StringFormat=N2}" 
-                          Style="{StaticResource ModernTextBox}" Height="44" Margin="0,0,0,14">
+                                             Converter={StaticResource DecimalZeroWhenEmptyConverter}, StringFormat=N2}" 
+                                             Style="{DynamicResource MaterialDesignOutlinedTextBox}"
+                                             materialDesign:HintAssist.Hint="Valor do Pagamento"
+                                             Margin="0,0,0,14">
                                         <TextBox.InputBindings>
                                             <KeyBinding Key="Enter" Command="{Binding AddPaymentCommand}"/>
                                         </TextBox.InputBindings>
                                     </TextBox>
 
-                                    <Button Command="{Binding AddPaymentCommand}" Height="44"
-                          Style="{StaticResource ModernPrimaryButton}">
+                                    <Button Command="{Binding AddPaymentCommand}"
+                                            Style="{DynamicResource MaterialDesignRaisedButton}">
                                         <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="Plus" Width="18" Height="18"/>
+                                            <materialDesign:PackIcon Kind="Plus"/>
                                             <TextBlock Text="Adicionar Pagamento" Margin="8,0,0,0"/>
                                         </StackPanel>
                                     </Button>
                                 </StackPanel>
-                            </Border>
+                            </materialDesign:Card>
 
                             <!-- Payment Summary -->
-                            <Border Grid.Row="2" Style="{StaticResource ModernCard}" Margin="0,0,0,16">
+                            <materialDesign:Card Grid.Row="2" Margin="0,0,0,16" Padding="20"
+                                                 materialDesign:ElevationAssist.Elevation="Dp2">
                                 <StackPanel>
-                                    <Grid Margin="0,0,0,14">
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="CashMultiple" Width="20" Height="20" 
-                                              Foreground="{StaticResource PdvSuccess}" 
-                                              VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                            <TextBlock Text="Status do Pagamento" FontSize="15" FontWeight="SemiBold" 
-                                Foreground="{StaticResource PdvTextPrimary}" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Grid>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                                        <materialDesign:PackIcon Kind="CashMultiple" Width="20" Height="20" 
+                                                                 Foreground="Green"
+                                                                 VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Status do Pagamento" 
+                                                   Style="{DynamicResource MaterialDesignSubtitle1TextBlock}" 
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
 
-                                    <Border Background="{StaticResource PdvInputBg}" CornerRadius="8" Padding="12" 
-                          Margin="0,0,0,14"
-                          Visibility="{Binding Payments.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                                    <Border Background="{DynamicResource MaterialDesignCardBackground}" 
+                                            CornerRadius="8" Padding="12" Margin="0,0,0,14"
+                                            Visibility="{Binding Payments.Count, Converter={StaticResource CountToVisibilityConverter}}">
                                         <StackPanel>
-                                            <TextBlock Text="Pagamentos Registrados" FontSize="11" FontWeight="SemiBold" 
-                                Foreground="{StaticResource PdvTextSecondary}" Margin="0,0,0,10"/>
+                                            <TextBlock Text="Pagamentos Registrados" 
+                                                       Style="{DynamicResource MaterialDesignOverlineTextBlock}" 
+                                                       Margin="0,0,0,10"/>
                                             <ItemsControl ItemsSource="{Binding Payments}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Border Background="White" CornerRadius="6" Padding="10,8" Margin="0,0,0,6"
-                                    BorderThickness="1" BorderBrush="{StaticResource PdvCardBorder}">
+                                                        <materialDesign:Card Padding="10,8" Margin="0,0,0,6"
+                                                                             materialDesign:ElevationAssist.Elevation="Dp1">
                                                             <Grid>
-                                                                <TextBlock Text="{Binding PaymentTypeName}" FontWeight="Medium" FontSize="12" 
-                                          Foreground="{StaticResource PdvTextPrimary}" VerticalAlignment="Center"/>
+                                                                <TextBlock Text="{Binding PaymentTypeName}" 
+                                                                           FontWeight="Medium" VerticalAlignment="Center"/>
                                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                                                    <TextBlock FontSize="13" FontWeight="Bold" 
-                                            Foreground="{StaticResource PdvSuccess}" 
-                                            VerticalAlignment="Center" Margin="0,0,8,0">
-                                    <Run Text="Kz"/>
-                                    <Run Text="{Binding Amount, StringFormat={}{0:N2}}"/>
+                                                                    <TextBlock FontWeight="Bold" Foreground="Green" 
+                                                                               VerticalAlignment="Center" Margin="0,0,8,0">
+                                                                        <Run Text="Kz"/>
+                                                                        <Run Text="{Binding Amount, StringFormat={}{0:N2}}"/>
                                                                     </TextBlock>
-                                                                    <Button Width="24" Height="24" Padding="0" 
-                                          Style="{DynamicResource MaterialDesignIconButton}"
-                                          Command="{Binding DataContext.RemovePaymentCommand, 
-                                          RelativeSource={RelativeSource AncestorType=ItemsControl}}" 
-                                          CommandParameter="{Binding}" ToolTip="Remover">
+                                                                    <Button Style="{DynamicResource MaterialDesignIconButton}"
+                                                                            Width="24" Height="24"
+                                                                            Command="{Binding DataContext.RemovePaymentCommand, 
+                                                                            RelativeSource={RelativeSource AncestorType=ItemsControl}}" 
+                                                                            CommandParameter="{Binding}" ToolTip="Remover">
                                                                         <materialDesign:PackIcon Kind="Close" Width="12" Height="12" 
-                                                            Foreground="{StaticResource PdvError}"/>
+                                                                                                 Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"/>
                                                                     </Button>
                                                                 </StackPanel>
                                                             </Grid>
-                                                        </Border>
+                                                        </materialDesign:Card>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
                                         </StackPanel>
                                     </Border>
 
-                                    <Grid Margin="0,0,0,10">
-                                        <StackPanel>
-                                            <TextBlock Text="Valor Pago" FontSize="11" FontWeight="SemiBold" 
-                                Foreground="{StaticResource PdvTextSecondary}" Margin="0,0,0,4"/>
-                                            <TextBlock FontSize="18" FontWeight="Bold" Foreground="{StaticResource PdvSuccess}">
-                        <Run Text="Kz"/>
-                        <Run Text="{Binding AmountPaid, Mode=OneWay, StringFormat={}{0:N2}}"/>
-                                            </TextBlock>
-                                        </StackPanel>
-                                    </Grid>
+                                    <StackPanel Margin="0,0,0,10">
+                                        <TextBlock Text="Valor Pago" 
+                                                   Style="{DynamicResource MaterialDesignOverlineTextBlock}" 
+                                                   Margin="0,0,0,4"/>
+                                        <TextBlock Style="{DynamicResource MaterialDesignHeadline6TextBlock}" Foreground="Green">
+                                            <Run Text="Kz"/>
+                                            <Run Text="{Binding AmountPaid, Mode=OneWay, StringFormat={}{0:N2}}"/>
+                                        </TextBlock>
+                                    </StackPanel>
 
-                                    <Grid Margin="0,0,0,10">
-                                        <StackPanel>
-                                            <TextBlock Text="Restante" FontSize="11" FontWeight="SemiBold" 
-                                Foreground="{StaticResource PdvTextSecondary}" Margin="0,0,0,4"/>
-                                            <TextBlock FontSize="18" FontWeight="Bold" Foreground="{StaticResource PdvWarning}">
-                        <Run Text="Kz"/>
-                        <Run Text="{Binding RemainingAmount, Mode=OneWay, StringFormat={}{0:N2}}"/>
-                                            </TextBlock>
-                                        </StackPanel>
-                                    </Grid>
+                                    <StackPanel Margin="0,0,0,10">
+                                        <TextBlock Text="Restante" 
+                                                   Style="{DynamicResource MaterialDesignOverlineTextBlock}" 
+                                                   Margin="0,0,0,4"/>
+                                        <TextBlock Style="{DynamicResource MaterialDesignHeadline6TextBlock}" Foreground="Orange">
+                                            <Run Text="Kz"/>
+                                            <Run Text="{Binding RemainingAmount, Mode=OneWay, StringFormat={}{0:N2}}"/>
+                                        </TextBlock>
+                                    </StackPanel>
 
-                                    <Border Background="{StaticResource PdvInputBg}" CornerRadius="8" Padding="12,10"
-                          BorderBrush="{StaticResource PdvCardBorder}" BorderThickness="1">
+                                    <materialDesign:ColorZone Mode="Light" CornerRadius="8" Padding="12,10">
                                         <StackPanel>
-                                            <TextBlock Text="Troco a Devolver" FontSize="11" FontWeight="SemiBold" 
-                                Foreground="{StaticResource PdvTextSecondary}" Margin="0,0,0,4"/>
-                                            <TextBlock FontSize="22" FontWeight="Bold" Foreground="{StaticResource PdvPrimary}">
-                        <Run Text="Kz"/>
-                        <Run Text="{Binding ChangeDue, Mode=OneWay, StringFormat={}{0:N2}}"/>
+                                            <TextBlock Text="Troco a Devolver" 
+                                                       Style="{DynamicResource MaterialDesignOverlineTextBlock}" 
+                                                       Margin="0,0,0,4"/>
+                                            <TextBlock Style="{DynamicResource MaterialDesignHeadline5TextBlock}" 
+                                                       Foreground="{DynamicResource PrimaryHueMidBrush}">
+                                                <Run Text="Kz"/>
+                                                <Run Text="{Binding ChangeDue, Mode=OneWay, StringFormat={}{0:N2}}"/>
                                             </TextBlock>
                                         </StackPanel>
-                                    </Border>
+                                    </materialDesign:ColorZone>
                                 </StackPanel>
-                            </Border>
+                            </materialDesign:Card>
 
                             <!-- Finalize Sale Button -->
                             <Button Grid.Row="3" Command="{Binding FinalizeSaleCommand}" Height="56"
-                      Style="{StaticResource ModernPrimaryButton}">
-                                <Grid>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <materialDesign:PackIcon Kind="CheckCircle" Width="24" Height="24" 
-                                            Foreground="White" VerticalAlignment="Center"/>
-                                        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                                            <TextBlock Text="FINALIZAR VENDA" FontSize="15" FontWeight="Bold" 
-                                Foreground="White"/>
-                                            <TextBlock Text="Pressione F9" FontSize="10" Foreground="White" 
-                                Opacity="0.8" Margin="0,2,0,0"/>
-                                        </StackPanel>
+                                    Style="{DynamicResource MaterialDesignRaisedButton}">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="CheckCircle" Width="24" Height="24" VerticalAlignment="Center"/>
+                                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="FINALIZAR VENDA" FontWeight="Bold"/>
+                                        <TextBlock Text="Pressione F9" 
+                                                   Style="{DynamicResource MaterialDesignCaptionTextBlock}" 
+                                                   Opacity="0.8"/>
                                     </StackPanel>
-                                </Grid>
+                                </StackPanel>
                             </Button>
                         </Grid>
                     </Grid>
@@ -838,16 +596,11 @@
         </Grid>
 
         <!-- Product Catalog Modal -->
-        <Grid x:Name="ProductCatalogOverlay"
-          Visibility="{Binding IsCatalogOpen, Converter={StaticResource BooleanToVisibilityConverter}}" 
-          Background="#CC000000">
-            <Border MaxWidth="1200" MaxHeight="800" Background="White" 
-              CornerRadius="16" BorderBrush="{StaticResource PdvCardBorder}" 
-              BorderThickness="1">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="30" ShadowDepth="0" Opacity="0.3" Color="#000000"/>
-                </Border.Effect>
-                <Grid>
+        <materialDesign:DialogHost x:Name="ProductCatalogOverlay"
+                                   IsOpen="{Binding IsCatalogOpen}"
+                                   CloseOnClickAway="True">
+            <materialDesign:DialogHost.DialogContent>
+                <Grid MaxWidth="1200" MaxHeight="800" MinWidth="900" MinHeight="600">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -855,30 +608,27 @@
                     </Grid.RowDefinitions>
 
                     <!-- Modal Header -->
-                    <Border Grid.Row="0" Background="{StaticResource PdvPrimary}" 
-                  CornerRadius="16,16,0,0" Padding="24,20">
+                    <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryMid" Padding="24,20">
                         <Grid>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <materialDesign:PackIcon Kind="ViewGrid" Width="28" Height="28" 
-                                        Foreground="White" Margin="0,0,14,0"/>
+                                <materialDesign:PackIcon Kind="ViewGrid" Width="28" Height="28" Margin="0,0,14,0"/>
                                 <StackPanel>
-                                    <TextBlock Text="Catálogo de Produtos" FontSize="20" FontWeight="Bold" 
-                            Foreground="White"/>
+                                    <TextBlock Text="Catálogo de Produtos" 
+                                               Style="{DynamicResource MaterialDesignHeadline6TextBlock}"/>
                                     <TextBlock Text="Selecione um produto para adicionar ao carrinho" 
-                            FontSize="12" Foreground="White" Opacity="0.8"/>
+                                               Style="{DynamicResource MaterialDesignCaptionTextBlock}" Opacity="0.8"/>
                                 </StackPanel>
                             </StackPanel>
                             <Button Style="{DynamicResource MaterialDesignIconButton}" 
-                      Width="36" Height="36" HorizontalAlignment="Right" 
-                      Command="{Binding CloseCatalogCommand}">
-                                <materialDesign:PackIcon Kind="Close" Width="20" Height="20" Foreground="White"/>
+                                    HorizontalAlignment="Right" 
+                                    Command="{Binding CloseCatalogCommand}">
+                                <materialDesign:PackIcon Kind="Close" Width="20" Height="20"/>
                             </Button>
                         </Grid>
-                    </Border>
+                    </materialDesign:ColorZone>
 
                     <!-- Search Bar -->
-                    <Border Grid.Row="1" Padding="24,18" Background="{StaticResource PdvInputBg}" 
-                  BorderBrush="{StaticResource PdvDivider}" BorderThickness="0,0,0,1">
+                    <Border Grid.Row="1" Padding="24,18" Background="{DynamicResource MaterialDesignCardBackground}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -887,14 +637,16 @@
                             </Grid.ColumnDefinitions>
 
                             <TextBox Grid.Column="0" x:Name="CatalogSearchBox" 
-                       Style="{StaticResource ModernTextBox}" Height="44"
-                       Tag="Pesquisar produtos por nome, código..." 
-                       Text="{Binding CatalogSearchTerm, UpdateSourceTrigger=PropertyChanged}"/>
+                                     Style="{DynamicResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Pesquisar produtos por nome, código..." 
+                                     Text="{Binding CatalogSearchTerm, UpdateSourceTrigger=PropertyChanged}"/>
 
-                            <ComboBox Grid.Column="2" Style="{StaticResource ModernComboBox}" 
-                       ItemsSource="{Binding CatalogCategories}" 
-                       SelectedItem="{Binding SelectedCatalogCategory}" 
-                       DisplayMemberPath="Name" Height="44"/>
+                            <ComboBox Grid.Column="2" 
+                                      Style="{DynamicResource MaterialDesignOutlinedComboBox}" 
+                                      ItemsSource="{Binding CatalogCategories}" 
+                                      SelectedItem="{Binding SelectedCatalogCategory}" 
+                                      DisplayMemberPath="Name"
+                                      materialDesign:HintAssist.Hint="Categoria"/>
                         </Grid>
                     </Border>
 
@@ -908,7 +660,8 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Style="{StaticResource ProductCard}" Width="260" Height="310">
+                                    <materialDesign:Card Width="260" Height="310" Margin="8" Padding="16"
+                                                         materialDesign:ElevationAssist.Elevation="Dp2">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="160"/>
@@ -917,116 +670,94 @@
                                             </Grid.RowDefinitions>
 
                                             <!-- Product Image -->
-                                            <Border Grid.Row="0" Background="{StaticResource PdvInputBg}" 
-                              CornerRadius="8" Margin="0,0,0,12" ClipToBounds="True">
+                                            <Border Grid.Row="0" Background="{DynamicResource MaterialDesignCardBackground}" 
+                                                    CornerRadius="8" Margin="0,0,0,12" ClipToBounds="True">
                                                 <Grid>
                                                     <Image Source="{Binding PhotoUrl, Converter={StaticResource StringToImageSourceConverter}}" 
-                                Stretch="UniformToFill"/>
-                                                    <Border Background="{StaticResource PdvSuccessLight}" 
-                                  CornerRadius="4" Padding="8,4" 
-                                  HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10"
-                                  BorderBrush="{StaticResource PdvSuccess}" BorderThickness="1">
+                                                           Stretch="UniformToFill"/>
+                                                    <materialDesign:Chip HorizontalAlignment="Right" VerticalAlignment="Top" 
+                                                                         Margin="10" IconBackground="Green">
+                                                        <materialDesign:Chip.Icon>
+                                                            <materialDesign:PackIcon Kind="Package" Width="12" Height="12"/>
+                                                        </materialDesign:Chip.Icon>
                                                         <TextBlock Text="{Binding CurrentStock, StringFormat={}{0} un.}" 
-                                      FontSize="10" FontWeight="Bold" 
-                                      Foreground="{StaticResource PdvSuccess}"/>
-                                                    </Border>
+                                                                   FontSize="10" FontWeight="Bold"/>
+                                                    </materialDesign:Chip>
                                                 </Grid>
                                             </Border>
 
                                             <!-- Product Info -->
                                             <StackPanel Grid.Row="1">
-                                                <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" 
-                                  Foreground="{StaticResource PdvTextPrimary}" 
-                                  TextWrapping="Wrap" MaxHeight="38" 
-                                  TextTrimming="CharacterEllipsis" Margin="0,0,0,6"/>
-                                                <TextBlock Text="{Binding SKU}" FontSize="11" 
-                                  Foreground="{StaticResource PdvTextTertiary}" Margin="0,0,0,10"/>
-                                                <TextBlock FontSize="20" FontWeight="Bold" 
-                                  Foreground="{StaticResource PdvPrimary}">
-                          <Run Text="Kz"/>
-                          <Run Text="{Binding SalePrice, StringFormat={}{0:N2}}"/>
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" 
+                                                           TextWrapping="Wrap" MaxHeight="38" 
+                                                           TextTrimming="CharacterEllipsis" Margin="0,0,0,6"/>
+                                                <TextBlock Text="{Binding SKU}" 
+                                                           Style="{DynamicResource MaterialDesignCaptionTextBlock}" 
+                                                           Margin="0,0,0,10"/>
+                                                <TextBlock Style="{DynamicResource MaterialDesignHeadline6TextBlock}" 
+                                                           Foreground="{DynamicResource PrimaryHueMidBrush}">
+                                                    <Run Text="Kz"/>
+                                                    <Run Text="{Binding SalePrice, StringFormat={}{0:N2}}"/>
                                                 </TextBlock>
                                             </StackPanel>
 
                                             <!-- Add Button -->
-                                            <Button Grid.Row="2" Style="{StaticResource ModernPrimaryButton}" 
-                              Height="38" Margin="0,10,0,0"
-                              Command="{Binding DataContext.AddProductFromCatalogCommand, 
-                              RelativeSource={RelativeSource AncestorType=ItemsControl}}" 
-                              CommandParameter="{Binding}">
+                                            <Button Grid.Row="2" 
+                                                    Style="{DynamicResource MaterialDesignRaisedButton}" 
+                                                    Margin="0,10,0,0"
+                                                    Command="{Binding DataContext.AddProductFromCatalogCommand, 
+                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}" 
+                                                    CommandParameter="{Binding}">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon Kind="CartPlus" Width="16" Height="16"/>
-                                                    <TextBlock Text="Adicionar" Margin="8,0,0,0" FontSize="13"/>
+                                                    <materialDesign:PackIcon Kind="CartPlus"/>
+                                                    <TextBlock Text="Adicionar" Margin="8,0,0,0"/>
                                                 </StackPanel>
                                             </Button>
                                         </Grid>
-                                    </Border>
+                                    </materialDesign:Card>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
 
                     <!-- Toast Feedback -->
-                    <Border Grid.RowSpan="3" HorizontalAlignment="Center" VerticalAlignment="Bottom" 
-                  Margin="0,0,0,24" Background="{StaticResource PdvSuccess}" 
-                  CornerRadius="20" Padding="16,10" Panel.ZIndex="100">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsCatalogToastVisible}" Value="True">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="12" ShadowDepth="0" Opacity="0.3" Color="#000000"/>
-                        </Border.Effect>
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="CheckCircle" Width="18" Height="18" Foreground="White"/>
-                            <TextBlock Text="{Binding CatalogToastMessage}" Margin="8,0,0,0" 
-                        Foreground="White" FontWeight="SemiBold" FontSize="13"/>
-                        </StackPanel>
-                    </Border>
+                    <materialDesign:Snackbar Grid.Row="2" 
+                                             HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                             IsActive="{Binding IsCatalogToastVisible}"
+                                             Message="{Binding CatalogToastMessage}"/>
                 </Grid>
-            </Border>
-        </Grid>
+            </materialDesign:DialogHost.DialogContent>
+        </materialDesign:DialogHost>
 
         <!-- Footer with Snackbar -->
-        <Border Grid.Row="1" Background="{StaticResource PdvHeaderBg}" 
-            BorderBrush="{StaticResource PdvDivider}" 
-            BorderThickness="0,1,0,0" Height="56">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="8" ShadowDepth="0" Opacity="0.04" Color="#000000"/>
-            </Border.Effect>
+        <materialDesign:ColorZone Grid.Row="1" Mode="Light" Height="56" 
+                                  materialDesign:ElevationAssist.Elevation="Dp2">
             <Grid Margin="24,0">
                 <materialDesign:Snackbar x:Name="StatusSnackbar"
-                                MessageQueue="{materialDesign:MessageQueue}" 
-                                VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                                         MessageQueue="{materialDesign:MessageQueue}" 
+                                         VerticalAlignment="Center" HorizontalAlignment="Left"/>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
                     <materialDesign:PackIcon Kind="Information" Width="14" Height="14" 
-                                  Foreground="{StaticResource PdvTextTertiary}" 
-                                  VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock Text="Pressione F1 para ajuda" FontSize="11" 
-                    Foreground="{StaticResource PdvTextTertiary}" VerticalAlignment="Center"/>
+                                             VerticalAlignment="Center" Margin="0,0,8,0" Opacity="0.6"/>
+                    <TextBlock Text="Pressione F1 para ajuda" 
+                               Style="{DynamicResource MaterialDesignCaptionTextBlock}" 
+                               VerticalAlignment="Center"/>
                 </StackPanel>
             </Grid>
-        </Border>
+        </materialDesign:ColorZone>
 
         <!-- Loading Overlay -->
-        <Border Grid.RowSpan="2" Background="#E6000000" 
-            Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" 
-            Panel.ZIndex="1000">
+        <Grid Grid.RowSpan="2" Background="#E6000000" 
+              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" 
+              Panel.ZIndex="1000">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" 
-                    IsIndeterminate="True" Width="56" Height="56" 
-                    Foreground="{StaticResource PdvPrimary}" SnapsToDevicePixels="True"/>
-                <TextBlock Text="{Binding StatusMessage}" FontSize="15" FontWeight="Medium" 
-                  Foreground="White" Margin="0,20,0,0" TextAlignment="Center" 
-                  MaxWidth="400" TextWrapping="Wrap"  />
-                
+                <ProgressBar Style="{DynamicResource MaterialDesignCircularProgressBar}" 
+                             IsIndeterminate="True" Width="56" Height="56"/>
+                <TextBlock Text="{Binding StatusMessage}" 
+                           Style="{DynamicResource MaterialDesignSubtitle1TextBlock}" 
+                           Foreground="White" Margin="0,20,0,0" TextAlignment="Center" 
+                           MaxWidth="400" TextWrapping="Wrap"/>
             </StackPanel>
-        </Border>
+        </Grid>
     </Grid>
 </Page>

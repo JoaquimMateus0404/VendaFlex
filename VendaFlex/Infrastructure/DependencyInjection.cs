@@ -25,6 +25,10 @@ using VendaFlex.ViewModels.Settings;
 using VendaFlex.ViewModels.Products;
 using VendaFlex.UI.Views.Stock;
 using VendaFlex.ViewModels.Stock;
+using VendaFlex.UI.Views.Persons;
+using VendaFlex.ViewModels.Persons;
+using VendaFlex.UI.Views.Users;
+using VendaFlex.ViewModels.Users;
 
 namespace VendaFlex.Infrastructure
 {
@@ -136,6 +140,21 @@ namespace VendaFlex.Infrastructure
             // StockManagement precisa ser Scoped porque usa múltiplos serviços que compartilham o DbContext
             services.AddTransient<StockManagementView>();
             services.AddScoped<StockManagementViewModel>();
+
+            // UserProfile
+            services.AddTransient<UserProfileView>();
+            services.AddTransient<UserProfileViewModel>();
+
+            // PersonManagement precisa ser Scoped porque usa múltiplos serviços que compartilham o DbContext
+            services.AddTransient<PersonManagementView>();
+            services.AddScoped<PersonManagementViewModel>();
+
+            // UserManagement precisa ser Scoped porque usa múltiplos serviços que compartilham o DbContext
+            services.AddTransient<UserManagementView>();
+            services.AddScoped<UserManagementViewModel>();
+
+            services.AddTransient<InvoiceManagementView>();
+            services.AddTransient<InvoiceManagementViewModel>();
 
             //
             return services;

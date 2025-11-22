@@ -9,14 +9,25 @@ namespace VendaFlex.ViewModels.Commands
 {
     public class AsyncCommand : ICommand
     {
-        private readonly Func<Task> _execute;
+        // Suporte tanto para execução sem parâmetro quanto com parâmetro
+        private readonly Func<Task>? _execute;
+        private readonly Func<object?, Task>? _executeWithParam;
         private readonly Func<bool>? _canExecute;
         private readonly Action<bool>? _onStateChanged;
         private bool _isExecuting;
 
+        // Construtor para Func<Task>
         public AsyncCommand(Func<Task> execute, Func<bool>? canExecute = null, Action<bool>? onStateChanged = null)
         {
             _execute = execute;
+            _canExecute = canExecute;
+            _onStateChanged = onStateChanged;
+        }
+
+        // Construtor para Func<object?, Task>
+        public AsyncCommand(Func<object?, Task> executeWithParam, Func<bool>? canExecute = null, Action<bool>? onStateChanged = null)
+        {
+            _executeWithParam = executeWithParam;
             _canExecute = canExecute;
             _onStateChanged = onStateChanged;
         }
@@ -32,8 +43,23 @@ namespace VendaFlex.ViewModels.Commands
             _isExecuting = true;
             _onStateChanged?.Invoke(true);
             CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-            try { await _execute(); }
-            finally { _isExecuting = false; _onStateChanged?.Invoke(false); CanExecuteChanged?.Invoke(this, EventArgs.Empty); }
+            try
+            {
+                if (_executeWithParam != null)
+                {
+                    await _executeWithParam(parameter);
+                }
+                else if (_execute != null)
+                {
+                    await _execute();
+                }
+            }
+            finally
+            {
+                _isExecuting = false;
+                _onStateChanged?.Invoke(false);
+                CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
 
         public event EventHandler? CanExecuteChanged;

@@ -516,55 +516,7 @@ namespace VendaFlex.ViewModels.Products
 
         #endregion
 
-        #region Stock Movement Properties
 
-        private int _movementProductId;
-        public int MovementProductId
-        {
-            get => _movementProductId;
-            set => Set(ref _movementProductId, value);
-        }
-
-        private int _movementQuantity;
-        public int MovementQuantity
-        {
-            get => _movementQuantity;
-            set => Set(ref _movementQuantity, value);
-        }
-
-        private StockMovementType _movementType = StockMovementType.Entry;
-        public StockMovementType MovementType
-        {
-            get => _movementType;
-            set => Set(ref _movementType, value);
-        }
-
-        private string? _movementNotes;
-        public string? MovementNotes
-        {
-            get => _movementNotes;
-            set => Set(ref _movementNotes, value);
-        }
-
-        private decimal? _movementUnitCost;
-        public decimal? MovementUnitCost
-        {
-            get => _movementUnitCost;
-            set
-            {
-                if (Set(ref _movementUnitCost, value))
-                    CalculateMovementTotalCost();
-            }
-        }
-
-        private decimal? _movementTotalCost;
-        public decimal? MovementTotalCost
-        {
-            get => _movementTotalCost;
-            set => Set(ref _movementTotalCost, value);
-        }
-
-        #endregion
 
         #region Filters and Search
 
@@ -805,12 +757,6 @@ namespace VendaFlex.ViewModels.Products
         public ICommand DeleteExpirationCommand { get; private set; } = null!;
         public ICommand CancelExpirationCommand { get; private set; } = null!;
 
-        // Stock Movement Commands
-        public ICommand LoadMovementsCommand { get; private set; } = null!;
-        public ICommand AddMovementCommand { get; private set; } = null!;
-        public ICommand SaveMovementCommand { get; private set; } = null!;
-        public ICommand CancelMovementCommand { get; private set; } = null!;
-
         // Filter Commands
         public ICommand ClearFiltersCommand { get; private set; } = null!;
         public ICommand RefreshCommand { get; private set; } = null!;
@@ -855,12 +801,7 @@ namespace VendaFlex.ViewModels.Products
             SaveExpirationCommand = new RelayCommand(async _ => await SaveExpirationAsync(), _ => CanSaveExpiration());
             DeleteExpirationCommand = new RelayCommand(async _ => await DeleteExpirationAsync(), _ => SelectedExpiration != null);
             CancelExpirationCommand = new RelayCommand(_ => CancelExpirationForm());
-
-            // Stock Movement Commands
-            LoadMovementsCommand = new RelayCommand(async _ => await LoadStockMovementsAsync());
-            AddMovementCommand = new RelayCommand(_ => OpenMovementForm(), _ => SelectedProduct != null);
-            SaveMovementCommand = new RelayCommand(async _ => await SaveMovementAsync(), _ => CanSaveMovement());
-            CancelMovementCommand = new RelayCommand(_ => CancelMovementForm());
+          
 
             // Filter Commands
             ClearFiltersCommand = new RelayCommand(_ => ClearFilters());
@@ -902,9 +843,7 @@ namespace VendaFlex.ViewModels.Products
                 await LoadProductsAsync();
                 await LoadCategoriesAsync();
                 await LoadSuppliersAsync();
-                await LoadLowStockAsync();
                 await LoadExpirationsAsync();
-                await LoadStockMovementsAsync();
                 await LoadPriceHistoriesAsync();
 
                 UpdateStatistics();
@@ -1647,86 +1586,6 @@ namespace VendaFlex.ViewModels.Products
 
         #endregion
 
-        #region Stock Movement Methods
-
-        private void OpenMovementForm()
-        {
-            if (SelectedProduct == null) return;
-
-            ClearMovementForm();
-            MovementProductId = SelectedProduct.ProductId;
-            IsMovementFormOpen = true;
-        }
-
-        private async Task SaveMovementAsync()
-        {
-            if (!CanSaveMovement()) return;
-
-            IsSaving = true;
-
-            try
-            {
-                var movementDto = new StockMovementDto
-                {
-                    ProductId = MovementProductId,
-                    UserId = _currentUserContext.UserId ?? 0,
-                    Quantity = MovementQuantity,
-                    Type = MovementType,
-                    Notes = MovementNotes ?? string.Empty,
-                    UnitCost = MovementUnitCost,
-                    TotalCost = MovementTotalCost,
-                    Date = DateTime.UtcNow
-                };
-                Debug.WriteLine("============STOCK====================");
-                Debug.WriteLine($"Saving movement: ProductId={movementDto.ProductId}, Quantity={movementDto.Quantity}, Type={movementDto.Type}, UnitCost={movementDto.UnitCost}, TotalCost={movementDto.TotalCost}, User={movementDto.UserId}");
-                Debug.WriteLine("=======================================");
-
-                var result = await _stockMovementService.AddAsync(movementDto);
-
-                if (result.Success)
-                {
-                    ShowStatusMessage("Movimentação registrada com sucesso!", false);
-                    IsMovementFormOpen = false;
-                    await LoadStockMovementsAsync();
-                    await LoadLowStockAsync();
-                }
-                else
-                {
-                    var errors = "";
-                    if (result.Errors?.Any() == true)
-                        errors += "\n• " + string.Join("\n• ", result.Errors);
-                    ShowStatusMessage(errors ?? "Erro ao registrar movimentação", true);
-                 
-                }
-            }
-            catch (Exception ex)
-            {
-                ShowStatusMessage($"Erro ao registrar movimentação: {ex.Message}", true);
-            }
-            finally
-            {
-                IsSaving = false;
-            }
-        }
-
-        private void CancelMovementForm()
-        {
-            IsMovementFormOpen = false;
-            ClearMovementForm();
-        }
-
-        private void ClearMovementForm()
-        {
-            MovementProductId = 0;
-            MovementQuantity = 0;
-            MovementType = StockMovementType.Entry;
-            MovementNotes = null;
-            MovementUnitCost = null;
-            MovementTotalCost = null;
-        }
-
-        #endregion
-
         #region Filters
 
         private void ApplyFilters()
@@ -1834,10 +1693,6 @@ namespace VendaFlex.ViewModels.Products
             return ExpirationProductId > 0 && ExpirationQuantity > 0 && !IsSaving;
         }
 
-        private bool CanSaveMovement()
-        {
-            return MovementProductId > 0 && MovementQuantity > 0 && !IsSaving;
-        }
 
         #endregion
 
@@ -1864,14 +1719,6 @@ namespace VendaFlex.ViewModels.Products
             else
             {
                 FinalPrice = ProductSalePrice;
-            }
-        }
-
-        private void CalculateMovementTotalCost()
-        {
-            if (MovementUnitCost.HasValue)
-            {
-                MovementTotalCost = MovementUnitCost.Value * MovementQuantity;
             }
         }
 

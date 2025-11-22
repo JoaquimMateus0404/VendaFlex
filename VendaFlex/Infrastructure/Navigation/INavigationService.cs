@@ -40,6 +40,26 @@ namespace VendaFlex.Infrastructure.Navigation
         void NavigateToStockManagement();
 
         /// <summary>
+        /// Navega para a tela de gerenciamento de usuários
+        /// </summary>
+        void NavigateToUserProfile();
+
+        /// <summary>
+        /// Navega para a tela de gerenciamento de pessoas
+        /// </summary>
+        void NavigateToPersonManagement();
+
+        /// <summary>
+        /// Navega para a tela de gerenciamento de utilizadores do sistema
+        /// </summary>
+        void NavigateToUserManagement();
+
+        /// <summary>
+        /// Navega para a tela de gestão de faturas
+        /// </summary>
+        void NavigateToInvoiceManagement();
+
+        /// <summary>
         /// Fecha a janela atual
         /// </summary>
         void CloseCurrentWindow();

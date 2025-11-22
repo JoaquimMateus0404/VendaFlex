@@ -6,17 +6,17 @@ namespace VendaFlex.Core.Interfaces
 {
     public interface IInvoiceService
     {
-        // Consultas básicas
+        // Consultas bï¿½sicas
         Task<OperationResult<InvoiceDto>> GetByIdAsync(int id);
         Task<OperationResult<IEnumerable<InvoiceDto>>> GetAllAsync();
 
-        // Consultas específicas
+        // Consultas especï¿½ficas
         Task<OperationResult<InvoiceDto>> GetByNumberAsync(string invoiceNumber);
         Task<OperationResult<IEnumerable<InvoiceDto>>> GetByStatusAsync(InvoiceStatus status);
         Task<OperationResult<IEnumerable<InvoiceDto>>> GetByPersonIdAsync(int personId);
         Task<OperationResult<IEnumerable<InvoiceDto>>> GetByDateRangeAsync(DateTime startDate, DateTime endDate);
 
-        // Verificações auxiliares
+        // Verificaï¿½ï¿½es auxiliares
         Task<bool> ExistsAsync(int id);
         Task<bool> NumberExistsAsync(string invoiceNumber, int? excludeId = null);
 
@@ -25,8 +25,13 @@ namespace VendaFlex.Core.Interfaces
         Task<OperationResult<InvoiceDto>> UpdateAsync(InvoiceDto invoice);
         Task<OperationResult<bool>> DeleteAsync(int id);
 
-        // Paginação e contagem
+        // Paginaï¿½ï¿½o e contagem
         Task<OperationResult<IEnumerable<InvoiceDto>>> GetPaginatedAsync(int pageNumber, int pageSize);
         Task<int> GetTotalCountAsync();
+
+        // AÃ§Ãµes de negÃ³cio
+        Task<OperationResult<bool>> CancelAsync(int invoiceId, string reason);
+        Task<OperationResult<bool>> ReopenAsync(int invoiceId);
+        Task<OperationResult<InvoiceDto>> DuplicateAsync(int invoiceId);
     }
 }
