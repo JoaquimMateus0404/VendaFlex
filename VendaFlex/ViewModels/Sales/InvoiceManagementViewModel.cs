@@ -789,7 +789,27 @@ namespace VendaFlex.ViewModels.Sales
                 var result = await _invoiceProductService.GetByInvoiceIdAsync(invoiceId);
                 if (result.Success && result.Data != null)
                 {
-                    SelectedInvoiceItems = new ObservableCollection<InvoiceProductDto>(result.Data);
+                    var itemsWithProductNames = new List<InvoiceProductDto>();
+                    
+                    foreach (var item in result.Data)
+                    {
+                        // Buscar informações do produto
+                        var productResult = await _productService.GetByIdAsync(item.ProductId);
+                        if (productResult.Success && productResult.Data != null)
+                        {
+                            item.ProductName = productResult.Data.Name;
+                            item.ProductCode = productResult.Data.Code ?? productResult.Data.SKU ?? string.Empty;
+                        }
+                        else
+                        {
+                            item.ProductName = $"Produto {item.ProductId}";
+                            item.ProductCode = string.Empty;
+                        }
+                        
+                        itemsWithProductNames.Add(item);
+                    }
+                    
+                    SelectedInvoiceItems = new ObservableCollection<InvoiceProductDto>(itemsWithProductNames);
                 }
                 else
                 {

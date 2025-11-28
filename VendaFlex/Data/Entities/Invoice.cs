@@ -33,23 +33,23 @@ namespace VendaFlex.Data.Entities
         public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal SubTotal { get; set; }
+        public decimal SubTotal { get; set; } // valor antes de impostos e descontos
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal TaxAmount { get; set; }
+        public decimal TaxAmount { get; set; } // valor do imposto
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal DiscountAmount { get; set; }
+        public decimal DiscountAmount { get; set; } // valor do desconto
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal ShippingCost { get; set; }
+        public decimal ShippingCost { get; set; } // custo de envio
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
-        public decimal Total { get; set; }
+        public decimal Total { get; set; } // valor total da fatura
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal PaidAmount { get; set; } = 0;
+        public decimal PaidAmount { get; set; } = 0; // valor pago
 
         [NotMapped]
         public decimal Balance => Total - PaidAmount;
