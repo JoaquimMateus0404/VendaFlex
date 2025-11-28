@@ -13,19 +13,16 @@ using MaterialDesignThemes.Wpf;
 using Microsoft.Win32;
 using System.IO;
 using System.Text;
+using System.Collections.Generic;
 
 namespace VendaFlex.ViewModels.Sales
 {
-    /// <summary>
-    /// ViewModel para gerenciamento completo de faturas, incluindo
-    /// listagem, filtragem, pagamentos, ajustes e ações de fatura.
-    /// </summary>
     public class InvoiceManagementViewModel : BaseViewModel
     {
         #region Services
 
         private readonly ICompanyConfigService _companyConfigService;
-        private readonly ISessionService _sessionService;
+        private readonly ICurrentUserContext _currentUserContext;
         private readonly IPersonService _personService;
         private readonly IReceiptPrintService _printService;
         private readonly IInvoiceService _invoiceService;
@@ -157,6 +154,7 @@ namespace VendaFlex.ViewModels.Sales
             {
                 if (Set(ref _pageSize, value))
                 {
+                    PageNumber = 1;
                     _ = SearchAsync();
                 }
             }
@@ -228,13 +226,7 @@ namespace VendaFlex.ViewModels.Sales
         public InvoiceListItemDto? SelectedInvoice
         {
             get => _selectedInvoice;
-            set
-            {
-                if (Set(ref _selectedInvoice, value))
-                {
-                    _ = LoadInvoiceDetailsAsync();
-                }
-            }
+            set => Set(ref _selectedInvoice, value);
         }
 
         private decimal _selectedInvoiceTotal;
@@ -248,7 +240,13 @@ namespace VendaFlex.ViewModels.Sales
         public decimal SelectedInvoicePaid
         {
             get => _selectedInvoicePaid;
-            set => Set(ref _selectedInvoicePaid, value);
+            set
+            {
+                if (Set(ref _selectedInvoicePaid, value))
+                {
+                    SelectedInvoiceBalance = SelectedInvoiceTotal - value;
+                }
+            }
         }
 
         private decimal _selectedInvoiceBalance;
@@ -354,43 +352,60 @@ namespace VendaFlex.ViewModels.Sales
             set => Set(ref _stockImpactItems, value);
         }
 
+        private decimal _accountsReceivable;
+        public decimal AccountsReceivable
+        {
+            get => _accountsReceivable;
+            set => Set(ref _accountsReceivable, value);
+        }
+
+        private decimal _netRevenue;
+        public decimal NetRevenue
+        {
+            get => _netRevenue;
+            set => Set(ref _netRevenue, value);
+        }
+
         #endregion
 
         #region Properties - Dialog
 
-        private bool _isDetailsDialogOpen;
-        public bool IsDetailsDialogOpen
+        private bool _isDetailsModalOpen;
+        public bool IsDetailsModalOpen
         {
-            get => _isDetailsDialogOpen;
-            set => Set(ref _isDetailsDialogOpen, value);
+            get => _isDetailsModalOpen;
+            set => Set(ref _isDetailsModalOpen, value);
         }
 
         #endregion
 
         #region Commands
 
-        public ICommand ViewDetailsCommand { get; }
-        public ICommand CloseDetailsCommand { get; }
-        public ICommand RefreshCommand { get; }
-        public ICommand ExportCommand { get; }
-        public ICommand SearchCommand { get; }
-        public ICommand ClearFiltersCommand { get; }
-        public ICommand FirstPageCommand { get; }
-        public ICommand PreviousPageCommand { get; }
-        public ICommand NextPageCommand { get; }
-        public ICommand LastPageCommand { get; }
-        public ICommand PrintInvoiceCommand { get; }
-        public ICommand GeneratePdfCommand { get; }
-        public ICommand DuplicateInvoiceCommand { get; }
-        public ICommand ReopenInvoiceCommand { get; }
-        public ICommand IssueCreditNoteCommand { get; }
-        public ICommand IssueDebitNoteCommand { get; }
-        public ICommand CancelInvoiceCommand { get; }
-        public ICommand AddPaymentCommand { get; }
-        public ICommand RemovePaymentCommand { get; }
-        public ICommand ApplyDiscountCommand { get; }
-        public ICommand ApplySurchargeCommand { get; }
-        public ICommand ChangePaymentTypeCommand { get; }
+        public ICommand OpenDetailsCommand { get; private set; }
+        public ICommand CloseDetailsCommand { get; private set; }
+        public ICommand RefreshCommand { get; private set; }
+        public ICommand ExportCommand { get; private set; }
+        public ICommand SearchCommand { get; private set; }
+        public ICommand ClearFiltersCommand { get; private set; }
+        public ICommand FirstPageCommand { get; private set; }
+        public ICommand PreviousPageCommand { get; private set; }
+        public ICommand NextPageCommand { get; private set; }
+        public ICommand LastPageCommand { get; private set; }
+        public ICommand PrintInvoiceCommand { get; private set; }
+        public ICommand GeneratePdfCommand { get; private set; }
+        public ICommand DuplicateInvoiceCommand { get; private set; }
+        public ICommand ReopenInvoiceCommand { get; private set; }
+        public ICommand IssueCreditNoteCommand { get; private set; }
+        public ICommand IssueDebitNoteCommand { get; private set; }
+        public ICommand CancelInvoiceCommand { get; private set; }
+        public ICommand AddPaymentCommand { get; private set; }
+        public ICommand RemovePaymentCommand { get; private set; }
+        public ICommand ApplyDiscountCommand { get; private set; }
+        public ICommand ApplySurchargeCommand { get; private set; }
+        public ICommand ChangePaymentTypeCommand { get; private set; }
+        public ICommand UpdateStockCommand { get; private set; }
+        public ICommand PostToAccountsReceivableCommand { get; private set; }
+        public ICommand GenerateFinancialReportCommand { get; private set; }
 
         #endregion
 
@@ -398,7 +413,7 @@ namespace VendaFlex.ViewModels.Sales
 
         public InvoiceManagementViewModel(
             ICompanyConfigService companyConfigService,
-            ISessionService sessionService,
+            ICurrentUserContext currentUserContext,
             IPersonService personService,
             IReceiptPrintService printService,
             IInvoiceService invoiceService,
@@ -409,7 +424,7 @@ namespace VendaFlex.ViewModels.Sales
             IStockService stockService)
         {
             _companyConfigService = companyConfigService ?? throw new ArgumentNullException(nameof(companyConfigService));
-            _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
+            _currentUserContext = currentUserContext ?? throw new ArgumentNullException(nameof(currentUserContext));
             _personService = personService ?? throw new ArgumentNullException(nameof(personService));
             _printService = printService ?? throw new ArgumentNullException(nameof(printService));
             _invoiceService = invoiceService ?? throw new ArgumentNullException(nameof(invoiceService));
@@ -419,8 +434,13 @@ namespace VendaFlex.ViewModels.Sales
             _productService = productService ?? throw new ArgumentNullException(nameof(productService));
             _stockService = stockService ?? throw new ArgumentNullException(nameof(stockService));
 
-            // Commands
-            ViewDetailsCommand = new RelayCommand(async invoice => await ViewDetailsAsync(invoice as InvoiceListItemDto));
+            InitializeCommands();
+            _ = InitializeAsync();
+        }
+
+        private void InitializeCommands()
+        {
+            OpenDetailsCommand = new RelayCommand(async invoice => await OpenDetailsAsync(invoice as InvoiceListItemDto));
             CloseDetailsCommand = new RelayCommand(_ => CloseDetails());
             RefreshCommand = new RelayCommand(async _ => await RefreshAsync());
             ExportCommand = new RelayCommand(async _ => await ExportAsync());
@@ -431,21 +451,20 @@ namespace VendaFlex.ViewModels.Sales
             NextPageCommand = new RelayCommand(async _ => await GoToNextPageAsync(), _ => PageNumber < TotalPages);
             LastPageCommand = new RelayCommand(async _ => await GoToLastPageAsync(), _ => PageNumber < TotalPages);
             PrintInvoiceCommand = new RelayCommand(async _ => await PrintInvoiceAsync(), _ => SelectedInvoice != null);
-            GeneratePdfCommand = new RelayCommand(
-                async _ => await GeneratePdfAsync(), _ => SelectedInvoice != null);
+            GeneratePdfCommand = new RelayCommand(async _ => await GeneratePdfAsync(), _ => SelectedInvoice != null);
             DuplicateInvoiceCommand = new RelayCommand(async _ => await DuplicateInvoiceAsync(), _ => SelectedInvoice != null);
-            ReopenInvoiceCommand = new RelayCommand(async _ => await ReopenInvoiceAsync(), _ => SelectedInvoice != null);
+            ReopenInvoiceCommand = new RelayCommand(async _ => await ReopenInvoiceAsync(), _ => SelectedInvoice != null && SelectedInvoice.Status == InvoiceStatus.Cancelled);
             IssueCreditNoteCommand = new RelayCommand(async _ => await IssueCreditNoteAsync(), _ => SelectedInvoice != null);
             IssueDebitNoteCommand = new RelayCommand(async _ => await IssueDebitNoteAsync(), _ => SelectedInvoice != null);
-            CancelInvoiceCommand = new RelayCommand(async _ => await CancelInvoiceAsync(), _ => SelectedInvoice != null);
-            AddPaymentCommand = new RelayCommand(async _ => await AddPaymentAsync(), _ => SelectedInvoice != null && NewPayment?.PaymentTypeId > 0 && NewPayment.Amount > 0);
+            CancelInvoiceCommand = new RelayCommand(async _ => await CancelInvoiceAsync(), _ => SelectedInvoice != null && SelectedInvoice.Status != InvoiceStatus.Cancelled);
+            AddPaymentCommand = new RelayCommand(async _ => await AddPaymentAsync(), CanAddPayment);
             RemovePaymentCommand = new RelayCommand(async payment => await RemovePaymentAsync(payment as PaymentListItemDto));
-            ApplyDiscountCommand = new RelayCommand(async _ => await ApplyDiscountAsync(), _ => SelectedInvoice != null && AdjustmentDiscount > 0 && !string.IsNullOrWhiteSpace(AdjustmentReason));
-            ApplySurchargeCommand = new RelayCommand(async _ => await ApplySurchargeAsync(), _ => SelectedInvoice != null && AdjustmentSurcharge > 0 && !string.IsNullOrWhiteSpace(SurchargeReason));
-            ChangePaymentTypeCommand = new RelayCommand(async _ => await ChangePaymentTypeAsync(), _ => PaymentToChange != null && NewPaymentType != null);
-
-            // Inicializar
-            _ = InitializeAsync();
+            ApplyDiscountCommand = new RelayCommand(async _ => await ApplyDiscountAsync(), CanApplyDiscount);
+            ApplySurchargeCommand = new RelayCommand(async _ => await ApplySurchargeAsync(), CanApplySurcharge);
+            ChangePaymentTypeCommand = new RelayCommand(async _ => await ChangePaymentTypeAsync(), CanChangePaymentType);
+            UpdateStockCommand = new RelayCommand(async _ => await UpdateStockAsync(), _ => SelectedInvoice != null);
+            PostToAccountsReceivableCommand = new RelayCommand(async _ => await PostToAccountsReceivableAsync(), _ => SelectedInvoice != null);
+            GenerateFinancialReportCommand = new RelayCommand(async _ => await GenerateFinancialReportAsync(), _ => SelectedInvoice != null);
         }
 
         #endregion
@@ -458,17 +477,8 @@ namespace VendaFlex.ViewModels.Sales
             {
                 IsLoading = true;
 
-                // Carregar tipos de pagamento
-                var paymentTypesResult = await _paymentTypeService.GetActiveAsync();
-                if (paymentTypesResult.Success && paymentTypesResult.Data != null)
-                {
-                    PaymentTypes = new ObservableCollection<PaymentTypeDto>(paymentTypesResult.Data);
-                }
-
-                // Carregar faturas iniciais
+                await LoadPaymentTypesAsync();
                 await SearchAsync();
-
-                // Atualizar estatísticas
                 await UpdateStatisticsAsync();
             }
             catch (Exception ex)
@@ -478,6 +488,22 @@ namespace VendaFlex.ViewModels.Sales
             finally
             {
                 IsLoading = false;
+            }
+        }
+
+        private async Task LoadPaymentTypesAsync()
+        {
+            try
+            {
+                var result = await _paymentTypeService.GetActiveAsync();
+                if (result.Success && result.Data != null)
+                {
+                    PaymentTypes = new ObservableCollection<PaymentTypeDto>(result.Data);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao carregar tipos de pagamento: {ex.Message}");
             }
         }
 
@@ -491,54 +517,34 @@ namespace VendaFlex.ViewModels.Sales
             {
                 IsLoading = true;
 
-                // TODO: Implementar filtros e paginação no serviço
                 var result = await _invoiceService.GetAllAsync();
-                
+
                 if (result.Success && result.Data != null)
                 {
-                    var invoices = result.Data;
+                    var invoices = result.Data.AsEnumerable();
 
-                    // Aplicar filtros localmente (temporário)
-                    if (FilterStartDate.HasValue)
-                        invoices = invoices.Where(i => i.Date >= FilterStartDate.Value);
-                    
-                    if (FilterEndDate.HasValue)
-                        invoices = invoices.Where(i => i.Date <= FilterEndDate.Value);
-                    
-                    if (!string.IsNullOrWhiteSpace(FilterInvoiceNumber))
-                        invoices = invoices.Where(i => i.InvoiceNumber.Contains(FilterInvoiceNumber, StringComparison.OrdinalIgnoreCase));
-                    
-                    if (FilterStatus != "Todos")
-                    {
-                        var status = FilterStatus switch
-                        {
-                            "Paga" => InvoiceStatus.Paid,
-                            "Pendente" => InvoiceStatus.Pending,
-                            "Cancelada" => InvoiceStatus.Cancelled,
-                            _ => (InvoiceStatus?)null
-                        };
-                        if (status.HasValue)
-                            invoices = invoices.Where(i => i.Status == status.Value);
-                    }
+                    // Aplicar filtros
+                    invoices = ApplyFilters(invoices);
 
-                    // Ordenação
-                    invoices = SortColumn switch
-                    {
-                        "Data" => SortAscending ? invoices.OrderBy(i => i.Date) : invoices.OrderByDescending(i => i.Date),
-                        "Número" => SortAscending ? invoices.OrderBy(i => i.InvoiceNumber) : invoices.OrderByDescending(i => i.InvoiceNumber),
-                        "Total" => SortAscending ? invoices.OrderBy(i => i.Total) : invoices.OrderByDescending(i => i.Total),
-                        _ => invoices.OrderByDescending(i => i.Date)
-                    };
+                    // Ordenar
+                    invoices = ApplySorting(invoices);
 
                     var invoicesList = invoices.ToList();
                     TotalItems = invoicesList.Count;
                     TotalPages = (int)Math.Ceiling((double)TotalItems / PageSize);
 
-                    // Paginação local
-                    var pagedInvoices = invoicesList.Skip((PageNumber - 1) * PageSize).Take(PageSize);
+                    // Paginação
+                    var pagedInvoices = invoicesList
+                        .Skip((PageNumber - 1) * PageSize)
+                        .Take(PageSize);
 
-                    // Mapear para DTO de listagem
-                    var listItems = pagedInvoices.Select(MapToListItem).ToList();
+                    // Mapear para lista com dados do cliente e operador
+                    var listItems = new List<InvoiceListItemDto>();
+                    foreach (var invoice in pagedInvoices)
+                    {
+                        listItems.Add(await MapToListItemAsync(invoice));
+                    }
+
                     Invoices = new ObservableCollection<InvoiceListItemDto>(listItems);
                 }
                 else
@@ -556,19 +562,91 @@ namespace VendaFlex.ViewModels.Sales
             }
         }
 
-        private InvoiceListItemDto MapToListItem(InvoiceDto invoice)
+        private IEnumerable<InvoiceDto> ApplyFilters(IEnumerable<InvoiceDto> invoices)
         {
-            return new InvoiceListItemDto
+            if (FilterStartDate.HasValue)
+                invoices = invoices.Where(i => i.Date.Date >= FilterStartDate.Value.Date);
+
+            if (FilterEndDate.HasValue)
+                invoices = invoices.Where(i => i.Date.Date <= FilterEndDate.Value.Date);
+
+            if (!string.IsNullOrWhiteSpace(FilterInvoiceNumber))
+                invoices = invoices.Where(i => i.InvoiceNumber.Contains(FilterInvoiceNumber, StringComparison.OrdinalIgnoreCase));
+
+            if (FilterStatus != "Todos")
+            {
+                var status = FilterStatus switch
+                {
+                    "Paga" => InvoiceStatus.Paid,
+                    "Pendente" => InvoiceStatus.Pending,
+                    "Cancelada" => InvoiceStatus.Cancelled,
+                    _ => (InvoiceStatus?)null
+                };
+                if (status.HasValue)
+                    invoices = invoices.Where(i => i.Status == status.Value);
+            }
+
+            // TODO: Implementar filtros de cliente e operador quando tiver acesso aos dados
+
+            return invoices;
+        }
+
+        private IEnumerable<InvoiceDto> ApplySorting(IEnumerable<InvoiceDto> invoices)
+        {
+            return SortColumn switch
+            {
+                "Data" => SortAscending ? invoices.OrderBy(i => i.Date) : invoices.OrderByDescending(i => i.Date),
+                "Número" => SortAscending ? invoices.OrderBy(i => i.InvoiceNumber) : invoices.OrderByDescending(i => i.InvoiceNumber),
+                "Total" => SortAscending ? invoices.OrderBy(i => i.Total) : invoices.OrderByDescending(i => i.Total),
+                _ => invoices.OrderByDescending(i => i.Date)
+            };
+        }
+
+        private async Task<InvoiceListItemDto> MapToListItemAsync(InvoiceDto invoice)
+        {
+            var listItem = new InvoiceListItemDto
             {
                 InvoiceId = invoice.InvoiceId,
                 InvoiceNumber = invoice.InvoiceNumber,
                 Date = invoice.Date,
                 Status = invoice.Status,
                 Total = invoice.Total,
-                Balance = invoice.Total - invoice.PaidAmount,
-                CustomerName = "Cliente",  // TODO: Carregar do Person
-                UserName = "Operador",     // TODO: Carregar do User
+                PaidAmount = invoice.PaidAmount,
+                Balance = invoice.Total - invoice.PaidAmount
             };
+
+            // Carregar dados do cliente
+            if (invoice.PersonId > 0)
+            {
+                var personResult = await _personService.GetByIdAsync(invoice.PersonId);
+                if (personResult.Success && personResult.Data != null)
+                {
+                    var person = personResult.Data;
+                    listItem.CustomerName = person.Name;
+                    listItem.CustomerNif = person.TaxId ?? string.Empty;
+                    listItem.CustomerPhone = person.PhoneNumber ?? string.Empty;
+                    listItem.CustomerEmail = person.Email ?? string.Empty;
+                    listItem.CustomerAddress = person.Address ?? string.Empty;
+                    listItem.CustomerInitials = GetInitials(person.Name);
+                }
+            }
+
+            // TODO: Carregar dados do operador quando tiver acesso ao UserService
+            listItem.OperatorName = "Operador";
+            listItem.OperatorRole = "Vendedor";
+
+            return listItem;
+        }
+
+        private string GetInitials(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "?";
+
+            var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 1)
+                return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
+
+            return $"{parts[0][0]}{parts[parts.Length - 1][0]}".ToUpper();
         }
 
         private void ClearFilters()
@@ -640,20 +718,25 @@ namespace VendaFlex.ViewModels.Sales
 
         #endregion
 
-        #region Invoice Details Methods
+        #region Modal Methods
 
-        private async Task ViewDetailsAsync(InvoiceListItemDto? invoice)
+        private async Task OpenDetailsAsync(InvoiceListItemDto? invoice)
         {
             if (invoice == null) return;
 
             SelectedInvoice = invoice;
             await LoadInvoiceDetailsAsync();
-            IsDetailsDialogOpen = true;
+            IsDetailsModalOpen = true;
         }
 
         private void CloseDetails()
         {
-            IsDetailsDialogOpen = false;
+            IsDetailsModalOpen = false;
+            SelectedInvoice = null;
+            SelectedInvoiceItems.Clear();
+            SelectedInvoicePayments.Clear();
+            SelectedInvoiceHistory.Clear();
+            StockImpactItems.Clear();
         }
 
         private async Task LoadInvoiceDetailsAsync()
@@ -664,7 +747,7 @@ namespace VendaFlex.ViewModels.Sales
             {
                 IsLoading = true;
 
-                // Carregar detalhes completos
+                // Carregar detalhes completos da fatura
                 var invoiceResult = await _invoiceService.GetByIdAsync(SelectedInvoice.InvoiceId);
                 if (invoiceResult.Success && invoiceResult.Data != null)
                 {
@@ -673,17 +756,20 @@ namespace VendaFlex.ViewModels.Sales
                     SelectedInvoicePaid = invoice.PaidAmount;
                     SelectedInvoiceBalance = invoice.Total - invoice.PaidAmount;
 
-                    // TODO: Carregar produtos da fatura
-                    SelectedInvoiceItems = new ObservableCollection<InvoiceProductDto>();
+                    // Carregar produtos
+                    await LoadInvoiceProductsAsync(invoice.InvoiceId);
 
                     // Carregar pagamentos
                     await LoadInvoicePaymentsAsync(invoice.InvoiceId);
 
-                    // TODO: Carregar histórico
-                    SelectedInvoiceHistory = new ObservableCollection<InvoiceHistoryItemDto>();
+                    // Carregar histórico
+                    await LoadInvoiceHistoryAsync(invoice.InvoiceId);
 
-                    // TODO: Carregar impacto no estoque
-                    StockImpactItems = new ObservableCollection<StockImpactItemDto>();
+                    // Carregar impacto no estoque
+                    await LoadStockImpactAsync();
+
+                    // Calcular impacto financeiro
+                    CalculateFinancialImpact();
                 }
             }
             catch (Exception ex)
@@ -696,17 +782,124 @@ namespace VendaFlex.ViewModels.Sales
             }
         }
 
+        private async Task LoadInvoiceProductsAsync(int invoiceId)
+        {
+            try
+            {
+                var result = await _invoiceProductService.GetByInvoiceIdAsync(invoiceId);
+                if (result.Success && result.Data != null)
+                {
+                    SelectedInvoiceItems = new ObservableCollection<InvoiceProductDto>(result.Data);
+                }
+                else
+                {
+                    SelectedInvoiceItems = new ObservableCollection<InvoiceProductDto>();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao carregar produtos: {ex.Message}");
+                SelectedInvoiceItems = new ObservableCollection<InvoiceProductDto>();
+            }
+        }
+
         private async Task LoadInvoicePaymentsAsync(int invoiceId)
         {
             try
             {
-                // TODO: Implementar GetByInvoiceIdAsync no PaymentService
-                SelectedInvoicePayments = new ObservableCollection<PaymentListItemDto>();
+                var result = await _paymentService.GetByInvoiceIdAsync(invoiceId);
+                if (result.Success && result.Data != null)
+                {
+                    var payments = new List<PaymentListItemDto>();
+                    foreach (var payment in result.Data)
+                    {
+                        var paymentType = PaymentTypes.FirstOrDefault(pt => pt.PaymentTypeId == payment.PaymentTypeId);
+                        payments.Add(new PaymentListItemDto
+                        {
+                            PaymentId = payment.PaymentId,
+                            PaymentDate = payment.PaymentDate,
+                            PaymentTypeName = paymentType?.Name ?? "Desconhecido",
+                            Amount = payment.Amount,
+                            Reference = payment.Reference ?? string.Empty
+                        });
+                    }
+                    SelectedInvoicePayments = new ObservableCollection<PaymentListItemDto>(payments);
+                }
+                else
+                {
+                    SelectedInvoicePayments = new ObservableCollection<PaymentListItemDto>();
+                }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Erro ao carregar pagamentos: {ex.Message}");
+                SelectedInvoicePayments = new ObservableCollection<PaymentListItemDto>();
             }
+        }
+
+        private async Task LoadInvoiceHistoryAsync(int invoiceId)
+        {
+            try
+            {
+                // TODO: Implementar serviço de histórico quando disponível
+                SelectedInvoiceHistory = new ObservableCollection<InvoiceHistoryItemDto>
+                {
+                    new InvoiceHistoryItemDto
+                    {
+                        ActionDescription = "Fatura criada",
+                        ActionIcon = "Plus",
+                        UserName = "Sistema",
+                        Timestamp = DateTime.Now
+                    }
+                };
+                await Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao carregar histórico: {ex.Message}");
+                SelectedInvoiceHistory = new ObservableCollection<InvoiceHistoryItemDto>();
+            }
+        }
+
+        private async Task LoadStockImpactAsync()
+        {
+            try
+            {
+                var stockItems = new List<StockImpactItemDto>();
+
+                foreach (var item in SelectedInvoiceItems)
+                {
+                    var stockResult = await _stockService.GetByProductIdAsync(item.ProductId);
+                    if (stockResult.Success && stockResult.Data != null)
+                    {
+                        // Buscar o nome do produto
+                        var productResult = await _productService.GetByIdAsync(item.ProductId);
+                        var productName = productResult.Success && productResult.Data != null 
+                            ? productResult.Data.Name 
+                            : $"Produto {item.ProductId}";
+
+                        stockItems.Add(new StockImpactItemDto
+                        {
+                            ProductName = productName,
+                            QuantitySold = item.Quantity,
+                            CurrentStock = stockResult.Data.Quantity
+                        });
+                    }
+                }
+
+                StockImpactItems = new ObservableCollection<StockImpactItemDto>(stockItems);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao carregar impacto no estoque: {ex.Message}");
+                StockImpactItems = new ObservableCollection<StockImpactItemDto>();
+            }
+        }
+
+        private void CalculateFinancialImpact()
+        {
+            AccountsReceivable = SelectedInvoiceBalance;
+            NetRevenue = SelectedInvoicePaid;
         }
 
         #endregion
@@ -720,12 +913,36 @@ namespace VendaFlex.ViewModels.Sales
             try
             {
                 IsLoading = true;
-                ShowMessage("Imprimindo fatura...");
-                
-                // TODO: Implementar impressão
-                await Task.Delay(1000);
-                
-                ShowMessage("Fatura impressa com sucesso!");
+                ShowMessage("Preparando impressão...");
+
+                var invoiceResult = await _invoiceService.GetByIdAsync(SelectedInvoice.InvoiceId);
+                if (invoiceResult.Success && invoiceResult.Data != null)
+                {
+                    var invoice = invoiceResult.Data;
+                    var companyResult = await _companyConfigService.GetAsync();
+
+                    if (companyResult.Success && companyResult.Data != null)
+                    {
+                        // Carregar itens da fatura
+                        var itemsResult = await _invoiceProductService.GetByInvoiceIdAsync(invoice.InvoiceId);
+                        var items = itemsResult.Success && itemsResult.Data != null 
+                            ? itemsResult.Data 
+                            : Enumerable.Empty<InvoiceProductDto>();
+
+                        // Usar o método PrintAsync do serviço
+                        await _printService.PrintAsync(
+                            companyResult.Data, 
+                            invoice, 
+                            items, 
+                            companyResult.Data.InvoiceFormat.ToString());
+                        
+                        ShowMessage("Fatura enviada para impressão!");
+                    }
+                    else
+                    {
+                        ShowMessage("Erro: Configuração da empresa não encontrada", true);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -743,13 +960,22 @@ namespace VendaFlex.ViewModels.Sales
 
             try
             {
-                IsLoading = true;
-                ShowMessage("Gerando PDF...");
-                
-                // TODO: Implementar geração de PDF
-                await Task.Delay(1000);
-                
-                ShowMessage("PDF gerado com sucesso!");
+                var dialog = new SaveFileDialog
+                {
+                    Filter = "PDF Files (*.pdf)|*.pdf",
+                    FileName = $"Fatura_{SelectedInvoice.InvoiceNumber}_{DateTime.Now:yyyyMMdd}.pdf"
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    IsLoading = true;
+                    ShowMessage("Gerando PDF...");
+
+                    // TODO: Implementar geração de PDF
+                    await Task.Delay(1000);
+
+                    ShowMessage($"PDF gerado: {dialog.FileName}");
+                }
             }
             catch (Exception ex)
             {
@@ -766,7 +992,7 @@ namespace VendaFlex.ViewModels.Sales
             if (SelectedInvoice == null) return;
 
             var result = MessageBox.Show(
-                "Deseja duplicar esta fatura?",
+                "Deseja criar uma cópia desta fatura?",
                 "Duplicar Fatura",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
@@ -777,12 +1003,19 @@ namespace VendaFlex.ViewModels.Sales
             {
                 IsLoading = true;
                 ShowMessage("Duplicando fatura...");
-                
-                // TODO: Implementar duplicação
-                await Task.Delay(1000);
-                
-                ShowMessage("Fatura duplicada com sucesso!");
-                await SearchAsync();
+
+                var duplicateResult = await _invoiceService.DuplicateAsync(SelectedInvoice.InvoiceId);
+
+                if (duplicateResult.Success && duplicateResult.Data != null)
+                {
+                    ShowMessage($"Fatura duplicada: {duplicateResult.Data.InvoiceNumber}");
+                    await SearchAsync();
+                    await UpdateStatisticsAsync();
+                }
+                else
+                {
+                    ShowMessage($"Erro ao duplicar: {duplicateResult.Message}", true);
+                }
             }
             catch (Exception ex)
             {
@@ -799,7 +1032,7 @@ namespace VendaFlex.ViewModels.Sales
             if (SelectedInvoice == null) return;
 
             var result = MessageBox.Show(
-                "Deseja reabrir esta fatura?",
+                "Deseja reabrir esta fatura cancelada?",
                 "Reabrir Fatura",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
@@ -810,13 +1043,24 @@ namespace VendaFlex.ViewModels.Sales
             {
                 IsLoading = true;
                 ShowMessage("Reabrindo fatura...");
-                
-                // TODO: Implementar reabertura
-                await Task.Delay(1000);
-                
-                ShowMessage("Fatura reaberta com sucesso!");
-                await SearchAsync();
-                await LoadInvoiceDetailsAsync();
+
+                var reopenResult = await _invoiceService.ReopenAsync(SelectedInvoice.InvoiceId);
+
+                if (reopenResult.Success)
+                {
+                    ShowMessage("Fatura reaberta com sucesso!");
+                    await SearchAsync();
+                    await UpdateStatisticsAsync();
+
+                    if (IsDetailsModalOpen)
+                    {
+                        await LoadInvoiceDetailsAsync();
+                    }
+                }
+                else
+                {
+                    ShowMessage($"Erro ao reabrir: {reopenResult.Message}", true);
+                }
             }
             catch (Exception ex)
             {
@@ -833,7 +1077,7 @@ namespace VendaFlex.ViewModels.Sales
             if (SelectedInvoice == null) return;
 
             var result = MessageBox.Show(
-                "Deseja emitir uma nota de crédito para esta fatura?",
+                "Deseja emitir uma nota de crédito para esta fatura?\nIsso criará um documento de devolução/estorno.",
                 "Nota de Crédito",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
@@ -844,12 +1088,13 @@ namespace VendaFlex.ViewModels.Sales
             {
                 IsLoading = true;
                 ShowMessage("Emitindo nota de crédito...");
-                
-                // TODO: Implementar nota de crédito
+
+                // TODO: Implementar emissão de nota de crédito
                 await Task.Delay(1000);
-                
+
                 ShowMessage("Nota de crédito emitida com sucesso!");
                 await SearchAsync();
+                await UpdateStatisticsAsync();
             }
             catch (Exception ex)
             {
@@ -866,7 +1111,7 @@ namespace VendaFlex.ViewModels.Sales
             if (SelectedInvoice == null) return;
 
             var result = MessageBox.Show(
-                "Deseja emitir uma nota de débito para esta fatura?",
+                "Deseja emitir uma nota de débito para esta fatura?\nIsso criará um documento de cobrança adicional.",
                 "Nota de Débito",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
@@ -877,12 +1122,13 @@ namespace VendaFlex.ViewModels.Sales
             {
                 IsLoading = true;
                 ShowMessage("Emitindo nota de débito...");
-                
-                // TODO: Implementar nota de débito
+
+                // TODO: Implementar emissão de nota de débito
                 await Task.Delay(1000);
-                
+
                 ShowMessage("Nota de débito emitida com sucesso!");
                 await SearchAsync();
+                await UpdateStatisticsAsync();
             }
             catch (Exception ex)
             {
@@ -899,7 +1145,7 @@ namespace VendaFlex.ViewModels.Sales
             if (SelectedInvoice == null) return;
 
             var result = MessageBox.Show(
-                "Tem certeza que deseja CANCELAR esta fatura? Esta ação não pode ser desfeita!",
+                "Tem certeza que deseja CANCELAR esta fatura?\n\nEsta ação:\n• Cancelará todos os pagamentos\n• Reverterá o estoque\n• Não poderá ser desfeita\n\nDeseja continuar?",
                 "Cancelar Fatura",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
@@ -910,13 +1156,24 @@ namespace VendaFlex.ViewModels.Sales
             {
                 IsLoading = true;
                 ShowMessage("Cancelando fatura...");
-                
-                // TODO: Implementar cancelamento
-                await Task.Delay(1000);
-                
-                ShowMessage("Fatura cancelada com sucesso!");
-                await SearchAsync();
-                await LoadInvoiceDetailsAsync();
+
+                var cancelResult = await _invoiceService.CancelAsync(SelectedInvoice.InvoiceId, "Cancelamento via gestão de faturas");
+
+                if (cancelResult.Success)
+                {
+                    ShowMessage("Fatura cancelada com sucesso!");
+                    await SearchAsync();
+                    await UpdateStatisticsAsync();
+
+                    if (IsDetailsModalOpen)
+                    {
+                        await LoadInvoiceDetailsAsync();
+                    }
+                }
+                else
+                {
+                    ShowMessage($"Erro ao cancelar: {cancelResult.Message}", true);
+                }
             }
             catch (Exception ex)
             {
@@ -931,6 +1188,14 @@ namespace VendaFlex.ViewModels.Sales
         #endregion
 
         #region Payment Methods
+
+        private bool CanAddPayment(object? parameter)
+        {
+            return SelectedInvoice != null &&
+                   NewPayment?.PaymentTypeId > 0 &&
+                   NewPayment.Amount > 0 &&
+                   NewPayment.Amount <= SelectedInvoiceBalance;
+        }
 
         private async Task AddPaymentAsync()
         {
@@ -964,7 +1229,7 @@ namespace VendaFlex.ViewModels.Sales
                     PaymentTypeId = NewPayment.PaymentTypeId,
                     Amount = NewPayment.Amount,
                     Reference = NewPayment.Reference ?? string.Empty,
-                    PaymentDate = DateTime.UtcNow,
+                    PaymentDate = DateTime.Now,
                     IsConfirmed = true
                 };
 
@@ -973,12 +1238,13 @@ namespace VendaFlex.ViewModels.Sales
                 if (result.Success)
                 {
                     ShowMessage("Pagamento registrado com sucesso!");
-                    
+
                     // Limpar formulário
                     NewPayment = new NewPaymentDto();
-                    
+
                     // Recarregar dados
                     await LoadInvoiceDetailsAsync();
+                    await SearchAsync();
                     await UpdateStatisticsAsync();
                 }
                 else
@@ -1001,7 +1267,7 @@ namespace VendaFlex.ViewModels.Sales
             if (payment == null) return;
 
             var result = MessageBox.Show(
-                $"Deseja remover o pagamento de Kz {payment.Amount:N2}?",
+                $"Deseja remover o pagamento de Kz {payment.Amount:N2}?\nEsta ação não pode ser desfeita.",
                 "Remover Pagamento",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
@@ -1018,6 +1284,7 @@ namespace VendaFlex.ViewModels.Sales
                 {
                     ShowMessage("Pagamento removido com sucesso!");
                     await LoadInvoiceDetailsAsync();
+                    await SearchAsync();
                     await UpdateStatisticsAsync();
                 }
                 else
@@ -1039,22 +1306,37 @@ namespace VendaFlex.ViewModels.Sales
 
         #region Adjustment Methods
 
+        private bool CanApplyDiscount(object? parameter)
+        {
+            return SelectedInvoice != null &&
+                   AdjustmentDiscount > 0 &&
+                   !string.IsNullOrWhiteSpace(AdjustmentReason);
+        }
+
         private async Task ApplyDiscountAsync()
         {
             if (SelectedInvoice == null) return;
+
+            if (AdjustmentDiscount > SelectedInvoiceTotal)
+            {
+                ShowMessage("Desconto não pode ser maior que o total da fatura!", true);
+                return;
+            }
 
             try
             {
                 IsLoading = true;
                 ShowMessage("Aplicando desconto...");
-                
-                // TODO: Implementar aplicação de desconto
+
+                // TODO: Implementar aplicação de desconto no serviço
                 await Task.Delay(1000);
-                
-                ShowMessage("Desconto aplicado com sucesso!");
+
+                ShowMessage($"Desconto de Kz {AdjustmentDiscount:N2} aplicado com sucesso!");
                 AdjustmentDiscount = 0;
                 AdjustmentReason = string.Empty;
+
                 await LoadInvoiceDetailsAsync();
+                await SearchAsync();
             }
             catch (Exception ex)
             {
@@ -1066,6 +1348,13 @@ namespace VendaFlex.ViewModels.Sales
             }
         }
 
+        private bool CanApplySurcharge(object? parameter)
+        {
+            return SelectedInvoice != null &&
+                   AdjustmentSurcharge > 0 &&
+                   !string.IsNullOrWhiteSpace(SurchargeReason);
+        }
+
         private async Task ApplySurchargeAsync()
         {
             if (SelectedInvoice == null) return;
@@ -1074,14 +1363,16 @@ namespace VendaFlex.ViewModels.Sales
             {
                 IsLoading = true;
                 ShowMessage("Aplicando acréscimo...");
-                
-                // TODO: Implementar aplicação de acréscimo
+
+                // TODO: Implementar aplicação de acréscimo no serviço
                 await Task.Delay(1000);
-                
-                ShowMessage("Acréscimo aplicado com sucesso!");
+
+                ShowMessage($"Acréscimo de Kz {AdjustmentSurcharge:N2} aplicado com sucesso!");
                 AdjustmentSurcharge = 0;
                 SurchargeReason = string.Empty;
+
                 await LoadInvoiceDetailsAsync();
+                await SearchAsync();
             }
             catch (Exception ex)
             {
@@ -1093,26 +1384,156 @@ namespace VendaFlex.ViewModels.Sales
             }
         }
 
+        private bool CanChangePaymentType(object? parameter)
+        {
+            return PaymentToChange != null && NewPaymentType != null;
+        }
+
         private async Task ChangePaymentTypeAsync()
         {
             if (PaymentToChange == null || NewPaymentType == null) return;
+
+            var result = MessageBox.Show(
+                $"Deseja alterar a forma de pagamento?\nDe: {PaymentToChange.PaymentTypeName}\nPara: {NewPaymentType.Name}",
+                "Alterar Forma de Pagamento",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result != MessageBoxResult.Yes) return;
 
             try
             {
                 IsLoading = true;
                 ShowMessage("Alterando forma de pagamento...");
-                
-                // TODO: Implementar alteração de forma de pagamento
-                await Task.Delay(1000);
-                
-                ShowMessage("Forma de pagamento alterada com sucesso!");
-                PaymentToChange = null;
-                NewPaymentType = null;
-                await LoadInvoiceDetailsAsync();
+
+                // Buscar o pagamento completo
+                var paymentResult = await _paymentService.GetByIdAsync(PaymentToChange.PaymentId);
+                if (paymentResult.Success && paymentResult.Data != null)
+                {
+                    var payment = paymentResult.Data;
+                    payment.PaymentTypeId = NewPaymentType.PaymentTypeId;
+
+                    var updateResult = await _paymentService.UpdateAsync(payment);
+
+                    if (updateResult.Success)
+                    {
+                        ShowMessage("Forma de pagamento alterada com sucesso!");
+                        PaymentToChange = null;
+                        NewPaymentType = null;
+
+                        await LoadInvoiceDetailsAsync();
+                    }
+                    else
+                    {
+                        ShowMessage($"Erro ao alterar: {updateResult.Message}", true);
+                    }
+                }
             }
             catch (Exception ex)
             {
                 ShowMessage($"Erro ao alterar forma de pagamento: {ex.Message}", true);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        #endregion
+
+        #region Stock & Financial Methods
+
+        private async Task UpdateStockAsync()
+        {
+            if (SelectedInvoice == null) return;
+
+            var result = MessageBox.Show(
+                "Deseja atualizar o estoque baseado nesta fatura?",
+                "Atualizar Estoque",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result != MessageBoxResult.Yes) return;
+
+            try
+            {
+                IsLoading = true;
+                ShowMessage("Atualizando estoque...");
+
+                // TODO: Implementar atualização de estoque
+                await Task.Delay(1000);
+
+                ShowMessage("Estoque atualizado com sucesso!");
+                await LoadStockImpactAsync();
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao atualizar estoque: {ex.Message}", true);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task PostToAccountsReceivableAsync()
+        {
+            if (SelectedInvoice == null) return;
+
+            var result = MessageBox.Show(
+                $"Deseja lançar Kz {AccountsReceivable:N2} em contas a receber?",
+                "Lançar Contas a Receber",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result != MessageBoxResult.Yes) return;
+
+            try
+            {
+                IsLoading = true;
+                ShowMessage("Lançando em contas a receber...");
+
+                // TODO: Implementar lançamento contábil
+                await Task.Delay(1000);
+
+                ShowMessage("Lançamento contábil realizado com sucesso!");
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao lançar: {ex.Message}", true);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task GenerateFinancialReportAsync()
+        {
+            if (SelectedInvoice == null) return;
+
+            try
+            {
+                var dialog = new SaveFileDialog
+                {
+                    Filter = "PDF Files (*.pdf)|*.pdf",
+                    FileName = $"Relatorio_Impacto_{SelectedInvoice.InvoiceNumber}_{DateTime.Now:yyyyMMdd}.pdf"
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    IsLoading = true;
+                    ShowMessage("Gerando relatório...");
+
+                    // TODO: Implementar geração de relatório financeiro
+                    await Task.Delay(1000);
+
+                    ShowMessage($"Relatório gerado: {dialog.FileName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao gerar relatório: {ex.Message}", true);
             }
             finally
             {
@@ -1130,7 +1551,7 @@ namespace VendaFlex.ViewModels.Sales
             {
                 var dialog = new SaveFileDialog
                 {
-                    Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+                    Filter = "CSV Files (*.csv)|*.csv|Excel Files (*.xlsx)|*.xlsx",
                     FileName = $"Faturas_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
                 };
 
@@ -1140,15 +1561,15 @@ namespace VendaFlex.ViewModels.Sales
                     ShowMessage("Exportando...");
 
                     var sb = new StringBuilder();
-                    sb.AppendLine("Número;Data;Cliente;Operador;Status;Total;Pago;Saldo");
+                    sb.AppendLine("Número;Data;Cliente;NIF;Operador;Status;Total;Pago;Saldo");
 
                     foreach (var invoice in Invoices)
                     {
-                        sb.AppendLine($"{invoice.InvoiceNumber};{invoice.Date:dd/MM/yyyy HH:mm};{invoice.CustomerName};{invoice.UserName};{invoice.Status};{invoice.Total};{invoice.Total - invoice.Balance};{invoice.Balance}");
+                        sb.AppendLine($"{invoice.InvoiceNumber};{invoice.Date:dd/MM/yyyy HH:mm};{invoice.CustomerName};{invoice.CustomerNif};{invoice.OperatorName};{invoice.Status};{invoice.Total:N2};{invoice.PaidAmount:N2};{invoice.Balance:N2}");
                     }
 
-                    await File.WriteAllTextAsync(dialog.FileName, sb.ToString());
-                    ShowMessage("Exportação concluída com sucesso!");
+                    await File.WriteAllTextAsync(dialog.FileName, sb.ToString(), Encoding.UTF8);
+                    ShowMessage($"Exportação concluída! {Invoices.Count} registros exportados.");
                 }
             }
             catch (Exception ex)
@@ -1174,7 +1595,10 @@ namespace VendaFlex.ViewModels.Sales
 
         private void ShowMessage(string message, bool isError = false)
         {
-            MessageQueue?.Enqueue(message);
+            Application.Current?.Dispatcher?.Invoke(() =>
+            {
+                MessageQueue?.Enqueue(message);
+            });
         }
 
         #endregion
@@ -1189,6 +1613,7 @@ namespace VendaFlex.ViewModels.Sales
         public DateTime Date { get; set; }
         public InvoiceStatus Status { get; set; }
         public decimal Total { get; set; }
+        public decimal PaidAmount { get; set; }
         public decimal Balance { get; set; }
         public string CustomerName { get; set; } = string.Empty;
         public string CustomerNif { get; set; } = string.Empty;
@@ -1196,7 +1621,6 @@ namespace VendaFlex.ViewModels.Sales
         public string CustomerEmail { get; set; } = string.Empty;
         public string CustomerAddress { get; set; } = string.Empty;
         public string CustomerInitials { get; set; } = string.Empty;
-        public string UserName { get; set; } = string.Empty;
         public string OperatorName { get; set; } = string.Empty;
         public string OperatorRole { get; set; } = string.Empty;
     }

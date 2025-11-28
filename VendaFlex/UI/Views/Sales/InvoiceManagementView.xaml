@@ -5,8 +5,9 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
       xmlns:converters="clr-namespace:VendaFlex.Infrastructure.Converters"
+      xmlns:sys="clr-namespace:System;assembly=mscorlib"
       mc:Ignorable="d" 
-      d:DesignHeight="900" d:DesignWidth="1600"
+      d:DesignHeight="900" d:DesignWidth="1400"
       Background="{DynamicResource MaterialDesignPaper}">
 
     <Page.Resources>
@@ -15,12 +16,13 @@
         <converters:InvoiceStatusToIconConverter x:Key="StatusToIconConverter"/>
     </Page.Resources>
 
-    <materialDesign:DialogHost Identifier="InvoiceDialogHost" CloseOnClickAway="True">
+    <materialDesign:DialogHost Identifier="InvoiceDialogHost" CloseOnClickAway="False"
+                               DialogTheme="Inherit">
         <Grid>
             <!-- Loading Overlay -->
             <Grid Background="#AA000000" 
                   Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"
-                  Panel.ZIndex="1000">
+                              Panel.ZIndex="1000">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                     <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
                                  IsIndeterminate="True" Width="60" Height="60"/>
@@ -28,7 +30,7 @@
                                Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
                 </StackPanel>
             </Grid>
-
+    
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -199,716 +201,833 @@
                     </Expander>
                 </materialDesign:Card>
 
-                <!-- Main Content: List + Details -->
-                <Grid Grid.Row="2" Margin="16">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" MinWidth="500"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="1.2*" MinWidth="600"/>
-                    </Grid.ColumnDefinitions>
+                <!-- Main Content: Invoices List (Full Width) -->
+                <materialDesign:Card Grid.Row="2" Margin="16" Padding="0"
+                                     materialDesign:ElevationAssist.Elevation="Dp2">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                    <!-- Invoices List -->
-                    <materialDesign:Card Grid.Column="0" Padding="0"
-                                         materialDesign:ElevationAssist.Elevation="Dp2">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
+                        <!-- List Header -->
+                        <Border Grid.Row="0" Background="{DynamicResource MaterialDesignToolBarBackground}" Padding="16,12">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="FormatListBulleted" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Faturas" Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
+                                    <materialDesign:Chip Margin="12,0,0,0" Content="{Binding TotalItems}" 
+                                                         ToolTip="Total de registros"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <ComboBox SelectedItem="{Binding SortColumn}" Width="120"
+                                              Style="{StaticResource MaterialDesignComboBox}"
+                                              materialDesign:HintAssist.Hint="Ordenar por" Margin="0,0,8,0">
+                                        <ComboBoxItem Content="Data"/>
+                                        <ComboBoxItem Content="Número"/>
+                                        <ComboBoxItem Content="Total"/>
+                                    </ComboBox>
+                                    <ToggleButton Style="{StaticResource MaterialDesignFlatPrimaryToggleButton}"
+                                                  IsChecked="{Binding SortAscending}" ToolTip="Ordem Crescente/Decrescente">
+                                        <materialDesign:PackIcon Kind="SortAscending"/>
+                                        <materialDesign:ToggleButtonAssist.OnContent>
+                                            <materialDesign:PackIcon Kind="SortDescending"/>
+                                        </materialDesign:ToggleButtonAssist.OnContent>
+                                    </ToggleButton>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
 
-                            <!-- List Header -->
-                            <Border Grid.Row="0" Background="{DynamicResource MaterialDesignToolBarBackground}" Padding="16,12">
-                                <Grid>
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="FormatListBulleted" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                        <TextBlock Text="Faturas" Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
-                                        <materialDesign:Chip Margin="12,0,0,0" Content="{Binding TotalItems}" 
-                                                             ToolTip="Total de registros"/>
-                                    </StackPanel>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                        <ComboBox SelectedItem="{Binding SortColumn}" Width="120"
-                                                  Style="{StaticResource MaterialDesignComboBox}"
-                                                  materialDesign:HintAssist.Hint="Ordenar por" Margin="0,0,8,0">
-                                            <ComboBoxItem Content="Data"/>
-                                            <ComboBoxItem Content="Número"/>
-                                            <ComboBoxItem Content="Total"/>
-                                        </ComboBox>
-                                        <ToggleButton Style="{StaticResource MaterialDesignFlatPrimaryToggleButton}"
-                                                      IsChecked="{Binding SortAscending}" ToolTip="Ordem Crescente/Decrescente">
-                                            <materialDesign:PackIcon Kind="SortAscending"/>
-                                            <materialDesign:ToggleButtonAssist.OnContent>
-                                                <materialDesign:PackIcon Kind="SortDescending"/>
-                                            </materialDesign:ToggleButtonAssist.OnContent>
-                                        </ToggleButton>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-
-                            <!-- DataGrid -->
-                            <DataGrid Grid.Row="1" ItemsSource="{Binding Invoices}"
-                                      SelectedItem="{Binding SelectedInvoice}"
-                                      AutoGenerateColumns="False" CanUserAddRows="False"
-                                      IsReadOnly="True" SelectionMode="Single"
-                                      VerticalScrollBarVisibility="Auto"
-                                      materialDesign:DataGridAssist.CellPadding="12 8"
-                                      materialDesign:DataGridAssist.ColumnHeaderPadding="12 8">
-                                <DataGrid.Columns>
-                                    <DataGridTemplateColumn Header="Status" Width="60">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <materialDesign:PackIcon Kind="{Binding Status, Converter={StaticResource StatusToIconConverter}}"
-                                                                         Foreground="{Binding Status, Converter={StaticResource StatusToColorConverter}}"
-                                                                         Width="24" Height="24" HorizontalAlignment="Center"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="Nº Fatura" Binding="{Binding InvoiceNumber}" Width="110">
-                                        <DataGridTextColumn.ElementStyle>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="FontWeight" Value="SemiBold"/>
-                                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                            </Style>
-                                        </DataGridTextColumn.ElementStyle>
-                                    </DataGridTextColumn>
-                                    <DataGridTextColumn Header="Data" Binding="{Binding Date, StringFormat=dd/MM/yy HH:mm}" Width="120"/>
-                                    <DataGridTextColumn Header="Cliente" Binding="{Binding CustomerName}" Width="*"/>
-                                    <DataGridTextColumn Header="Operador" Binding="{Binding UserName}" Width="*"/>
-                                    <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat=Kz {0:N2}}" Width="110">
-                                        <DataGridTextColumn.ElementStyle>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="FontWeight" Value="Bold"/>
-                                                <Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidBrush}"/>
-                                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                            </Style>
-                                        </DataGridTextColumn.ElementStyle>
-                                    </DataGridTextColumn>
-                                    <DataGridTextColumn Header="Saldo" Binding="{Binding Balance, StringFormat=Kz {0:N2}}" Width="100">
-                                        <DataGridTextColumn.ElementStyle>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Foreground" Value="Orange"/>
-                                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                            </Style>
-                                        </DataGridTextColumn.ElementStyle>
-                                    </DataGridTextColumn>
-                                    <DataGridTemplateColumn Header="Ações" Width="80">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <Button Style="{StaticResource MaterialDesignIconButton}"
-                                                        Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                        CommandParameter="{Binding}" ToolTip="Ver Detalhes">
+                        <!-- DataGrid -->
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding Invoices}"
+                                  SelectedItem="{Binding SelectedInvoice}"
+                                  AutoGenerateColumns="False" CanUserAddRows="False"
+                                  IsReadOnly="True" SelectionMode="Single"
+                                  VerticalScrollBarVisibility="Auto"
+                                  materialDesign:DataGridAssist.CellPadding="12 8"
+                                  materialDesign:DataGridAssist.ColumnHeaderPadding="12 8">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="Status" Width="70">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <materialDesign:PackIcon Kind="{Binding Status, Converter={StaticResource StatusToIconConverter}}"
+                                                                     Foreground="{Binding Status, Converter={StaticResource StatusToColorConverter}}"
+                                                                     Width="24" Height="24" HorizontalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Nº Fatura" Binding="{Binding InvoiceNumber}" Width="120">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Data" Binding="{Binding Date, StringFormat=dd/MM/yyyy HH:mm}" Width="140"/>
+                                <DataGridTextColumn Header="Cliente" Binding="{Binding CustomerName}" Width="*"/>
+                                <DataGridTextColumn Header="NIF" Binding="{Binding CustomerNif}" Width="120"/>
+                                <DataGridTextColumn Header="Operador" Binding="{Binding OperatorName}" Width="140"/>
+                                <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat=Kz {0:N2}}" Width="130">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Pago" Binding="{Binding PaidAmount, StringFormat=Kz {0:N2}}" Width="120">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="Green"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Saldo" Binding="{Binding Balance, StringFormat=Kz {0:N2}}" Width="120">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="Orange"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <!-- Action Button Column -->
+                                <DataGridTemplateColumn Header="Ações" Width="100">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <Button Style="{StaticResource MaterialDesignIconForegroundButton}"
+                                                        Command="{Binding DataContext.OpenDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="Ver Detalhes" Width="32" Height="32">
                                                     <materialDesign:PackIcon Kind="Eye" Width="20" Height="20"/>
                                                 </Button>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                </DataGrid.Columns>
-                            </DataGrid>
-
-                            <!-- Pagination -->
-                            <Border Grid.Row="2" Background="{DynamicResource MaterialDesignToolBarBackground}" Padding="12,8">
-                                <Grid>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                        <TextBlock Text="Exibindo" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                        <ComboBox SelectedItem="{Binding PageSize}" Width="60"
-                                                  Style="{StaticResource MaterialDesignComboBox}" Margin="0,0,4,0">
-                                            <sys:Int32 xmlns:sys="clr-namespace:System;assembly=mscorlib">10</sys:Int32>
-                                            <sys:Int32 xmlns:sys="clr-namespace:System;assembly=mscorlib">20</sys:Int32>
-                                            <sys:Int32 xmlns:sys="clr-namespace:System;assembly=mscorlib">50</sys:Int32>
-                                            <sys:Int32 xmlns:sys="clr-namespace:System;assembly=mscorlib">100</sys:Int32>
-                                        </ComboBox>
-                                        <TextBlock Text="por página" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                        <Button Command="{Binding FirstPageCommand}"
-                                                Style="{StaticResource MaterialDesignIconButton}" ToolTip="Primeira">
-                                            <materialDesign:PackIcon Kind="PageFirst"/>
-                                        </Button>
-                                        <Button Command="{Binding PreviousPageCommand}"
-                                                Style="{StaticResource MaterialDesignIconButton}" ToolTip="Anterior">
-                                            <materialDesign:PackIcon Kind="ChevronLeft"/>
-                                        </Button>
-                                        <TextBlock VerticalAlignment="Center" Margin="8,0">
-                                            <Run Text="{Binding PageNumber}"/>
-                                            <Run Text="de"/>
-                                            <Run Text="{Binding TotalPages}"/>
-                                        </TextBlock>
-                                        <Button Command="{Binding NextPageCommand}"
-                                                Style="{StaticResource MaterialDesignIconButton}" ToolTip="Próxima">
-                                            <materialDesign:PackIcon Kind="ChevronRight"/>
-                                        </Button>
-                                        <Button Command="{Binding LastPageCommand}"
-                                                Style="{StaticResource MaterialDesignIconButton}" ToolTip="Última">
-                                            <materialDesign:PackIcon Kind="PageLast"/>
-                                        </Button>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </Grid>
-                    </materialDesign:Card>
-
-                    <!-- Splitter -->
-                    <GridSplitter Grid.Column="1" Width="8" HorizontalAlignment="Center" VerticalAlignment="Stretch"
-                                  Background="Transparent" Margin="4,0"/>
-
-                    <!-- Details Panel -->
-                    <materialDesign:Card Grid.Column="2" Padding="0"
-                                         materialDesign:ElevationAssist.Elevation="Dp2">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <!-- Details Header -->
-                            <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryLight" Padding="16,12">
-                                <Grid>
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="FileDocumentEdit" Width="24" Height="24" 
-                                                                 VerticalAlignment="Center" Margin="0,0,12,0"/>
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding SelectedInvoice.InvoiceNumber, StringFormat=Fatura {0}, FallbackValue=Selecione uma fatura}"
-                                                       Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
-                                            <TextBlock Text="{Binding SelectedInvoice.Date, StringFormat=dd/MM/yyyy às HH:mm}"
-                                                       Style="{StaticResource MaterialDesignCaptionTextBlock}" Opacity="0.8"/>
-                                        </StackPanel>
-                                    </StackPanel>
-
-                                    <!-- Quick Actions -->
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                        <Button Style="{StaticResource MaterialDesignIconButton}" 
-                                                Command="{Binding PrintInvoiceCommand}" ToolTip="Imprimir">
-                                            <materialDesign:PackIcon Kind="Printer"/>
-                                        </Button>
-                                        <Button Style="{StaticResource MaterialDesignIconButton}"
-                                                Command="{Binding GeneratePdfCommand}" ToolTip="Gerar PDF">
-                                            <materialDesign:PackIcon Kind="FilePdfBox"/>
-                                        </Button>
-                                        <materialDesign:PopupBox PlacementMode="BottomAndAlignRightEdges" ToolTip="Mais ações">
-                                            <StackPanel Width="200">
-                                                <Button Command="{Binding DuplicateInvoiceCommand}"
-                                                        Style="{StaticResource MaterialDesignFlatButton}"
-                                                        HorizontalContentAlignment="Left">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <materialDesign:PackIcon Kind="ContentCopy" Margin="0,0,12,0"/>
-                                                        <TextBlock Text="Duplicar Fatura"/>
+                                                <materialDesign:PopupBox PlacementMode="BottomAndAlignRightEdges" 
+                                                                         ToolTip="Mais ações"
+                                                                         StaysOpen="False">
+                                                    <StackPanel Width="180">
+                                                        <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                                                Command="{Binding DataContext.PrintInvoiceCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                                CommandParameter="{Binding}"
+                                                                HorizontalContentAlignment="Left">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <materialDesign:PackIcon Kind="Printer" Margin="0,0,12,0"/>
+                                                                <TextBlock Text="Imprimir"/>
+                                                            </StackPanel>
+                                                        </Button>
+                                                        <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                                                Command="{Binding DataContext.GeneratePdfCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                                CommandParameter="{Binding}"
+                                                                HorizontalContentAlignment="Left">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <materialDesign:PackIcon Kind="FilePdfBox" Margin="0,0,12,0"/>
+                                                                <TextBlock Text="Gerar PDF"/>
+                                                            </StackPanel>
+                                                        </Button>
+                                                        <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                                                Command="{Binding DataContext.DuplicateInvoiceCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                                CommandParameter="{Binding}"
+                                                                HorizontalContentAlignment="Left">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <materialDesign:PackIcon Kind="ContentCopy" Margin="0,0,12,0"/>
+                                                                <TextBlock Text="Duplicar"/>
+                                                            </StackPanel>
+                                                        </Button>
+                                                        <Separator/>
+                                                        <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                                                Command="{Binding DataContext.CancelInvoiceCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                                CommandParameter="{Binding}"
+                                                                HorizontalContentAlignment="Left" Foreground="Red">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <materialDesign:PackIcon Kind="Cancel" Margin="0,0,12,0"/>
+                                                                <TextBlock Text="Cancelar"/>
+                                                            </StackPanel>
+                                                        </Button>
                                                     </StackPanel>
-                                                </Button>
-                                                <Button Command="{Binding ReopenInvoiceCommand}"
-                                                        Style="{StaticResource MaterialDesignFlatButton}"
-                                                        HorizontalContentAlignment="Left">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <materialDesign:PackIcon Kind="FolderOpen" Margin="0,0,12,0"/>
-                                                        <TextBlock Text="Reabrir Fatura"/>
-                                                    </StackPanel>
-                                                </Button>
-                                                <Button Command="{Binding IssueCreditNoteCommand}"
-                                                        Style="{StaticResource MaterialDesignFlatButton}"
-                                                        HorizontalContentAlignment="Left">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <materialDesign:PackIcon Kind="CreditCardMinus" Margin="0,0,12,0"/>
-                                                        <TextBlock Text="Nota de Crédito"/>
-                                                    </StackPanel>
-                                                </Button>
-                                                <Button Command="{Binding IssueDebitNoteCommand}"
-                                                        Style="{StaticResource MaterialDesignFlatButton}"
-                                                        HorizontalContentAlignment="Left">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <materialDesign:PackIcon Kind="CreditCardPlus" Margin="0,0,12,0"/>
-                                                        <TextBlock Text="Nota de Débito"/>
-                                                    </StackPanel>
-                                                </Button>
-                                                <Separator/>
-                                                <Button Command="{Binding CancelInvoiceCommand}"
-                                                        Style="{StaticResource MaterialDesignFlatButton}"
-                                                        HorizontalContentAlignment="Left" Foreground="Red">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <materialDesign:PackIcon Kind="Cancel" Margin="0,0,12,0"/>
-                                                        <TextBlock Text="Cancelar Fatura"/>
-                                                    </StackPanel>
-                                                </Button>
+                                                </materialDesign:PopupBox>
                                             </StackPanel>
-                                        </materialDesign:PopupBox>
-                                    </StackPanel>
-                                </Grid>
-                            </materialDesign:ColorZone>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
 
-                            <!-- Summary Cards -->
-                            <Grid Grid.Row="1" Margin="16,16,16,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <materialDesign:Card Grid.Column="0" Padding="12" Margin="0,0,8,0"
-                                                     Background="{DynamicResource PrimaryHueLightBrush}">
-                                    <StackPanel>
-                                        <TextBlock Text="TOTAL" Style="{StaticResource MaterialDesignOverlineTextBlock}"/>
-                                        <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}">
-                                            <Run Text="Kz"/>
-                                            <Run Text="{Binding SelectedInvoiceTotal, StringFormat={}{0:N2}}"/>
-                                        </TextBlock>
-                                    </StackPanel>
-                                </materialDesign:Card>
-                                <materialDesign:Card Grid.Column="1" Padding="12" Margin="4,0"
-                                                     Background="#E8F5E9">
-                                    <StackPanel>
-                                        <TextBlock Text="PAGO" Style="{StaticResource MaterialDesignOverlineTextBlock}" Foreground="Green"/>
-                                        <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Foreground="Green">
-                                            <Run Text="Kz"/>
-                                            <Run Text="{Binding SelectedInvoicePaid, StringFormat={}{0:N2}}"/>
-                                        </TextBlock>
-                                    </StackPanel>
-                                </materialDesign:Card>
-                                <materialDesign:Card Grid.Column="2" Padding="12" Margin="4,0"
-                                                     Background="#FFF3E0">
-                                    <StackPanel>
-                                        <TextBlock Text="SALDO" Style="{StaticResource MaterialDesignOverlineTextBlock}" Foreground="Orange"/>
-                                        <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Foreground="Orange">
-                                            <Run Text="Kz"/>
-                                            <Run Text="{Binding SelectedInvoiceBalance, StringFormat={}{0:N2}}"/>
-                                        </TextBlock>
-                                    </StackPanel>
-                                </materialDesign:Card>
-                                <materialDesign:Card Grid.Column="3" Padding="12" Margin="8,0,0,0"
-                                                     Background="#E3F2FD">
-                                    <StackPanel>
-                                        <TextBlock Text="ITENS" Style="{StaticResource MaterialDesignOverlineTextBlock}" Foreground="Blue"/>
-                                        <TextBlock Text="{Binding SelectedInvoiceItems.Count}" 
-                                                   Style="{StaticResource MaterialDesignHeadline6TextBlock}" Foreground="Blue"/>
-                                    </StackPanel>
-                                </materialDesign:Card>
+                        <!-- Pagination -->
+                        <Border Grid.Row="2" Background="{DynamicResource MaterialDesignToolBarBackground}" Padding="12,8">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                    <TextBlock Text="Exibindo" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <ComboBox SelectedItem="{Binding PageSize}" Width="60"
+                                              Style="{StaticResource MaterialDesignComboBox}" Margin="0,0,4,0">
+                                        <sys:Int32>10</sys:Int32>
+                                        <sys:Int32>20</sys:Int32>
+                                        <sys:Int32>50</sys:Int32>
+                                        <sys:Int32>100</sys:Int32>
+                                    </ComboBox>
+                                    <TextBlock Text="por página" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Command="{Binding FirstPageCommand}"
+                                            Style="{StaticResource MaterialDesignIconButton}" ToolTip="Primeira">
+                                        <materialDesign:PackIcon Kind="PageFirst"/>
+                                    </Button>
+                                    <Button Command="{Binding PreviousPageCommand}"
+                                            Style="{StaticResource MaterialDesignIconButton}" ToolTip="Anterior">
+                                        <materialDesign:PackIcon Kind="ChevronLeft"/>
+                                    </Button>
+                                    <TextBlock VerticalAlignment="Center" Margin="8,0">
+                                        <Run Text="{Binding PageNumber}"/>
+                                        <Run Text="de"/>
+                                        <Run Text="{Binding TotalPages}"/>
+                                    </TextBlock>
+                                    <Button Command="{Binding NextPageCommand}"
+                                            Style="{StaticResource MaterialDesignIconButton}" ToolTip="Próxima">
+                                        <materialDesign:PackIcon Kind="ChevronRight"/>
+                                    </Button>
+                                    <Button Command="{Binding LastPageCommand}"
+                                            Style="{StaticResource MaterialDesignIconButton}" ToolTip="Última">
+                                        <materialDesign:PackIcon Kind="PageLast"/>
+                                    </Button>
+                                </StackPanel>
                             </Grid>
+                        </Border>
+                    </Grid>
+                </materialDesign:Card>
 
-                            <!-- Tabs -->
-                            <TabControl Grid.Row="2" Margin="0" Style="{StaticResource MaterialDesignFilledTabControl}">
-                                <!-- Tab: Itens -->
-                                <TabItem>
-                                    <TabItem.Header>
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="CreditCard" Margin="0,0,8,0"/>
-                                            <TextBlock Text="Pagamentos"/>
-                                        </StackPanel>
-                                    </TabItem.Header>
+                <!-- Snackbar for Messages -->
+                <materialDesign:Snackbar Grid.Row="2" MessageQueue="{Binding MessageQueue}" 
+                                         HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,80"/>
+            </Grid>
+
+            <!-- ==================== INVOICE DETAILS MODAL ==================== -->
+            <Grid Background="#AA000000" 
+                  Visibility="{Binding IsDetailsModalOpen, Converter={StaticResource BooleanToVisibilityConverter}}"
+                  Panel.ZIndex="999">
+                <materialDesign:Card Width="1100" Height="550"
+                                     VerticalAlignment="Center"
+                                     Padding="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Modal Header -->
+                        <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryMid" Padding="20,16">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="FileDocumentEdit" Width="28" Height="28" 
+                                                             VerticalAlignment="Center" Margin="0,0,14,0"/>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}">
+                                            <Run Text="Fatura"/>
+                                            <Run Text="{Binding SelectedInvoice.InvoiceNumber}"/>
+                                        </TextBlock>
+                                        <TextBlock Style="{StaticResource MaterialDesignCaptionTextBlock}" Opacity="0.8">
+                                            <Run Text="{Binding SelectedInvoice.Date, StringFormat=dd/MM/yyyy às HH:mm}"/>
+                                            <Run Text=" • "/>
+                                            <Run Text="{Binding SelectedInvoice.CustomerName}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Close Button -->
+                                <Button Style="{StaticResource MaterialDesignIconButton}" 
+                                        HorizontalAlignment="Right"
+                                        Command="{Binding CloseDetailsCommand}">
+                                    <materialDesign:PackIcon Kind="Close" Width="24" Height="24"/>
+                                </Button>
+                            </Grid>
+                        </materialDesign:ColorZone>
+
+                        <!-- Summary Cards -->
+                        <Grid Grid.Row="1" Margin="20,16,20,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <materialDesign:Card Grid.Column="0" Padding="14" Margin="0,0,8,0"
+                                                 Background="{DynamicResource PrimaryHueLightBrush}">
+                                <StackPanel>
+                                    <TextBlock Text="TOTAL" Style="{StaticResource MaterialDesignOverlineTextBlock}"/>
+                                    <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}">
+                                        <Run Text="Kz"/>
+                                        <Run Text="{Binding SelectedInvoiceTotal, StringFormat={}{0:N2}}"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </materialDesign:Card>
+                            <materialDesign:Card Grid.Column="1" Padding="14" Margin="4,0"
+                                                 Background="#E8F5E9">
+                                <StackPanel>
+                                    <TextBlock Text="PAGO" Style="{StaticResource MaterialDesignOverlineTextBlock}" Foreground="Green"/>
+                                    <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Foreground="Green">
+                                        <Run Text="Kz"/>
+                                        <Run Text="{Binding SelectedInvoicePaid, StringFormat={}{0:N2}}"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </materialDesign:Card>
+                            <materialDesign:Card Grid.Column="2" Padding="14" Margin="4,0"
+                                                 Background="#FFF3E0">
+                                <StackPanel>
+                                    <TextBlock Text="SALDO" Style="{StaticResource MaterialDesignOverlineTextBlock}" Foreground="Orange"/>
+                                    <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Foreground="Orange">
+                                        <Run Text="Kz"/>
+                                        <Run Text="{Binding SelectedInvoiceBalance, StringFormat={}{0:N2}}"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </materialDesign:Card>
+                            <materialDesign:Card Grid.Column="3" Padding="14" Margin="8,0,0,0"
+                                                 Background="#E3F2FD">
+                                <StackPanel>
+                                    <TextBlock Text="ITENS" Style="{StaticResource MaterialDesignOverlineTextBlock}" Foreground="Blue"/>
+                                    <TextBlock Text="{Binding SelectedInvoiceItems.Count}" 
+                                               Style="{StaticResource MaterialDesignHeadline6TextBlock}" Foreground="Blue"/>
+                                </StackPanel>
+                            </materialDesign:Card>
+                        </Grid>
+
+                        <!-- Tabs Content -->
+                        <TabControl Grid.Row="2" Margin="20,8,20,0" 
+                                    Style="{StaticResource MaterialDesignFilledTabControl}">
+                            
+                            <!-- Tab: Itens -->
+                            <TabItem>
+                                <TabItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Cart" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Itens"/>
+                                    </StackPanel>
+                                </TabItem.Header>
+                                <DataGrid ItemsSource="{Binding SelectedInvoiceItems}"
+                                          AutoGenerateColumns="False" CanUserAddRows="False"
+                                          IsReadOnly="True" SelectionMode="Single"
+                                          materialDesign:DataGridAssist.CellPadding="12 8"
+                                          MaxHeight="350">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Produto" Binding="{Binding ProductName}" Width="*"/>
+                                        <DataGridTextColumn Header="Qtd" Binding="{Binding Quantity}" Width="70"/>
+                                        <DataGridTextColumn Header="Preço Unit." Binding="{Binding UnitPrice, StringFormat=Kz {0:N2}}" Width="120"/>
+                                        <DataGridTextColumn Header="Desconto" Binding="{Binding Discount, StringFormat=Kz {0:N2}}" Width="100"/>
+                                        <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat=Kz {0:N2}}" Width="120">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="FontWeight" Value="Bold"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </TabItem>
+
+                            <!-- Tab: Pagamentos -->
+                            <TabItem>
+                                <TabItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="CreditCard" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Pagamentos"/>
+                                    </StackPanel>
+                                </TabItem.Header>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <DataGrid Grid.Row="0" ItemsSource="{Binding SelectedInvoicePayments}"
+                                              SelectedItem="{Binding SelectedPayment}"
+                                              AutoGenerateColumns="False" CanUserAddRows="False"
+                                              IsReadOnly="True" SelectionMode="Single"
+                                              materialDesign:DataGridAssist.CellPadding="12 8"
+                                              MaxHeight="250">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Data" Binding="{Binding PaymentDate, StringFormat=dd/MM/yy HH:mm}" Width="130"/>
+                                            <DataGridTextColumn Header="Tipo" Binding="{Binding PaymentTypeName}" Width="150"/>
+                                            <DataGridTextColumn Header="Valor" Binding="{Binding Amount, StringFormat=Kz {0:N2}}" Width="130">
+                                                <DataGridTextColumn.ElementStyle>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="FontWeight" Value="Bold"/>
+                                                        <Setter Property="Foreground" Value="Green"/>
+                                                    </Style>
+                                                </DataGridTextColumn.ElementStyle>
+                                            </DataGridTextColumn>
+                                            <DataGridTextColumn Header="Referência" Binding="{Binding Reference}" Width="*"/>
+                                            <DataGridTemplateColumn Header="" Width="50">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Button Style="{StaticResource MaterialDesignIconButton}"
+                                                                Command="{Binding DataContext.RemovePaymentCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                                CommandParameter="{Binding}" ToolTip="Remover" Width="28" Height="28">
+                                                            <materialDesign:PackIcon Kind="Delete" Foreground="Red" Width="16" Height="16"/>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+
+                                    <!-- New Payment Form -->
+                                    <materialDesign:Card Grid.Row="1" Padding="16" Margin="0,12,0,0"
+                                                         materialDesign:ElevationAssist.Elevation="Dp1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <ComboBox Grid.Column="0" ItemsSource="{Binding PaymentTypes}"
+                                                      SelectedValue="{Binding NewPayment.PaymentTypeId}"
+                                                      SelectedValuePath="PaymentTypeId" DisplayMemberPath="Name"
+                                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                                      materialDesign:HintAssist.Hint="Forma de Pagamento" Margin="0,0,8,0"/>
+                                            <TextBox Grid.Column="1" Text="{Binding NewPayment.Amount, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                     materialDesign:HintAssist.Hint="Valor (Kz)" Margin="0,0,8,0"/>
+                                            <TextBox Grid.Column="2" Text="{Binding NewPayment.Reference}"
+                                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                     materialDesign:HintAssist.Hint="Referência" Margin="0,0,8,0"/>
+                                            <Button Grid.Column="3" Command="{Binding AddPaymentCommand}"
+                                                    Style="{StaticResource MaterialDesignRaisedButton}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="CashPlus" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="Registrar"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
+                                    </materialDesign:Card>
+                                </Grid>
+                            </TabItem>
+
+                            <!-- Tab: Cliente -->
+                            <TabItem>
+                                <TabItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Account" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Cliente"/>
+                                    </StackPanel>
+                                </TabItem.Header>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
                                     <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="*"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="16"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
 
-                                        <DataGrid Grid.Row="0" ItemsSource="{Binding SelectedInvoicePayments}"
-                                                  SelectedItem="{Binding SelectedPayment}"
-                                                  AutoGenerateColumns="False" CanUserAddRows="False"
-                                                  IsReadOnly="True" SelectionMode="Single"
-                                                  materialDesign:DataGridAssist.CellPadding="12 8">
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header="Data" Binding="{Binding PaymentDate, StringFormat=dd/MM/yy HH:mm}" Width="130"/>
-                                                <DataGridTextColumn Header="Tipo" Binding="{Binding PaymentTypeName}" Width="140"/>
-                                                <DataGridTextColumn Header="Valor" Binding="{Binding Amount, StringFormat=Kz {0:N2}}" Width="120">
-                                                    <DataGridTextColumn.ElementStyle>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="FontWeight" Value="Bold"/>
-                                                            <Setter Property="Foreground" Value="Green"/>
-                                                        </Style>
-                                                    </DataGridTextColumn.ElementStyle>
-                                                </DataGridTextColumn>
-                                                <DataGridTextColumn Header="Referência" Binding="{Binding Reference}" Width="*"/>
-                                                <DataGridTemplateColumn Header="" Width="50">
-                                                    <DataGridTemplateColumn.CellTemplate>
-                                                        <DataTemplate>
-                                                            <Button Style="{StaticResource MaterialDesignIconButton}"
-                                                                    Command="{Binding DataContext.RemovePaymentCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                                    CommandParameter="{Binding}" ToolTip="Remover" Width="30" Height="30">
-                                                                <materialDesign:PackIcon Kind="Delete" Foreground="Red" Width="16" Height="16"/>
-                                                            </Button>
-                                                        </DataTemplate>
-                                                    </DataGridTemplateColumn.CellTemplate>
-                                                </DataGridTemplateColumn>
-                                            </DataGrid.Columns>
-                                        </DataGrid>
-
-                                        <!-- New Payment Form -->
-                                        <materialDesign:Card Grid.Row="1" Padding="16" Margin="8"
-                                                             materialDesign:ElevationAssist.Elevation="Dp1">
+                                        <!-- Cliente -->
+                                        <materialDesign:Card Grid.Column="0" Padding="20">
                                             <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="*"/>
+                                                </Grid.RowDefinitions>
+
+                                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+                                                    <Border Width="60" Height="60" CornerRadius="30"
+                                                            Background="{DynamicResource PrimaryHueMidBrush}" Margin="0,0,16,0">
+                                                        <TextBlock Text="{Binding SelectedInvoice.CustomerInitials}" 
+                                                                   FontSize="22" FontWeight="Bold" Foreground="White"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding SelectedInvoice.CustomerName}" 
+                                                                   Style="{StaticResource MaterialDesignHeadline6TextBlock}"/>
+                                                        <TextBlock Text="Cliente" Style="{StaticResource MaterialDesignCaptionTextBlock}" Opacity="0.6"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Row="1">
+                                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                        <materialDesign:PackIcon Kind="CardAccountDetails" Width="18" Height="18"
+                                                                                 VerticalAlignment="Center" Margin="0,0,12,0" Opacity="0.6"/>
+                                                        <TextBlock Text="{Binding SelectedInvoice.CustomerNif, StringFormat=NIF: {0}}"
+                                                                   Style="{StaticResource MaterialDesignBody2TextBlock}"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                        <materialDesign:PackIcon Kind="Phone" Width="18" Height="18"
+                                                                                 VerticalAlignment="Center" Margin="0,0,12,0" Opacity="0.6"/>
+                                                        <TextBlock Text="{Binding SelectedInvoice.CustomerPhone}"
+                                                                   Style="{StaticResource MaterialDesignBody2TextBlock}"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                        <materialDesign:PackIcon Kind="Email" Width="18" Height="18"
+                                                                                 VerticalAlignment="Center" Margin="0,0,12,0" Opacity="0.6"/>
+                                                        <TextBlock Text="{Binding SelectedInvoice.CustomerEmail}"
+                                                                   Style="{StaticResource MaterialDesignBody2TextBlock}"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                        <materialDesign:PackIcon Kind="MapMarker" Width="18" Height="18"
+                                                                                 VerticalAlignment="Top" Margin="0,0,12,0" Opacity="0.6"/>
+                                                        <TextBlock Text="{Binding SelectedInvoice.CustomerAddress}"
+                                                                   Style="{StaticResource MaterialDesignBody2TextBlock}" TextWrapping="Wrap"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Grid>
+                                        </materialDesign:Card>
+
+                                        <!-- Operador -->
+                                        <materialDesign:Card Grid.Column="2" Padding="20">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="*"/>
+                                                </Grid.RowDefinitions>
+
+                                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+                                                    <Border Width="60" Height="60" CornerRadius="30"
+                                                            Background="{DynamicResource SecondaryHueMidBrush}" Margin="0,0,16,0">
+                                                        <materialDesign:PackIcon Kind="AccountTie" Width="30" Height="30"
+                                                                                 Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding SelectedInvoice.OperatorName}" 
+                                                                   Style="{StaticResource MaterialDesignHeadline6TextBlock}"/>
+                                                        <TextBlock Text="{Binding SelectedInvoice.OperatorRole}"
+                                                                   Style="{StaticResource MaterialDesignCaptionTextBlock}" Opacity="0.6"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Row="1">
+                                                    <TextBlock Text="INFORMAÇÕES DA VENDA" 
+                                                               Style="{StaticResource MaterialDesignOverlineTextBlock}" Margin="0,0,0,12"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                        <materialDesign:PackIcon Kind="Calendar" Width="18" Height="18"
+                                                                                 VerticalAlignment="Center" Margin="0,0,12,0" Opacity="0.6"/>
+                                                        <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}">
+                                                            <Run Text="Data:"/>
+                                                            <Run Text="{Binding SelectedInvoice.Date, StringFormat=dd/MM/yyyy HH:mm}"/>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                        <materialDesign:PackIcon Kind="TagOutline" Width="18" Height="18"
+                                                                                 VerticalAlignment="Center" Margin="0,0,12,0" Opacity="0.6"/>
+                                                        <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}">
+                                                            <Run Text="Status:"/>
+                                                            <Run Text="{Binding SelectedInvoice.Status}"/>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Grid>
+                                        </materialDesign:Card>
+                                    </Grid>
+                                </ScrollViewer>
+                            </TabItem>
+
+                            <!-- Tab: Histórico -->
+                            <TabItem>
+                                <TabItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="History" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Histórico"/>
+                                    </StackPanel>
+                                </TabItem.Header>
+                                <ListView ItemsSource="{Binding SelectedInvoiceHistory}" Padding="8" MaxHeight="350">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="8">
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
 
-                                                <ComboBox Grid.Column="0" ItemsSource="{Binding PaymentTypes}"
-                                                          SelectedValue="{Binding NewPayment.PaymentTypeId}"
-                                                          SelectedValuePath="PaymentTypeId" DisplayMemberPath="Name"
-                                                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                                          materialDesign:HintAssist.Hint="Forma de Pagamento" Margin="0,0,8,0"/>
-                                                <TextBox Grid.Column="1" Text="{Binding NewPayment.Amount, UpdateSourceTrigger=PropertyChanged}"
-                                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                                         materialDesign:HintAssist.Hint="Valor (Kz)" Margin="0,0,8,0"/>
-                                                <TextBox Grid.Column="2" Text="{Binding NewPayment.Reference}"
-                                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                                         materialDesign:HintAssist.Hint="Referência" Margin="0,0,8,0"/>
-                                                <Button Grid.Column="3" Command="{Binding AddPaymentCommand}"
-                                                        Style="{StaticResource MaterialDesignRaisedButton}">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <materialDesign:PackIcon Kind="CashPlus" Margin="0,0,8,0"/>
-                                                        <TextBlock Text="Registrar"/>
-                                                    </StackPanel>
-                                                </Button>
+                                                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20"
+                                                        Background="{DynamicResource MaterialDesignToolBarBackground}" Margin="0,0,16,0">
+                                                    <materialDesign:PackIcon Kind="{Binding ActionIcon}" Width="20" Height="20"
+                                                                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding ActionDescription}" 
+                                                               Style="{StaticResource MaterialDesignBody1TextBlock}"/>
+                                                    <TextBlock Style="{StaticResource MaterialDesignCaptionTextBlock}" Opacity="0.7">
+                                                        <Run Text="Por"/>
+                                                        <Run Text="{Binding UserName}" FontWeight="SemiBold"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="{Binding Timestamp, StringFormat=dd/MM/yy HH:mm}"
+                                                           Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                                           VerticalAlignment="Center" Opacity="0.6"/>
                                             </Grid>
-                                        </materialDesign:Card>
-                                    </Grid>
-                                </TabItem>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </TabItem>
 
-                                <!-- Tab: Cliente -->
-                                <TabItem>
-                                    <TabItem.Header>
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="Account" Margin="0,0,8,0"/>
-                                            <TextBlock Text="Cliente"/>
-                                        </StackPanel>
-                                    </TabItem.Header>
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
-                                        <Grid>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                            </Grid.RowDefinitions>
-
-                                            <materialDesign:Card Grid.Row="0" Padding="20" Margin="0,0,0,16">
+                            <!-- Tab: Ajustes -->
+                            <TabItem>
+                                <TabItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="TuneVariant" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Ajustes"/>
+                                    </StackPanel>
+                                </TabItem.Header>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
+                                    <StackPanel>
+                                        <!-- Desconto -->
+                                        <materialDesign:Card Padding="16" Margin="0,0,0,12">
+                                            <StackPanel>
+                                                <TextBlock Text="APLICAR DESCONTO PÓS-VENDA" 
+                                                           Style="{StaticResource MaterialDesignOverlineTextBlock}" Margin="0,0,0,12"/>
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
 
-                                                    <Border Grid.Column="0" Width="80" Height="80" CornerRadius="40"
-                                                            Background="{DynamicResource PrimaryHueMidBrush}" Margin="0,0,20,0">
-                                                        <TextBlock Text="{Binding SelectedInvoice.CustomerInitials}" 
-                                                                   FontSize="28" FontWeight="Bold" Foreground="White"
-                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding SelectedInvoice.CustomerName}" 
-                                                                   Style="{StaticResource MaterialDesignHeadline6TextBlock}"/>
-                                                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                                            <materialDesign:PackIcon Kind="CardAccountDetails" 
-                                                                                     VerticalAlignment="Center" Margin="0,0,8,0" Opacity="0.6"/>
-                                                            <TextBlock Text="{Binding SelectedInvoice.CustomerNif, StringFormat=NIF: {0}}"
-                                                                       Style="{StaticResource MaterialDesignBody2TextBlock}"/>
+                                                    <TextBox Grid.Column="0" Text="{Binding AdjustmentDiscount}"
+                                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                             materialDesign:HintAssist.Hint="Valor (Kz)" Margin="0,0,8,0"/>
+                                                    <TextBox Grid.Column="1" Text="{Binding AdjustmentReason}"
+                                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                             materialDesign:HintAssist.Hint="Justificativa" Margin="0,0,8,0"/>
+                                                    <Button Grid.Column="2" Command="{Binding ApplyDiscountCommand}"
+                                                            Style="{StaticResource MaterialDesignOutlinedButton}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="Sale" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="Aplicar"/>
                                                         </StackPanel>
-                                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                                            <materialDesign:PackIcon Kind="Phone" 
-                                                                                     VerticalAlignment="Center" Margin="0,0,8,0" Opacity="0.6"/>
-                                                            <TextBlock Text="{Binding SelectedInvoice.CustomerPhone}"
-                                                                       Style="{StaticResource MaterialDesignBody2TextBlock}"/>
-                                                        </StackPanel>
-                                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                                            <materialDesign:PackIcon Kind="Email" 
-                                                                                     VerticalAlignment="Center" Margin="0,0,8,0" Opacity="0.6"/>
-                                                            <TextBlock Text="{Binding SelectedInvoice.CustomerEmail}"
-                                                                       Style="{StaticResource MaterialDesignBody2TextBlock}"/>
-                                                        </StackPanel>
-                                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                                            <materialDesign:PackIcon Kind="MapMarker" 
-                                                                                     VerticalAlignment="Center" Margin="0,0,8,0" Opacity="0.6"/>
-                                                            <TextBlock Text="{Binding SelectedInvoice.CustomerAddress}"
-                                                                       Style="{StaticResource MaterialDesignBody2TextBlock}" TextWrapping="Wrap"/>
-                                                        </StackPanel>
-                                                    </StackPanel>
+                                                    </Button>
                                                 </Grid>
-                                            </materialDesign:Card>
+                                            </StackPanel>
+                                        </materialDesign:Card>
 
-                                            <!-- Operador -->
-                                            <materialDesign:Card Grid.Row="1" Padding="16">
-                                                <StackPanel>
-                                                    <TextBlock Text="OPERADOR DA VENDA" 
-                                                               Style="{StaticResource MaterialDesignOverlineTextBlock}" Margin="0,0,0,12"/>
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <Border Grid.Column="0" Width="50" Height="50" CornerRadius="25"
-                                                                Background="{DynamicResource SecondaryHueMidBrush}" Margin="0,0,16,0">
-                                                            <materialDesign:PackIcon Kind="AccountTie" Width="28" Height="28"
-                                                                                     Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                        </Border>
-                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding SelectedInvoice.OperatorName}" 
-                                                                       Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
-                                                            <TextBlock Text="{Binding SelectedInvoice.OperatorRole}"
-                                                                       Style="{StaticResource MaterialDesignCaptionTextBlock}" Opacity="0.7"/>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                </StackPanel>
-                                            </materialDesign:Card>
-                                        </Grid>
-                                    </ScrollViewer>
-                                </TabItem>
-
-                                <!-- Tab: Histórico -->
-                                <TabItem>
-                                    <TabItem.Header>
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="History" Margin="0,0,8,0"/>
-                                            <TextBlock Text="Histórico"/>
-                                        </StackPanel>
-                                    </TabItem.Header>
-                                    <ListView ItemsSource="{Binding SelectedInvoiceHistory}" Padding="8">
-                                        <ListView.ItemTemplate>
-                                            <DataTemplate>
-                                                <Grid Margin="8">
+                                        <!-- Acréscimo -->
+                                        <materialDesign:Card Padding="16" Margin="0,0,0,12">
+                                            <StackPanel>
+                                                <TextBlock Text="APLICAR ACRÉSCIMO PÓS-VENDA" 
+                                                           Style="{StaticResource MaterialDesignOverlineTextBlock}" Margin="0,0,0,12"/>
+                                                <Grid>
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
 
-                                                    <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20"
-                                                            Background="{DynamicResource MaterialDesignToolBarBackground}" Margin="0,0,16,0">
-                                                        <materialDesign:PackIcon Kind="{Binding ActionIcon}" Width="20" Height="20"
-                                                                                 HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding ActionDescription}" 
-                                                                   Style="{StaticResource MaterialDesignBody1TextBlock}"/>
-                                                        <TextBlock Style="{StaticResource MaterialDesignCaptionTextBlock}" Opacity="0.7">
-                                                            <Run Text="Por"/>
-                                                            <Run Text="{Binding UserName}" FontWeight="SemiBold"/>
+                                                    <TextBox Grid.Column="0" Text="{Binding AdjustmentSurcharge}"
+                                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                             materialDesign:HintAssist.Hint="Valor (Kz)" Margin="0,0,8,0"/>
+                                                    <TextBox Grid.Column="1" Text="{Binding SurchargeReason}"
+                                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                             materialDesign:HintAssist.Hint="Justificativa" Margin="0,0,8,0"/>
+                                                    <Button Grid.Column="2" Command="{Binding ApplySurchargeCommand}"
+                                                            Style="{StaticResource MaterialDesignOutlinedButton}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="Plus" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="Aplicar"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </Grid>
+                                            </StackPanel>
+                                        </materialDesign:Card>
+
+                                        <!-- Alterar Forma de Pagamento -->
+                                        <materialDesign:Card Padding="16">
+                                            <StackPanel>
+                                                <TextBlock Text="ALTERAR FORMA DE PAGAMENTO" 
+                                                           Style="{StaticResource MaterialDesignOverlineTextBlock}" Margin="0,0,0,12"/>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <ComboBox Grid.Column="0" ItemsSource="{Binding SelectedInvoicePayments}"
+                                                              SelectedItem="{Binding PaymentToChange}" DisplayMemberPath="PaymentTypeName"
+                                                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                                              materialDesign:HintAssist.Hint="Pagamento" Margin="0,0,8,0"/>
+                                                    <ComboBox Grid.Column="1" ItemsSource="{Binding PaymentTypes}"
+                                                              SelectedItem="{Binding NewPaymentType}" DisplayMemberPath="Name"
+                                                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                                              materialDesign:HintAssist.Hint="Nova Forma" Margin="0,0,8,0"/>
+                                                    <Button Grid.Column="2" Command="{Binding ChangePaymentTypeCommand}"
+                                                            Style="{StaticResource MaterialDesignOutlinedButton}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="SwapHorizontal" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="Alterar"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </Grid>
+                                            </StackPanel>
+                                        </materialDesign:Card>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </TabItem>
+
+                            <!-- Tab: Impacto -->
+                            <TabItem>
+                                <TabItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="ChartBox" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Impacto"/>
+                                    </StackPanel>
+                                </TabItem.Header>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Stock Impact -->
+                                        <materialDesign:Card Grid.Row="0" Padding="16" Margin="0,0,0,12">
+                                            <StackPanel>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                                    <materialDesign:PackIcon Kind="Package" Width="24" Height="24" 
+                                                                             Foreground="{DynamicResource PrimaryHueMidBrush}" Margin="0,0,12,0"/>
+                                                    <TextBlock Text="Impacto no Estoque" 
+                                                               Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
+                                                </StackPanel>
+                                                <DataGrid ItemsSource="{Binding StockImpactItems}"
+                                                          AutoGenerateColumns="False" CanUserAddRows="False"
+                                                          IsReadOnly="True" MaxHeight="150"
+                                                          materialDesign:DataGridAssist.CellPadding="8">
+                                                    <DataGrid.Columns>
+                                                        <DataGridTextColumn Header="Produto" Binding="{Binding ProductName}" Width="*"/>
+                                                        <DataGridTextColumn Header="Qtd Vendida" Binding="{Binding QuantitySold}" Width="100"/>
+                                                        <DataGridTextColumn Header="Estoque Atual" Binding="{Binding CurrentStock}" Width="110"/>
+                                                    </DataGrid.Columns>
+                                                </DataGrid>
+                                            </StackPanel>
+                                        </materialDesign:Card>
+
+                                        <!-- Financial Impact -->
+                                        <materialDesign:Card Grid.Row="1" Padding="16" Margin="0,0,0,12">
+                                            <StackPanel>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                                    <materialDesign:PackIcon Kind="Cash" Width="24" Height="24" 
+                                                                             Foreground="Green" Margin="0,0,12,0"/>
+                                                    <TextBlock Text="Impacto Financeiro" 
+                                                               Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
+                                                </StackPanel>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="Contas a Receber" 
+                                                                   Style="{StaticResource MaterialDesignBody2TextBlock}" Opacity="0.7"/>
+                                                        <TextBlock Style="{StaticResource MaterialDesignHeadline5TextBlock}" Foreground="Green">
+                                                            <Run Text="Kz"/>
+                                                            <Run Text="{Binding AccountsReceivable, StringFormat={}{0:N2}}"/>
                                                         </TextBlock>
                                                     </StackPanel>
-                                                    <TextBlock Grid.Column="2" Text="{Binding Timestamp, StringFormat=dd/MM/yy HH:mm}"
-                                                               Style="{StaticResource MaterialDesignCaptionTextBlock}"
-                                                               VerticalAlignment="Center" Opacity="0.6"/>
+                                                    <StackPanel Grid.Column="1">
+                                                        <TextBlock Text="Receita Líquida" 
+                                                                   Style="{StaticResource MaterialDesignBody2TextBlock}" Opacity="0.7"/>
+                                                        <TextBlock Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
+                                                                   Foreground="{DynamicResource PrimaryHueMidBrush}">
+                                                            <Run Text="Kz"/>
+                                                            <Run Text="{Binding NetRevenue, StringFormat={}{0:N2}}"/>
+                                                        </TextBlock>
+                                                    </StackPanel>
                                                 </Grid>
-                                            </DataTemplate>
-                                        </ListView.ItemTemplate>
-                                    </ListView>
-                                </TabItem>
+                                            </StackPanel>
+                                        </materialDesign:Card>
 
-                                <!-- Tab: Ajustes -->
-                                <TabItem>
-                                    <TabItem.Header>
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="TuneVariant" Margin="0,0,8,0"/>
-                                            <TextBlock Text="Ajustes"/>
-                                        </StackPanel>
-                                    </TabItem.Header>
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
-                                        <StackPanel>
-                                            <!-- Desconto Pós-Venda -->
-                                            <materialDesign:Card Padding="16" Margin="0,0,0,16">
-                                                <StackPanel>
-                                                    <TextBlock Text="APLICAR DESCONTO PÓS-VENDA" 
-                                                               Style="{StaticResource MaterialDesignOverlineTextBlock}" Margin="0,0,0,12"/>
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <TextBox Grid.Column="0" Text="{Binding AdjustmentDiscount}"
-                                                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                                                 materialDesign:HintAssist.Hint="Valor do Desconto (Kz)" Margin="0,0,8,0"/>
-                                                        <TextBox Grid.Column="1" Text="{Binding AdjustmentReason}"
-                                                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                                                 materialDesign:HintAssist.Hint="Justificativa (obrigatório)" Margin="0,0,8,0"/>
-                                                        <Button Grid.Column="2" Command="{Binding ApplyDiscountCommand}"
-                                                                Style="{StaticResource MaterialDesignOutlinedButton}">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <materialDesign:PackIcon Kind="Sale" Margin="0,0,8,0"/>
-                                                                <TextBlock Text="Aplicar"/>
-                                                            </StackPanel>
-                                                        </Button>
-                                                    </Grid>
-                                                </StackPanel>
-                                            </materialDesign:Card>
-
-                                            <!-- Acréscimo Pós-Venda -->
-                                            <materialDesign:Card Padding="16" Margin="0,0,0,16">
-                                                <StackPanel>
-                                                    <TextBlock Text="APLICAR ACRÉSCIMO PÓS-VENDA" 
-                                                               Style="{StaticResource MaterialDesignOverlineTextBlock}" Margin="0,0,0,12"/>
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <TextBox Grid.Column="0" Text="{Binding AdjustmentSurcharge}"
-                                                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                                                 materialDesign:HintAssist.Hint="Valor do Acréscimo (Kz)" Margin="0,0,8,0"/>
-                                                        <TextBox Grid.Column="1" Text="{Binding SurchargeReason}"
-                                                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                                                 materialDesign:HintAssist.Hint="Justificativa (obrigatório)" Margin="0,0,8,0"/>
-                                                        <Button Grid.Column="2" Command="{Binding ApplySurchargeCommand}"
-                                                                Style="{StaticResource MaterialDesignOutlinedButton}">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <materialDesign:PackIcon Kind="Plus" Margin="0,0,8,0"/>
-                                                                <TextBlock Text="Aplicar"/>
-                                                            </StackPanel>
-                                                        </Button>
-                                                    </Grid>
-                                                </StackPanel>
-                                            </materialDesign:Card>
-
-                                            <!-- Alterar Forma de Pagamento -->
-                                            <materialDesign:Card Padding="16">
-                                                <StackPanel>
-                                                    <TextBlock Text="ALTERAR FORMA DE PAGAMENTO" 
-                                                               Style="{StaticResource MaterialDesignOverlineTextBlock}" Margin="0,0,0,12"/>
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <ComboBox Grid.Column="0" ItemsSource="{Binding SelectedInvoicePayments}"
-                                                                  SelectedItem="{Binding PaymentToChange}" DisplayMemberPath="PaymentTypeName"
-                                                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                                                  materialDesign:HintAssist.Hint="Pagamento a Alterar" Margin="0,0,8,0"/>
-                                                        <ComboBox Grid.Column="1" ItemsSource="{Binding PaymentTypes}"
-                                                                  SelectedItem="{Binding NewPaymentType}" DisplayMemberPath="Name"
-                                                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                                                  materialDesign:HintAssist.Hint="Nova Forma de Pagamento" Margin="0,0,8,0"/>
-                                                        <Button Grid.Column="2" Command="{Binding ChangePaymentTypeCommand}"
-                                                                Style="{StaticResource MaterialDesignOutlinedButton}">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <materialDesign:PackIcon Kind="SwapHorizontal" Margin="0,0,8,0"/>
-                                                                <TextBlock Text="Alterar"/>
-                                                            </StackPanel>
-                                                        </Button>
-                                                    </Grid>
-                                                </StackPanel>
-                                            </materialDesign:Card>
-                                        </StackPanel>
-                                    </ScrollViewer>
-                                </TabItem>
-
-                                <!-- Tab: Estoque & Financeiro -->
-                                <TabItem>
-                                    <TabItem.Header>
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="ChartBox" Margin="0,0,8,0"/>
-                                            <TextBlock Text="Impacto"/>
-                                        </StackPanel>
-                                    </TabItem.Header>
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
-                                        <Grid>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                            </Grid.RowDefinitions>
-
-                                            <!-- Stock Impact -->
-                                            <materialDesign:Card Grid.Row="0" Padding="16" Margin="0,0,0,16">
-                                                <StackPanel>
-                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                                        <materialDesign:PackIcon Kind="Package" Width="24" Height="24" 
-                                                                                 Foreground="{DynamicResource PrimaryHueMidBrush}" Margin="0,0,12,0"/>
-                                                        <TextBlock Text="Impacto no Estoque" 
-                                                                   Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
-                                                    </StackPanel>
-                                                    <DataGrid ItemsSource="{Binding StockImpactItems}"
-                                                              AutoGenerateColumns="False" CanUserAddRows="False"
-                                                              IsReadOnly="True" MaxHeight="200"
-                                                              materialDesign:DataGridAssist.CellPadding="8">
-                                                        <DataGrid.Columns>
-                                                            <DataGridTextColumn Header="Produto" Binding="{Binding ProductName}" Width="*"/>
-                                                            <DataGridTextColumn Header="Qtd Vendida" Binding="{Binding QuantitySold}" Width="100"/>
-                                                            <DataGridTextColumn Header="Estoque Atual" Binding="{Binding CurrentStock}" Width="110"/>
-                                                        </DataGrid.Columns>
-                                                    </DataGrid>
-                                                </StackPanel>
-                                            </materialDesign:Card>
-
-                                            <!-- Financial Impact -->
-                                            <materialDesign:Card Grid.Row="1" Padding="16" Margin="0,0,0,16">
-                                                <StackPanel>
-                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                                        <materialDesign:PackIcon Kind="Cash" Width="24" Height="24" 
-                                                                                 Foreground="Green" Margin="0,0,12,0"/>
-                                                        <TextBlock Text="Lançamento Financeiro" 
-                                                                   Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
-                                                    </StackPanel>
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <StackPanel Grid.Column="0" Margin="0,0,16,0">
-                                                            <TextBlock Text="Contas a Receber" 
-                                                                       Style="{StaticResource MaterialDesignBody2TextBlock}" Opacity="0.7"/>
-                                                            <TextBlock Style="{StaticResource MaterialDesignHeadline5TextBlock}" Foreground="Green">
-                                                                <Run Text="Kz"/>
-                                                                <Run Text="{Binding AccountsReceivable, StringFormat={}{0:N2}}"/>
-                                                            </TextBlock>
+                                        <!-- Quick Actions -->
+                                        <materialDesign:Card Grid.Row="2" Padding="16">
+                                            <StackPanel>
+                                                <TextBlock Text="AÇÕES RÁPIDAS" 
+                                                           Style="{StaticResource MaterialDesignOverlineTextBlock}" Margin="0,0,0,12"/>
+                                                <WrapPanel>
+                                                    <Button Command="{Binding UpdateStockCommand}"
+                                                            Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,8,8">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="PackageVariant" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="Atualizar Estoque"/>
                                                         </StackPanel>
-                                                        <StackPanel Grid.Column="1">
-                                                            <TextBlock Text="Receita Líquida" 
-                                                                       Style="{StaticResource MaterialDesignBody2TextBlock}" Opacity="0.7"/>
-                                                            <TextBlock Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
-                                                                       Foreground="{DynamicResource PrimaryHueMidBrush}">
-                                                                <Run Text="Kz"/>
-                                                                <Run Text="{Binding NetRevenue, StringFormat={}{0:N2}}"/>
-                                                            </TextBlock>
+                                                    </Button>
+                                                    <Button Command="{Binding PostToAccountsReceivableCommand}"
+                                                            Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,8,8">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="BankTransfer" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="Lançar Contas a Receber"/>
                                                         </StackPanel>
-                                                    </Grid>
-                                                </StackPanel>
-                                            </materialDesign:Card>
+                                                    </Button>
+                                                    <Button Command="{Binding GenerateFinancialReportCommand}"
+                                                            Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,8,8">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="FileChart" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="Relatório de Impacto"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </WrapPanel>
+                                            </StackPanel>
+                                        </materialDesign:Card>
+                                    </Grid>
+                                </ScrollViewer>
+                            </TabItem>
+                        </TabControl>
 
-                                            <!-- Actions -->
-                                            <materialDesign:Card Grid.Row="2" Padding="16">
-                                                <StackPanel>
-                                                    <TextBlock Text="AÇÕES RÁPIDAS" 
-                                                               Style="{StaticResource MaterialDesignOverlineTextBlock}" Margin="0,0,0,12"/>
-                                                    <WrapPanel>
-                                                        <Button Command="{Binding UpdateStockCommand}"
-                                                                Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,8,8">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <materialDesign:PackIcon Kind="PackageVariant" Margin="0,0,8,0"/>
-                                                                <TextBlock Text="Atualizar Estoque"/>
-                                                            </StackPanel>
-                                                        </Button>
-                                                        <Button Command="{Binding PostToAccountsReceivableCommand}"
-                                                                Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,8,8">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <materialDesign:PackIcon Kind="BankTransfer" Margin="0,0,8,0"/>
-                                                                <TextBlock Text="Lançar Contas a Receber"/>
-                                                            </StackPanel>
-                                                        </Button>
-                                                        <Button Command="{Binding GenerateFinancialReportCommand}"
-                                                                Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,8,8">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <materialDesign:PackIcon Kind="FileChart" Margin="0,0,8,0"/>
-                                                                <TextBlock Text="Relatório de Impacto"/>
-                                                            </StackPanel>
-                                                        </Button>
-                                                    </WrapPanel>
-                                                </StackPanel>
-                                            </materialDesign:Card>
-                                        </Grid>
-                                    </ScrollViewer>
-                                </TabItem>
-                            </TabControl>
-                        </Grid>
-                    </materialDesign:Card>
-                </Grid>
+                        <!-- Modal Footer Actions -->
+                        <Border Grid.Row="3" Background="{DynamicResource MaterialDesignToolBarBackground}" 
+                                Padding="20,12" Margin="0,12,0,0">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                    <Button Style="{StaticResource MaterialDesignOutlinedButton}"
+                                            Command="{Binding IssueCreditNoteCommand}" Margin="0,0,8,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="CreditCardMinus" Margin="0,0,8,0"/>
+                                            <TextBlock Text="Nota de Crédito"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignOutlinedButton}"
+                                            Command="{Binding IssueDebitNoteCommand}" Margin="0,0,8,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="CreditCardPlus" Margin="0,0,8,0"/>
+                                            <TextBlock Text="Nota de Débito"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignOutlinedButton}"
+                                            Command="{Binding ReopenInvoiceCommand}" Foreground="Orange">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="FolderOpen" Margin="0,0,8,0"/>
+                                            <TextBlock Text="Reabrir"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
 
-                <!-- Snackbar for Messages -->
-                <materialDesign:Snackbar MessageQueue="{Binding MessageQueue}" 
-                                         HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,16"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                            Command="{Binding PrintInvoiceCommand}" Margin="0,0,8,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Printer" Margin="0,0,8,0"/>
+                                            <TextBlock Text="Imprimir"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                            Command="{Binding GeneratePdfCommand}" Margin="0,0,8,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="FilePdfBox" Margin="0,0,8,0"/>
+                                            <TextBlock Text="Gerar PDF"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                                            Command="{Binding CloseDetailsCommand}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Check" Margin="0,0,8,0"/>
+                                            <TextBlock Text="Fechar"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </materialDesign:Card>
             </Grid>
         </Grid>
     </materialDesign:DialogHost>
