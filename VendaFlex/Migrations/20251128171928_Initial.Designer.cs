@@ -12,8 +12,8 @@ using VendaFlex.Data;
 namespace VendaFlex.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251023010013_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251128171928_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -868,7 +868,7 @@ namespace VendaFlex.Migrations
                             Notes = "Venda com desconto",
                             PaidAmount = 10000m,
                             PersonId = 102,
-                            ShippingCost = 0m,
+                            ShippingCost = 1000m,
                             Status = 2,
                             SubTotal = 20000m,
                             TaxAmount = 2744m,
@@ -2612,7 +2612,6 @@ namespace VendaFlex.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Notes")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
@@ -2626,7 +2625,6 @@ namespace VendaFlex.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Reference")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -3003,7 +3001,7 @@ namespace VendaFlex.Migrations
                         new
                         {
                             UserId = 4,
-                            CreatedAt = new DateTime(2025, 10, 23, 1, 0, 11, 740, DateTimeKind.Utc).AddTicks(3814),
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             FailedLoginAttempts = 0,
                             IsDeleted = false,
                             LastLoginIp = "",

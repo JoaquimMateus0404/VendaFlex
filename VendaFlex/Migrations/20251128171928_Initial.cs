@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace VendaFlex.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -458,8 +458,8 @@ namespace VendaFlex.Migrations
                     NewQuantity = table.Column<int>(type: "int", nullable: true),
                     Date = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Type = table.Column<int>(type: "int", nullable: false),
-                    Notes = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Reference = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Notes = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Reference = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     UnitCost = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
                     TotalCost = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -672,7 +672,7 @@ namespace VendaFlex.Migrations
             migrationBuilder.InsertData(
                 table: "Users",
                 columns: new[] { "UserId", "CreatedAt", "CreatedByUserId", "DeletedAt", "FailedLoginAttempts", "IsDeleted", "LastLoginAt", "LastLoginIp", "LockedUntil", "PasswordHash", "PersonId", "Status", "UpdatedAt", "UpdatedByUserId", "Username" },
-                values: new object[] { 4, new DateTime(2025, 10, 23, 1, 0, 11, 740, DateTimeKind.Utc).AddTicks(3814), null, null, 0, false, null, "", null, "8C6976E5B5410415BDE908BD4DEE15DFB167A9C873FC4BB8A81F6F2AB448A918", 1, 1, null, null, "admin" });
+                values: new object[] { 4, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, null, 0, false, null, "", null, "8C6976E5B5410415BDE908BD4DEE15DFB167A9C873FC4BB8A81F6F2AB448A918", 1, 1, null, null, "admin" });
 
             migrationBuilder.InsertData(
                 table: "Expirations",
@@ -703,7 +703,7 @@ namespace VendaFlex.Migrations
                 values: new object[,]
                 {
                     { 1, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 4, new DateTime(2025, 1, 3, 0, 0, 0, 0, DateTimeKind.Utc), null, 0m, new DateTime(2025, 1, 16, 0, 0, 0, 0, DateTimeKind.Utc), "Seed invoice", "INV-2025-0001", false, "Venda balcão", 13908m, 101, 0m, 3, 12200m, 1708m, 13908m, null, null, 4 },
-                    { 2, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 4, new DateTime(2025, 1, 4, 0, 0, 0, 0, DateTimeKind.Utc), null, 400m, new DateTime(2025, 1, 21, 0, 0, 0, 0, DateTimeKind.Utc), "Seed invoice", "INV-2025-0002", false, "Venda com desconto", 10000m, 102, 0m, 2, 20000m, 2744m, 22344m, null, null, 4 },
+                    { 2, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 4, new DateTime(2025, 1, 4, 0, 0, 0, 0, DateTimeKind.Utc), null, 400m, new DateTime(2025, 1, 21, 0, 0, 0, 0, DateTimeKind.Utc), "Seed invoice", "INV-2025-0002", false, "Venda com desconto", 10000m, 102, 1000m, 2, 20000m, 2744m, 22344m, null, null, 4 },
                     { 3, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 4, new DateTime(2025, 1, 5, 0, 0, 0, 0, DateTimeKind.Utc), null, 0m, new DateTime(2025, 1, 31, 0, 0, 0, 0, DateTimeKind.Utc), "Seed invoice", "INV-2025-0003", false, "Pedido corporativo", 0m, 103, 1000m, 2, 23800m, 3332m, 28132m, null, null, 4 }
                 });
 
