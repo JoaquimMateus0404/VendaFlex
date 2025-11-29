@@ -14,6 +14,7 @@ using Microsoft.Win32;
 using System.IO;
 using System.Text;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace VendaFlex.ViewModels.Sales
 {
@@ -334,8 +335,8 @@ namespace VendaFlex.ViewModels.Sales
             set => Set(ref _paymentToChange, value);
         }
 
-        private PaymentTypeDto? _newPaymentType;
-        public PaymentTypeDto? NewPaymentType
+        private int _newPaymentType;
+        public int NewPaymentType
         {
             get => _newPaymentType;
             set => Set(ref _newPaymentType, value);
@@ -460,7 +461,7 @@ namespace VendaFlex.ViewModels.Sales
             AddPaymentCommand = new RelayCommand(async _ => await AddPaymentAsync(), CanAddPayment);
             RemovePaymentCommand = new RelayCommand(async payment => await RemovePaymentAsync(payment as PaymentListItemDto));
             ApplyDiscountCommand = new RelayCommand(async _ => await ApplyDiscountAsync(), CanApplyDiscount);
-            ApplySurchargeCommand = new RelayCommand(async _ => await ApplySurchargeAsync(), CanApplySurcharge);
+            //ApplySurchargeCommand = new RelayCommand(async _ => await ApplySurchargeAsync(), CanApplySurcharge);
             ChangePaymentTypeCommand = new RelayCommand(async _ => await ChangePaymentTypeAsync(), CanChangePaymentType);
             UpdateStockCommand = new RelayCommand(async _ => await UpdateStockAsync(), _ => SelectedInvoice != null);
             PostToAccountsReceivableCommand = new RelayCommand(async _ => await PostToAccountsReceivableAsync(), _ => SelectedInvoice != null);
@@ -1217,6 +1218,7 @@ namespace VendaFlex.ViewModels.Sales
                    NewPayment.Amount <= SelectedInvoiceBalance;
         }
 
+        // Add um novo pagamento à fatura selecionada apenas em faturas pendentes
         private async Task AddPaymentAsync()
         {
             if (SelectedInvoice == null || NewPayment == null) return;
@@ -1248,7 +1250,8 @@ namespace VendaFlex.ViewModels.Sales
                     InvoiceId = SelectedInvoice.InvoiceId,
                     PaymentTypeId = NewPayment.PaymentTypeId,
                     Amount = NewPayment.Amount,
-                    Reference = NewPayment.Reference ?? string.Empty,
+                    Reference = string.IsNullOrWhiteSpace(NewPayment.Reference) ? SelectedInvoice.InvoiceNumber : NewPayment.Reference,
+                    Notes = string.IsNullOrWhiteSpace(NewPayment.Notes) ? "Pagamento registrado via gestão de faturas" : NewPayment.Notes,
                     PaymentDate = DateTime.Now,
                     IsConfirmed = true
                 };
@@ -1257,7 +1260,57 @@ namespace VendaFlex.ViewModels.Sales
 
                 if (result.Success)
                 {
-                    ShowMessage("Pagamento registrado com sucesso!");
+                    Debug.WriteLine("Sucesso no add pagamento");
+                    // Buscar a fatura atualizada para obter o novo valor pago
+                    var invoiceResult = await _invoiceService.GetByIdAsync(SelectedInvoice.InvoiceId);
+                    
+                    if (invoiceResult.Success && invoiceResult.Data != null)
+                    {
+                        Debug.WriteLine("Sucesso na procura da fatura: "+ invoiceResult.Data.InvoiceNumber);
+                        var invoice = invoiceResult.Data;
+                        
+                        // Atualizar o PaidAmount somando todos os pagamentos confirmados
+                        var paymentsResult = await _paymentService.GetByInvoiceIdAsync(invoice.InvoiceId);
+                        if (paymentsResult.Success && paymentsResult.Data != null)
+                        {
+                            Debug.WriteLine("Sucesso encontramos o pagamento associado com a fatura");
+                            var totalPaid = paymentsResult.Data
+                                .Where(p => p.IsConfirmed)
+                                .Sum(p => p.Amount);
+                            
+                            invoice.PaidAmount = totalPaid;
+                            
+                            // Atualizar o status baseado no valor pago
+                            if (invoice.PaidAmount >= invoice.Total)
+                            {
+                                invoice.Status = InvoiceStatus.Paid;
+                            }
+                            else if (invoice.PaidAmount > 0)
+                            {
+                                invoice.Status = InvoiceStatus.Confirmed;
+                            }
+                            
+                            // Salvar as alterações na fatura
+                            var updateResult = await _invoiceService.UpdateAsync(invoice);
+                            
+                            if (updateResult.Success)
+                            {
+                                ShowMessage($"Pagamento registrado com sucesso! Status: {invoice.Status}");
+                                Debug.WriteLine($"Pagamento registrado com sucesso! Status: {invoice.Status}");
+                            }
+                            else
+                            {
+                                ShowMessage($"Pagamento registrado, mas erro ao atualizar status: {updateResult.Message}", true);
+                                Debug.WriteLine($"Pagamento registrado, mas erro ao atualizar status: {updateResult.Message}");
+                                var validationErrors = updateResult.Errors != null
+                                    ? string.Join(" | ", updateResult.Errors)
+                                    : "Nenhum detalhe";
+
+                                Debug.WriteLine("Erros de validação: " + validationErrors);
+
+                            }
+                        }
+                    }
 
                     // Limpar formulário
                     NewPayment = new NewPaymentDto();
@@ -1270,11 +1323,13 @@ namespace VendaFlex.ViewModels.Sales
                 else
                 {
                     ShowMessage($"Erro ao registrar pagamento: {result.Message}", true);
+                    Debug.WriteLine($"Erro ao registrar pagamento: {result.Message}");
                 }
             }
             catch (Exception ex)
             {
                 ShowMessage($"Erro ao registrar pagamento: {ex.Message}", true);
+                Debug.WriteLine($"Erro ao registrar pagamento: {ex.Message}");
             }
             finally
             {
@@ -1282,6 +1337,7 @@ namespace VendaFlex.ViewModels.Sales
             }
         }
 
+        // remove um pagamento existente
         private async Task RemovePaymentAsync(PaymentListItemDto? payment)
         {
             if (payment == null) return;
@@ -1302,6 +1358,37 @@ namespace VendaFlex.ViewModels.Sales
 
                 if (deleteResult.Success)
                 {
+                    // Atualizar o status da fatura após remoção do pagamento
+                    var invoiceResult = await _invoiceService.GetByIdAsync(SelectedInvoice.InvoiceId);
+                    if (invoiceResult.Success && invoiceResult.Data != null)
+                    {
+                        var invoice = invoiceResult.Data;
+                        // Recalcular o valor pago
+                        var paymentsResult = await _paymentService.GetByInvoiceIdAsync(invoice.InvoiceId);
+                        if (paymentsResult.Success && paymentsResult.Data != null)
+                        {
+                            var totalPaid = paymentsResult.Data
+                                .Where(p => p.IsConfirmed)
+                                .Sum(p => p.Amount);
+                            invoice.PaidAmount = totalPaid;
+                            // Atualizar o status baseado no valor pago
+                            if (invoice.PaidAmount >= invoice.Total)
+                            {
+                                invoice.Status = InvoiceStatus.Paid;
+                            }
+                            else
+                            {
+                                invoice.Status = InvoiceStatus.Pending;
+                            }
+                            // Salvar as alterações na fatura
+                            var updateResult = await _invoiceService.UpdateAsync(invoice);
+                            if (!updateResult.Success)
+                            {
+                                ShowMessage($"Pagamento removido, mas erro ao atualizar status: {updateResult.Message}", true);
+                            }
+                        }
+                    }
+
                     ShowMessage("Pagamento removido com sucesso!");
                     await LoadInvoiceDetailsAsync();
                     await SearchAsync();
@@ -1333,6 +1420,7 @@ namespace VendaFlex.ViewModels.Sales
                    !string.IsNullOrWhiteSpace(AdjustmentReason);
         }
 
+        // aplica um desconto à fatura selecionada
         private async Task ApplyDiscountAsync()
         {
             if (SelectedInvoice == null) return;
@@ -1348,7 +1436,24 @@ namespace VendaFlex.ViewModels.Sales
                 IsLoading = true;
                 ShowMessage("Aplicando desconto...");
 
-                // TODO: Implementar aplicação de desconto no serviço
+                // vamos implementar a aplicação de desconto no serviço
+
+                var invoiceResult = await _invoiceService.GetByIdAsync(SelectedInvoice.InvoiceId);
+
+                if (invoiceResult.Success && invoiceResult.Data != null)
+                {
+                    var invoice = invoiceResult.Data;
+
+                    invoice.DiscountAmount = invoice.DiscountAmount + AdjustmentDiscount;
+                    invoice.Total = invoice.Total - AdjustmentDiscount;
+                    invoice.Notes += $"\nDesconto de Kz {AdjustmentDiscount:N2} aplicado. Motivo: {AdjustmentReason}";
+
+                    // Salvar as alterações na fatura
+                    var updateResult = await _invoiceService.UpdateAsync(invoice);
+
+                        
+                }
+
                 await Task.Delay(1000);
 
                 ShowMessage($"Desconto de Kz {AdjustmentDiscount:N2} aplicado com sucesso!");
@@ -1368,6 +1473,7 @@ namespace VendaFlex.ViewModels.Sales
             }
         }
 
+       /* //  verifica se um acréscimo pode ser aplicado
         private bool CanApplySurcharge(object? parameter)
         {
             return SelectedInvoice != null &&
@@ -1375,6 +1481,7 @@ namespace VendaFlex.ViewModels.Sales
                    !string.IsNullOrWhiteSpace(SurchargeReason);
         }
 
+        //  aplica um acréscimo à fatura selecionada
         private async Task ApplySurchargeAsync()
         {
             if (SelectedInvoice == null) return;
@@ -1384,8 +1491,50 @@ namespace VendaFlex.ViewModels.Sales
                 IsLoading = true;
                 ShowMessage("Aplicando acréscimo...");
 
-                // TODO: Implementar aplicação de acréscimo no serviço
-                await Task.Delay(1000);
+                var invoiceResult = await _invoiceService.GetByIdAsync(SelectedInvoice.InvoiceId);
+
+                if (invoiceResult.Success && invoiceResult.Data != null)
+                {
+                    var invoice = invoiceResult.Data;
+
+                    // Aplicar o acréscimo ao total da fatura
+                    invoice.Total = invoice.Total + AdjustmentSurcharge;
+                    invoice.Notes += $"\nAcréscimo de Kz {AdjustmentSurcharge:N2} aplicado. Motivo: {SurchargeReason}";
+
+                    // Atualizar o status se necessário
+                    if (invoice.PaidAmount >= invoice.Total)
+                    {
+                        invoice.Status = InvoiceStatus.Paid;
+                    }
+                    else if (invoice.PaidAmount > 0)
+                    {
+                        invoice.Status = InvoiceStatus.Confirmed;
+                    }
+
+                    // Salvar as alterações na fatura
+                    var updateResult = await _invoiceService.UpdateAsync(invoice);
+
+                    if (!updateResult.Success)
+                    {
+                        ShowMessage($"Erro ao aplicar acréscimo: {updateResult.Message}", true);
+                        var validationErrors = updateResult.Errors != null
+                            ? string.Join(" | ", updateResult.Errors)
+                            : "Nenhum detalhe";
+
+                        Debug.WriteLine("Erros de validação acrescimo: " + validationErrors);
+                        return;
+                    }
+                }
+                else
+                {
+                    ShowMessage($"Erro ao buscar fatura: {invoiceResult.Message}", true);
+                    var validationErrors = invoiceResult.Errors != null
+                        ? string.Join(" | ", invoiceResult.Errors)
+                        : "Nenhum detalhe";
+
+                    Debug.WriteLine("Erros de validação Buscar fatura: " + validationErrors);
+                    return;
+                }
 
                 ShowMessage($"Acréscimo de Kz {AdjustmentSurcharge:N2} aplicado com sucesso!");
                 AdjustmentSurcharge = 0;
@@ -1397,24 +1546,29 @@ namespace VendaFlex.ViewModels.Sales
             catch (Exception ex)
             {
                 ShowMessage($"Erro ao aplicar acréscimo: {ex.Message}", true);
+                Debug.WriteLine($"Exp: Erro ao aplicar acréscimo: {ex.Message}");
             }
             finally
             {
                 IsLoading = false;
             }
         }
-
-        private bool CanChangePaymentType(object? parameter)
+*/
+        
+       private bool CanChangePaymentType(object? parameter)
         {
-            return PaymentToChange != null && NewPaymentType != null;
+            return PaymentToChange != null && NewPaymentType > 0;
         }
 
+        //  altera a forma de pagamento de um pagamento existente
         private async Task ChangePaymentTypeAsync()
         {
-            if (PaymentToChange == null || NewPaymentType == null) return;
+            if (PaymentToChange == null || NewPaymentType <= 0) return;
+
+            var newPaymentTypeName = PaymentTypes.FirstOrDefault(pt => pt.PaymentTypeId == NewPaymentType)?.Name ?? "Desconhecido";
 
             var result = MessageBox.Show(
-                $"Deseja alterar a forma de pagamento?\nDe: {PaymentToChange.PaymentTypeName}\nPara: {NewPaymentType.Name}",
+                $"Deseja alterar a forma de pagamento?\nDe: {PaymentToChange.PaymentTypeName}\nPara: {newPaymentTypeName}",
                 "Alterar Forma de Pagamento",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
@@ -1431,7 +1585,9 @@ namespace VendaFlex.ViewModels.Sales
                 if (paymentResult.Success && paymentResult.Data != null)
                 {
                     var payment = paymentResult.Data;
-                    payment.PaymentTypeId = NewPaymentType.PaymentTypeId;
+                    
+                    // Atualizar apenas o PaymentTypeId
+                    payment.PaymentTypeId = NewPaymentType;
 
                     var updateResult = await _paymentService.UpdateAsync(payment);
 
@@ -1439,13 +1595,17 @@ namespace VendaFlex.ViewModels.Sales
                     {
                         ShowMessage("Forma de pagamento alterada com sucesso!");
                         PaymentToChange = null;
-                        NewPaymentType = null;
+                        NewPaymentType = 0;
 
                         await LoadInvoiceDetailsAsync();
                     }
                     else
                     {
                         ShowMessage($"Erro ao alterar: {updateResult.Message}", true);
+                        if (updateResult.Errors?.Any() == true)
+                        {
+                            ShowMessage($"Erros de alteracao de pagamento: {string.Join(", ", updateResult.Errors)}", true);
+                        }
                     }
                 }
             }
@@ -1683,6 +1843,13 @@ namespace VendaFlex.ViewModels.Sales
         {
             get => _reference;
             set => Set(ref _reference, value);
+        }
+
+        private string _notes = string.Empty;
+        public string Notes
+        {
+            get => _notes;
+            set => Set(ref _notes, value);
         }
     }
 

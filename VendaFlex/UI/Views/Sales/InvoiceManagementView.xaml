@@ -603,9 +603,9 @@
                                                      materialDesign:HintAssist.Hint="Valor (Kz)" 
                                                      materialDesign:TextFieldAssist.HasClearButton="True"
                                                      Margin="0,0,8,0"/>
-                                            <TextBox Grid.Column="2" Text="{Binding NewPayment.Reference}"
+                                            <TextBox Grid.Column="2" Text="{Binding NewPayment.Notes}"
                                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                                     materialDesign:HintAssist.Hint="Referência" 
+                                                     materialDesign:HintAssist.Hint="Observação" 
                                                      materialDesign:TextFieldAssist.HasClearButton="True"
                                                      Margin="0,0,8,0"/>
                                             <Button Grid.Column="3" Command="{Binding AddPaymentCommand}"
@@ -953,8 +953,6 @@
                                 </ScrollViewer>
                             </TabItem>
 
-
-
                             <!-- Tab: Histórico -->
                             <TabItem>
                                 <TabItem.Header>
@@ -1039,7 +1037,7 @@
                                         </materialDesign:Card>
 
                                         <!-- Acréscimo -->
-                                        <materialDesign:Card Padding="16" Margin="0,0,0,12">
+                                        <!--<materialDesign:Card Padding="16" Margin="0,0,0,12">
                                             <StackPanel>
                                                 <TextBlock Text="APLICAR ACRÉSCIMO PÓS-VENDA" 
                                                            Style="{StaticResource MaterialDesignOverlineTextBlock}" Margin="0,0,0,12"/>
@@ -1069,7 +1067,7 @@
                                                     </Button>
                                                 </Grid>
                                             </StackPanel>
-                                        </materialDesign:Card>
+                                        </materialDesign:Card> -->
 
                                         <!-- Alterar Forma de Pagamento -->
                                         <materialDesign:Card Padding="16">
@@ -1084,13 +1082,16 @@
                                                     </Grid.ColumnDefinitions>
 
                                                     <ComboBox Grid.Column="0" ItemsSource="{Binding SelectedInvoicePayments}"
-                                                              SelectedItem="{Binding PaymentToChange}" DisplayMemberPath="PaymentTypeName"
+                                                              SelectedItem="{Binding PaymentToChange}" 
+                                                              DisplayMemberPath="PaymentTypeName"
                                                               Style="{StaticResource MaterialDesignOutlinedComboBox}"
                                                               materialDesign:HintAssist.Hint="Pagamento" 
                                                               materialDesign:TextFieldAssist.HasClearButton="True"
                                                               Margin="0,0,8,0"/>
                                                     <ComboBox Grid.Column="1" ItemsSource="{Binding PaymentTypes}"
-                                                              SelectedItem="{Binding NewPaymentType}" DisplayMemberPath="Name"
+                                                              SelectedValue="{Binding NewPaymentType}"
+                                                              SelectedValuePath="PaymentTypeId"
+                                                              DisplayMemberPath="Name"
                                                               Style="{StaticResource MaterialDesignOutlinedComboBox}"
                                                               materialDesign:HintAssist.Hint="Nova Forma" 
                                                               materialDesign:TextFieldAssist.HasClearButton="True"
