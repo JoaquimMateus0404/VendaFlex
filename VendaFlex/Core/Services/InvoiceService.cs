@@ -267,18 +267,128 @@ namespace VendaFlex.Core.Services
                 if (invoice.Status == InvoiceStatus.Cancelled)
                     return OperationResult<bool>.CreateFailure("Fatura já está cancelada.");
 
-                // Atualizar status para cancelado
-                invoice.Status = InvoiceStatus.Cancelled;
-                // Adicionar razão nas notas internas
-                invoice.InternalNotes = $"Cancelado em {DateTime.Now:dd/MM/yyyy HH:mm}: {reason}. " + invoice.InternalNotes;
+                Debug.WriteLine($"[CANCEL] Iniciando cancelamento da fatura #{invoiceId} ({invoice.InvoiceNumber})");
+                Debug.WriteLine($"[CANCEL] Motivo: {reason}");
+                Debug.WriteLine($"[CANCEL] Status atual: {invoice.Status}");
 
+                // Buscar produtos da fatura para restaurar o estoque
+                var invoiceProducts = await _invoiceProductRepository.GetByInvoiceIdAsync(invoiceId);
+                
+                if (!invoiceProducts.Any())
+                {
+                    Debug.WriteLine($"[CANCEL] AVISO: Fatura sem produtos");
+                }
+
+                var userId = _currentUserContext.UserId ?? invoice.UserId;
+                var stockRestorations = new List<string>();
+                var stockErrors = new List<string>();
+
+                // Restaurar estoque de todos os produtos
+                foreach (var product in invoiceProducts)
+                {
+                    try
+                    {
+                        var stock = await _stockRepository.GetByProductIdAsync(product.ProductId);
+                        if (stock != null)
+                        {
+                            var previousQty = stock.Quantity;
+                            var restoredQty = (int)product.Quantity;
+                            var newQty = stock.Quantity + restoredQty;
+
+                            Debug.WriteLine($"[CANCEL] Restaurando estoque - Produto: {product.ProductId}, " +
+                                          $"Qtd Anterior: {previousQty}, Nova Qtd: {newQty}, Restaurado: +{restoredQty}");
+
+                            // Atualizar quantidade com nota explicativa detalhada
+                            await _stockRepository.UpdateQuantityAsync(
+                                product.ProductId,
+                                newQty,
+                                userId,
+                                $"Restauração - Cancelamento da fatura #{invoice.InvoiceNumber}. Motivo: {reason}");
+
+                            var productName = product.Product?.Name ?? $"Produto {product.ProductId}";
+                            stockRestorations.Add($"{productName}: {previousQty} → {newQty} (+{restoredQty})");
+                        }
+                        else
+                        {
+                            var productName = product.Product?.Name ?? $"Produto {product.ProductId}";
+                            var errorMsg = $"{productName}: estoque não encontrado";
+                            stockErrors.Add(errorMsg);
+                            Debug.WriteLine($"[CANCEL] ERRO: {errorMsg}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        var productName = product.Product?.Name ?? $"Produto {product.ProductId}";
+                        var errorMsg = $"{productName}: {ex.Message}";
+                        stockErrors.Add(errorMsg);
+                        Debug.WriteLine($"[CANCEL] ERRO ao restaurar produto {product.ProductId}: {ex.Message}");
+                    }
+                }
+
+                // Atualizar status da fatura
+                var previousStatus = invoice.Status;
+                invoice.Status = InvoiceStatus.Cancelled;
+                
+                // Adicionar informações detalhadas nas notas internas
+                var cancellationNote = $"Cancelado em {DateTime.Now:dd/MM/yyyy HH:mm} por usuário #{userId}.\n" +
+                                     $"Motivo: {reason}\n" +
+                                     $"Status anterior: {previousStatus}\n" +
+                                     $"Produtos restaurados: {stockRestorations.Count}/{invoiceProducts.Count()}";
+                
+                if (stockErrors.Any())
+                {
+                    cancellationNote += $"\nErros na restauração: {stockErrors.Count}";
+                }
+
+                invoice.InternalNotes = cancellationNote + "\n---\n" + (invoice.InternalNotes ?? string.Empty);
+
+                // Salvar alterações na fatura
                 await _invoiceRepository.UpdateAsync(invoice);
 
-                return OperationResult<bool>.CreateSuccess(true, "Fatura cancelada com sucesso.");
+                Debug.WriteLine($"[CANCEL] Cancelamento concluído!");
+                Debug.WriteLine($"[CANCEL] - Status: {previousStatus} → {invoice.Status}");
+                Debug.WriteLine($"[CANCEL] - Produtos processados: {invoiceProducts.Count()}");
+                Debug.WriteLine($"[CANCEL] - Estoques restaurados: {stockRestorations.Count}");
+                
+                if (stockRestorations.Any())
+                {
+                    Debug.WriteLine($"[CANCEL] Restaurações de estoque:");
+                    foreach (var restoration in stockRestorations)
+                    {
+                        Debug.WriteLine($"[CANCEL]   ✓ {restoration}");
+                    }
+                }
+
+                if (stockErrors.Any())
+                {
+                    Debug.WriteLine($"[CANCEL] Erros durante restauração:");
+                    foreach (var error in stockErrors)
+                    {
+                        Debug.WriteLine($"[CANCEL]   ✗ {error}");
+                    }
+                }
+
+                // Mensagem de sucesso com informações relevantes
+                var successMessage = "Fatura cancelada com sucesso!";
+                if (stockRestorations.Any())
+                {
+                    successMessage += $" {stockRestorations.Count} produto(s) restaurado(s) ao estoque.";
+                }
+                
+                if (stockErrors.Any())
+                {
+                    successMessage += $" Atenção: {stockErrors.Count} erro(s) ao restaurar alguns produtos.";
+                }
+
+                return OperationResult<bool>.CreateSuccess(true, successMessage);
             }
             catch (Exception ex)
             {
-                return OperationResult<bool>.CreateFailure("Erro ao cancelar fatura.", new[] { ex.Message });
+                Debug.WriteLine($"[CANCEL] ERRO GERAL ao cancelar fatura: {ex.Message}");
+                Debug.WriteLine($"[CANCEL] Stack trace: {ex.StackTrace}");
+                return OperationResult<bool>.CreateFailure(
+                    "Erro ao cancelar fatura.", 
+                    new[] { ex.Message });
             }
         }
 
@@ -355,27 +465,65 @@ namespace VendaFlex.Core.Services
                 // Obter usuário atual ou usar o da fatura original
                 var userId = _currentUserContext.UserId ?? originalInvoice.UserId;
 
+                // Gerar número de fatura inteligente e compacto
+                // Remover sufixos anteriores de cópias para evitar números muito longos
+                var baseInvoiceNumber = originalInvoice.InvoiceNumber;
+                
+                // Se já é uma cópia, extrair o número base
+                var copyIndex = baseInvoiceNumber.IndexOf("-C", StringComparison.OrdinalIgnoreCase);
+                if (copyIndex > 0)
+                {
+                    baseInvoiceNumber = baseInvoiceNumber.Substring(0, copyIndex);
+                }
+                
+                // Gerar novo número compacto: BASE-C-TIMESTAMP_CURTO
+                // Exemplo: INV-2025-0003-C-1129160435 (max 30 caracteres)
+                var timestamp = DateTime.Now.ToString("MMddHHmmss"); // 10 caracteres
+                var newInvoiceNumber = $"{baseInvoiceNumber}-C-{timestamp}";
+                
+                // Garantir que não exceda 50 caracteres (limite do banco)
+                if (newInvoiceNumber.Length > 50)
+                {
+                    // Se ainda assim for muito longo, truncar o base e adicionar timestamp
+                    var maxBaseLength = 50 - 13; // 13 = "-C-" + 10 dígitos timestamp
+                    baseInvoiceNumber = baseInvoiceNumber.Substring(0, Math.Min(maxBaseLength, baseInvoiceNumber.Length));
+                    newInvoiceNumber = $"{baseInvoiceNumber}-C-{timestamp}";
+                }
+
+                Debug.WriteLine($"[DUPLICATE] Número da fatura original: {originalInvoice.InvoiceNumber}");
+                Debug.WriteLine($"[DUPLICATE] Número base extraído: {baseInvoiceNumber}");
+                Debug.WriteLine($"[DUPLICATE] Novo número gerado: {newInvoiceNumber} (length: {newInvoiceNumber.Length})");
+
+                // Verificar se o número já existe (improvável, mas seguro)
+                var attempts = 0;
+                while (await _invoiceRepository.NumberExistsAsync(newInvoiceNumber) && attempts < 10)
+                {
+                    attempts++;
+                    timestamp = DateTime.Now.AddSeconds(attempts).ToString("MMddHHmmss");
+                    newInvoiceNumber = $"{baseInvoiceNumber}-C-{timestamp}";
+                    Debug.WriteLine($"[DUPLICATE] Número já existe, tentativa {attempts}: {newInvoiceNumber}");
+                }
+
                 // Criar nova fatura baseada na original
                 var newInvoice = new Invoice
                 {
                     PersonId = originalInvoice.PersonId,
                     UserId = userId,
-                    Date = DateTime.UtcNow, // Usar UTC
+                    Date = DateTime.UtcNow,
                     DueDate = originalInvoice.DueDate.HasValue 
                         ? DateTime.UtcNow.AddDays((originalInvoice.DueDate.Value - originalInvoice.Date).Days)
                         : null,
-                    InvoiceNumber = $"{originalInvoice.InvoiceNumber}-COPIA-{DateTime.Now:yyyyMMddHHmmss}",
+                    InvoiceNumber = newInvoiceNumber,
                     Status = InvoiceStatus.Draft,
                     SubTotal = originalInvoice.SubTotal,
                     TaxAmount = originalInvoice.TaxAmount,
                     DiscountAmount = originalInvoice.DiscountAmount,
                     ShippingCost = originalInvoice.ShippingCost,
                     Total = originalInvoice.Total,
-                    PaidAmount = 0, // Nova fatura começa sem pagamento
-                    Notes = $"Cópia da fatura {originalInvoice.InvoiceNumber} - {DateTime.Now:dd/MM/yyyy}" ?? string.Empty,
+                    PaidAmount = 0,
+                    Notes = $"Cópia da fatura {originalInvoice.InvoiceNumber}" ?? string.Empty,
                     InternalNotes = $"Duplicada da fatura #{originalInvoice.InvoiceNumber} pelo usuário {userId}. " + 
                                   (originalInvoice.InternalNotes ?? string.Empty),
-                    // Campos de auditoria herdados de AuditableEntity
                     CreatedAt = DateTime.UtcNow,
                     CreatedByUserId = userId,
                     UpdatedAt = null,
@@ -383,7 +531,7 @@ namespace VendaFlex.Core.Services
                 };
 
                 Debug.WriteLine($"[DUPLICATE] Salvando nova fatura...");
-                Debug.WriteLine($"[DUPLICATE] - InvoiceNumber: {newInvoice.InvoiceNumber}");
+                Debug.WriteLine($"[DUPLICATE] - InvoiceNumber: {newInvoice.InvoiceNumber} (length: {newInvoice.InvoiceNumber.Length})");
                 Debug.WriteLine($"[DUPLICATE] - PersonId: {newInvoice.PersonId}");
                 Debug.WriteLine($"[DUPLICATE] - UserId: {newInvoice.UserId}");
                 Debug.WriteLine($"[DUPLICATE] - Status: {newInvoice.Status}");
@@ -400,9 +548,7 @@ namespace VendaFlex.Core.Services
                 {
                     Debug.WriteLine($"[DUPLICATE] ERRO ao salvar nova fatura: {ex.Message}");
                     Debug.WriteLine($"[DUPLICATE] Inner Exception: {ex.InnerException?.Message}");
-                    Debug.WriteLine($"[DUPLICATE] Stack trace: {ex.StackTrace}");
                     
-                    // Retornar erro mais detalhado
                     var errorMessage = ex.InnerException?.Message ?? ex.Message;
                     return OperationResult<InvoiceDto>.CreateFailure(
                         $"Erro ao salvar nova fatura: {errorMessage}");
@@ -445,7 +591,7 @@ namespace VendaFlex.Core.Services
                                 originalProduct.ProductId,
                                 newQty,
                                 userId,
-                                $"Dedução automática - Duplicação da fatura {originalInvoice.InvoiceNumber} para {created.InvoiceNumber}");
+                                $"Dedução - Duplicação de fatura #{originalInvoice.InvoiceNumber}");
 
                             var productName = originalProduct.Product?.Name ?? $"Produto {originalProduct.ProductId}";
                             stockUpdates.Add($"{productName}: {previousQty} → {newQty} (-{originalProduct.Quantity})");
@@ -458,21 +604,12 @@ namespace VendaFlex.Core.Services
                     catch (Exception ex)
                     {
                         Debug.WriteLine($"[DUPLICATE] ERRO ao processar produto {originalProduct.ProductId}: {ex.Message}");
-                        // Continuar com os outros produtos mesmo se um falhar
                     }
                 }
 
                 Debug.WriteLine($"[DUPLICATE] Duplicação concluída com sucesso!");
                 Debug.WriteLine($"[DUPLICATE] - {copiedProductsCount} produtos copiados");
                 Debug.WriteLine($"[DUPLICATE] - {stockUpdates.Count} atualizações de estoque realizadas");
-                if (stockUpdates.Any())
-                {
-                    Debug.WriteLine($"[DUPLICATE] Atualizações de estoque:");
-                    foreach (var update in stockUpdates)
-                    {
-                        Debug.WriteLine($"[DUPLICATE]   - {update}");
-                    }
-                }
 
                 var dto = _mapper.Map<InvoiceDto>(created);
                 
@@ -482,9 +619,8 @@ namespace VendaFlex.Core.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[DUPLICATE] ERRO GERAL ao duplicar fatura: {ex.Message}");
-                Debug.WriteLine($"[DUPLICATE] Inner Exception: {ex.InnerException?.Message}");
-                Debug.WriteLine($"[DUPLICATE] Stack trace: {ex.StackTrace}");
+                Debug.WriteLine($"[DUPLICATE] ERRO GERAL: {ex.Message}");
+                Debug.WriteLine($"[DUPLICATE] Inner: {ex.InnerException?.Message}");
                 
                 var errorMessage = ex.InnerException?.Message ?? ex.Message;
                 return OperationResult<InvoiceDto>.CreateFailure(
