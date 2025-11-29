@@ -58,9 +58,19 @@ namespace VendaFlex.Data.Repositories
 
         public async Task<Invoice> UpdateAsync(Invoice entity)
         {
-            _context.Invoices.Update(entity);
+            // Buscar a entidade existente do contexto
+            var existingEntity = await _context.Invoices.FindAsync(entity.InvoiceId);
+            
+            if (existingEntity == null)
+            {
+                throw new InvalidOperationException($"Invoice with ID {entity.InvoiceId} not found.");
+            }
+
+            // Atualizar apenas as propriedades necessárias, excluindo navegação
+            _context.Entry(existingEntity).CurrentValues.SetValues(entity);
+            
             await _context.SaveChangesAsync();
-            return entity;
+            return existingEntity;
         }
 
         public async Task<bool> DeleteAsync(int id)

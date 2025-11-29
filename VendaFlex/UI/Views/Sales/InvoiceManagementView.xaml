@@ -126,19 +126,19 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <DatePicker Grid.Column="0" SelectedDate="{Binding FilterStartDate}"
+                                <DatePicker Grid.Column="0" SelectedDate="{Binding FilterStartDate, Mode=TwoWay}"
                                             Style="{StaticResource MaterialDesignOutlinedDatePicker}"
                                             materialDesign:HintAssist.Hint="Data Inicial"
                                             materialDesign:TextFieldAssist.HasClearButton="True"/>
-                                <DatePicker Grid.Column="2" SelectedDate="{Binding FilterEndDate}"
+                                <DatePicker Grid.Column="2" SelectedDate="{Binding FilterEndDate, Mode=TwoWay}"
                                             Style="{StaticResource MaterialDesignOutlinedDatePicker}"
                                             materialDesign:HintAssist.Hint="Data Final"
                                             materialDesign:TextFieldAssist.HasClearButton="True"/>
-                                <TextBox Grid.Column="4" Text="{Binding FilterInvoiceNumber, UpdateSourceTrigger=PropertyChanged}"
+                                <TextBox Grid.Column="4" Text="{Binding FilterInvoiceNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                          materialDesign:HintAssist.Hint="Nº Fatura"
                                          materialDesign:TextFieldAssist.HasClearButton="True"/>
-                                <ComboBox Grid.Column="6" SelectedItem="{Binding FilterStatus}"
+                                <ComboBox Grid.Column="6" SelectedItem="{Binding FilterStatus, Mode=TwoWay}"
                                           Style="{StaticResource MaterialDesignOutlinedComboBox}"
                                           materialDesign:HintAssist.Hint="Status">
                                     <ComboBoxItem Content="Todos"/>
@@ -160,26 +160,26 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBox Grid.Column="0" Text="{Binding FilterCustomerName, UpdateSourceTrigger=PropertyChanged}"
+                                <TextBox Grid.Column="0" Text="{Binding FilterCustomerName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                          materialDesign:HintAssist.Hint="Nome do Cliente"
                                          materialDesign:TextFieldAssist.HasLeadingIcon="True"
                                          materialDesign:TextFieldAssist.LeadingIcon="Account"
                                          materialDesign:TextFieldAssist.HasClearButton="True"/>
-                                <TextBox Grid.Column="2" Text="{Binding FilterCustomerNif, UpdateSourceTrigger=PropertyChanged}"
+                                <TextBox Grid.Column="2" Text="{Binding FilterCustomerNif, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                          materialDesign:HintAssist.Hint="NIF do Cliente"
                                          materialDesign:TextFieldAssist.HasLeadingIcon="True"
                                          materialDesign:TextFieldAssist.LeadingIcon="CardAccountDetails"
                                          materialDesign:TextFieldAssist.HasClearButton="True"/>
-                                <TextBox Grid.Column="4" Text="{Binding FilterOperatorName, UpdateSourceTrigger=PropertyChanged}"
+                                <TextBox Grid.Column="4" Text="{Binding FilterOperatorName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                          materialDesign:HintAssist.Hint="Operador"
                                          materialDesign:TextFieldAssist.HasLeadingIcon="True"
                                          materialDesign:TextFieldAssist.LeadingIcon="AccountTie"
                                          materialDesign:TextFieldAssist.HasClearButton="True"/>
                                 <ComboBox Grid.Column="6" ItemsSource="{Binding PaymentTypes}"
-                                          SelectedItem="{Binding FilterPaymentType}"
+                                          SelectedItem="{Binding FilterPaymentType, Mode=TwoWay}"
                                           DisplayMemberPath="Name"
                                           Style="{StaticResource MaterialDesignOutlinedComboBox}"
                                           materialDesign:HintAssist.Hint="Forma de Pagamento"
@@ -228,7 +228,7 @@
                                                          ToolTip="Total de registros"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                    <ComboBox SelectedItem="{Binding SortColumn}" Width="120"
+                                    <ComboBox SelectedItem="{Binding SortColumn, Mode=TwoWay}" Width="120"
                                               Style="{StaticResource MaterialDesignComboBox}"
                                               materialDesign:HintAssist.Hint="Ordenar por" Margin="0,0,8,0">
                                         <ComboBoxItem Content="Data"/>
@@ -236,7 +236,7 @@
                                         <ComboBoxItem Content="Total"/>
                                     </ComboBox>
                                     <ToggleButton Style="{StaticResource MaterialDesignFlatPrimaryToggleButton}"
-                                                  IsChecked="{Binding SortAscending}" ToolTip="Ordem Crescente/Decrescente">
+                                                  IsChecked="{Binding SortAscending, Mode=TwoWay}" ToolTip="Ordem Crescente/Decrescente">
                                         <materialDesign:PackIcon Kind="SortAscending"/>
                                         <materialDesign:ToggleButtonAssist.OnContent>
                                             <materialDesign:PackIcon Kind="SortDescending"/>
@@ -248,7 +248,7 @@
 
                         <!-- DataGrid -->
                         <DataGrid Grid.Row="1" ItemsSource="{Binding Invoices}"
-                                  SelectedItem="{Binding SelectedInvoice}"
+                                  SelectedItem="{Binding SelectedInvoice, Mode=TwoWay}"
                                   AutoGenerateColumns="False" CanUserAddRows="False"
                                   IsReadOnly="True" SelectionMode="Single"
                                   VerticalScrollBarVisibility="Auto"
@@ -367,7 +367,7 @@
                             <Grid>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                     <TextBlock Text="Exibindo" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                    <ComboBox SelectedItem="{Binding PageSize}" Width="60"
+                                    <ComboBox SelectedItem="{Binding PageSize, Mode=TwoWay}" Width="60"
                                               Style="{StaticResource MaterialDesignComboBox}" Margin="0,0,4,0">
                                         <sys:Int32>10</sys:Int32>
                                         <sys:Int32>20</sys:Int32>
@@ -386,9 +386,9 @@
                                         <materialDesign:PackIcon Kind="ChevronLeft"/>
                                     </Button>
                                     <TextBlock VerticalAlignment="Center" Margin="8,0">
-                                        <Run Text="{Binding PageNumber}"/>
+                                        <Run Text="{Binding PageNumber, Mode=OneWay}"/>
                                         <Run Text="de"/>
-                                        <Run Text="{Binding TotalPages}"/>
+                                        <Run Text="{Binding TotalPages, Mode=OneWay}"/>
                                     </TextBlock>
                                     <Button Command="{Binding NextPageCommand}"
                                             Style="{StaticResource MaterialDesignIconButton}" ToolTip="Próxima">

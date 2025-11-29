@@ -19,5 +19,11 @@ namespace VendaFlex.Core.DTOs
         public decimal PaidAmount { get; set; }
         public string Notes { get; set; }
         public string InternalNotes { get; set; }
+        
+        // Campos de auditoria
+        public DateTime? CreatedAt { get; set; }
+        public int CreatedByUserId { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        public int UpdatedByUserId { get; set; }
     }
 }

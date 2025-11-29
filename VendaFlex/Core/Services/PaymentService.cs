@@ -162,10 +162,12 @@ namespace VendaFlex.Core.Services
                 if (!validation.IsValid)
                     return OperationResult<PaymentDto>.CreateFailure("Dados inválidos.", validation.Errors.Select(e => e.ErrorMessage));
 
-                var existing = await _paymentRepository.GetByIdAsync(payment.PaymentId);
-                if (existing == null)
+                // Buscar a entidade existente sem tracking para verificar se existe
+                var exists = await _paymentRepository.ExistsAsync(payment.PaymentId);
+                if (!exists)
                     return OperationResult<PaymentDto>.CreateFailure("Pagamento não encontrado.");
 
+                // Mapear e atualizar diretamente
                 var entity = _mapper.Map<VendaFlex.Data.Entities.Payment>(payment);
                 var updated = await _paymentRepository.UpdateAsync(entity);
                 var dto = _mapper.Map<PaymentDto>(updated);

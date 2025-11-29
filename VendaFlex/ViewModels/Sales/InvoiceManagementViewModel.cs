@@ -25,6 +25,7 @@ namespace VendaFlex.ViewModels.Sales
         private readonly ICompanyConfigService _companyConfigService;
         private readonly ICurrentUserContext _currentUserContext;
         private readonly IPersonService _personService;
+        private readonly IUserService _userService;
         private readonly IReceiptPrintService _printService;
         private readonly IInvoiceService _invoiceService;
         private readonly IInvoiceProductService _invoiceProductService;
@@ -422,7 +423,8 @@ namespace VendaFlex.ViewModels.Sales
             IPaymentService paymentService,
             IPaymentTypeService paymentTypeService,
             IProductService productService,
-            IStockService stockService)
+            IStockService stockService,
+            IUserService userService)
         {
             _companyConfigService = companyConfigService ?? throw new ArgumentNullException(nameof(companyConfigService));
             _currentUserContext = currentUserContext ?? throw new ArgumentNullException(nameof(currentUserContext));
@@ -434,6 +436,7 @@ namespace VendaFlex.ViewModels.Sales
             _paymentTypeService = paymentTypeService ?? throw new ArgumentNullException(nameof(paymentTypeService));
             _productService = productService ?? throw new ArgumentNullException(nameof(productService));
             _stockService = stockService ?? throw new ArgumentNullException(nameof(stockService));
+            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
 
             InitializeCommands();
             _ = InitializeAsync();
@@ -490,7 +493,7 @@ namespace VendaFlex.ViewModels.Sales
             {
                 IsLoading = false;
             }
-        }
+        }  //SelectedInvoiceHistory
 
         private async Task LoadPaymentTypesAsync()
         {
@@ -862,17 +865,49 @@ namespace VendaFlex.ViewModels.Sales
         {
             try
             {
-                // TODO: Implementar serviço de histórico quando disponível
-                SelectedInvoiceHistory = new ObservableCollection<InvoiceHistoryItemDto>
+                var historyItems = new List<InvoiceHistoryItemDto>();
+
+                var invoiceResult = await _invoiceService.GetByIdAsync(invoiceId);
+                if (invoiceResult.Success && invoiceResult.Data != null)
                 {
-                    new InvoiceHistoryItemDto
+                    var invoice = invoiceResult.Data;
+
+                    // Adicionar item de criação
+                    if (invoice.CreatedAt.HasValue)
                     {
-                        ActionDescription = "Fatura criada",
-                        ActionIcon = "Plus",
-                        UserName = "Sistema",
-                        Timestamp = DateTime.Now
+                        var user = await _userService.GetByIdAsync(invoice.CreatedByUserId);
+                        var userCreateName = user?.Data?.Username ?? "Desconhecido";
+
+                        historyItems.Add(new InvoiceHistoryItemDto
+                        {
+                            ActionDescription = "Fatura criada",
+                            ActionIcon = "Plus",
+                            UserName = userCreateName,
+                            Timestamp = invoice.CreatedAt.Value
+                        });
                     }
-                };
+
+                    // Adicionar item de atualização (se houver e for diferente da criação)
+                    if (invoice.UpdatedAt.HasValue &&
+                        invoice.UpdatedAt.Value != invoice.CreatedAt)
+                    {
+                        var user = await _userService.GetByIdAsync(invoice.UpdatedByUserId); // usar UpdatedByUserId
+                        var userUpdateName = user?.Data?.Username ?? "Desconhecido";
+
+                        historyItems.Add(new InvoiceHistoryItemDto
+                        {
+                            ActionDescription = "Fatura atualizada",
+                            ActionIcon = "Pencil",
+                            UserName = userUpdateName,
+                            Timestamp = invoice.UpdatedAt.Value
+                        });
+                    }
+                }
+
+                SelectedInvoiceHistory = new ObservableCollection<InvoiceHistoryItemDto>(
+                    historyItems.OrderByDescending(h => h.Timestamp)
+                );
+
                 await Task.CompletedTask;
             }
             catch (Exception ex)
@@ -881,6 +916,7 @@ namespace VendaFlex.ViewModels.Sales
                 SelectedInvoiceHistory = new ObservableCollection<InvoiceHistoryItemDto>();
             }
         }
+
 
         private async Task LoadStockImpactAsync()
         {
@@ -1560,7 +1596,6 @@ namespace VendaFlex.ViewModels.Sales
             return PaymentToChange != null && NewPaymentType > 0;
         }
 
-        //  altera a forma de pagamento de um pagamento existente
         private async Task ChangePaymentTypeAsync()
         {
             if (PaymentToChange == null || NewPaymentType <= 0) return;
@@ -1586,7 +1621,7 @@ namespace VendaFlex.ViewModels.Sales
                 {
                     var payment = paymentResult.Data;
                     
-                    // Atualizar apenas o PaymentTypeId
+                    // Atualizar apenas o PaymentTypeId mantendo todos os outros dados
                     payment.PaymentTypeId = NewPaymentType;
 
                     var updateResult = await _paymentService.UpdateAsync(payment);
@@ -1594,9 +1629,12 @@ namespace VendaFlex.ViewModels.Sales
                     if (updateResult.Success)
                     {
                         ShowMessage("Forma de pagamento alterada com sucesso!");
+                        
+                        // Limpar seleção
                         PaymentToChange = null;
                         NewPaymentType = 0;
 
+                        // Recarregar detalhes
                         await LoadInvoiceDetailsAsync();
                     }
                     else
@@ -1604,14 +1642,19 @@ namespace VendaFlex.ViewModels.Sales
                         ShowMessage($"Erro ao alterar: {updateResult.Message}", true);
                         if (updateResult.Errors?.Any() == true)
                         {
-                            ShowMessage($"Erros de alteracao de pagamento: {string.Join(", ", updateResult.Errors)}", true);
+                            Debug.WriteLine($"Erros de validação: {string.Join(", ", updateResult.Errors)}");
                         }
                     }
+                }
+                else
+                {
+                    ShowMessage($"Erro ao buscar pagamento: {paymentResult.Message}", true);
                 }
             }
             catch (Exception ex)
             {
                 ShowMessage($"Erro ao alterar forma de pagamento: {ex.Message}", true);
+                Debug.WriteLine($"Exceção: {ex}");
             }
             finally
             {
