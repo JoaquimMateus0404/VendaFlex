@@ -16,19 +16,25 @@ namespace VendaFlex.Core.Services
     {
         private readonly InvoiceRepository _invoiceRepository;
         private readonly InvoiceProductRepository _invoiceProductRepository;
+        private readonly StockRepository _stockRepository;
         private readonly IValidator<InvoiceDto> _invoiceValidator;
         private readonly IMapper _mapper;
+        private readonly ICurrentUserContext _currentUserContext;
         
         public InvoiceService(
             InvoiceRepository invoiceRepository,
             InvoiceProductRepository invoiceProductRepository,
+            StockRepository stockRepository,
             IValidator<InvoiceDto> invoiceValidator,
-            IMapper mapper)
+            IMapper mapper,
+            ICurrentUserContext currentUserContext)
         {
             _invoiceRepository = invoiceRepository;
             _invoiceProductRepository = invoiceProductRepository;
+            _stockRepository = stockRepository;
             _invoiceValidator = invoiceValidator;
             _mapper = mapper;
+            _currentUserContext = currentUserContext;
         }
 
         public async Task<OperationResult<InvoiceDto>> AddAsync(InvoiceDto invoice)
@@ -325,14 +331,38 @@ namespace VendaFlex.Core.Services
                         "Não é possível duplicar uma fatura sem produtos.");
                 }
 
+                Debug.WriteLine($"[DUPLICATE] Iniciando duplicação da fatura #{invoiceId} com {originalProducts.Count()} produtos");
+
+                // Verificar disponibilidade de estoque para todos os produtos
+                var stockIssues = new List<string>();
+                foreach (var product in originalProducts)
+                {
+                    var availableQty = await _stockRepository.GetAvailableQuantityAsync(product.ProductId);
+                    if (availableQty < product.Quantity)
+                    {
+                        // Buscar nome do produto para mensagem mais clara
+                        var productName = product.Product?.Name ?? $"Produto {product.ProductId}";
+                        stockIssues.Add($"{productName}: disponível {availableQty}, necessário {product.Quantity}");
+                    }
+                }
+
+                if (stockIssues.Any())
+                {
+                    return OperationResult<InvoiceDto>.CreateFailure(
+                        $"Estoque insuficiente para duplicar a fatura:\n{string.Join("\n", stockIssues)}");
+                }
+
+                // Obter usuário atual ou usar o da fatura original
+                var userId = _currentUserContext.UserId ?? originalInvoice.UserId;
+
                 // Criar nova fatura baseada na original
                 var newInvoice = new Invoice
                 {
                     PersonId = originalInvoice.PersonId,
-                    UserId = originalInvoice.UserId,
-                    Date = DateTime.Now,
+                    UserId = userId,
+                    Date = DateTime.UtcNow, // Usar UTC
                     DueDate = originalInvoice.DueDate.HasValue 
-                        ? DateTime.Now.AddDays((originalInvoice.DueDate.Value - originalInvoice.Date).Days)
+                        ? DateTime.UtcNow.AddDays((originalInvoice.DueDate.Value - originalInvoice.Date).Days)
                         : null,
                     InvoiceNumber = $"{originalInvoice.InvoiceNumber}-COPIA-{DateTime.Now:yyyyMMddHHmmss}",
                     Status = InvoiceStatus.Draft,
@@ -342,47 +372,123 @@ namespace VendaFlex.Core.Services
                     ShippingCost = originalInvoice.ShippingCost,
                     Total = originalInvoice.Total,
                     PaidAmount = 0, // Nova fatura começa sem pagamento
-                    Notes = $"Cópia da fatura {originalInvoice.InvoiceNumber} - {DateTime.Now:dd/MM/yyyy}",
-                    InternalNotes = $"Duplicada da fatura #{originalInvoice.InvoiceNumber}. " + 
+                    Notes = $"Cópia da fatura {originalInvoice.InvoiceNumber} - {DateTime.Now:dd/MM/yyyy}" ?? string.Empty,
+                    InternalNotes = $"Duplicada da fatura #{originalInvoice.InvoiceNumber} pelo usuário {userId}. " + 
                                   (originalInvoice.InternalNotes ?? string.Empty),
-                    CreatedAt = DateTime.UtcNow
+                    // Campos de auditoria herdados de AuditableEntity
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedByUserId = userId,
+                    UpdatedAt = null,
+                    UpdatedByUserId = 0
                 };
 
+                Debug.WriteLine($"[DUPLICATE] Salvando nova fatura...");
+                Debug.WriteLine($"[DUPLICATE] - InvoiceNumber: {newInvoice.InvoiceNumber}");
+                Debug.WriteLine($"[DUPLICATE] - PersonId: {newInvoice.PersonId}");
+                Debug.WriteLine($"[DUPLICATE] - UserId: {newInvoice.UserId}");
+                Debug.WriteLine($"[DUPLICATE] - Status: {newInvoice.Status}");
+                Debug.WriteLine($"[DUPLICATE] - Total: {newInvoice.Total}");
+
                 // Salvar a nova fatura
-                var created = await _invoiceRepository.AddAsync(newInvoice);
-
-                // Copiar todos os produtos da fatura original
-                var copiedProductsCount = 0;
-                foreach (var originalProduct in originalProducts)
+                Invoice created;
+                try
                 {
-                    var newProduct = new InvoiceProduct
-                    {
-                        InvoiceId = created.InvoiceId,
-                        ProductId = originalProduct.ProductId,
-                        Quantity = originalProduct.Quantity,
-                        UnitPrice = originalProduct.UnitPrice,
-                        DiscountPercentage = originalProduct.DiscountPercentage,
-                        TaxRate = originalProduct.TaxRate
-                    };
-
-                    await _invoiceProductRepository.AddAsync(newProduct);
-                    copiedProductsCount++;
+                    created = await _invoiceRepository.AddAsync(newInvoice);
+                    Debug.WriteLine($"[DUPLICATE] Nova fatura criada com sucesso: #{created.InvoiceNumber} (ID: {created.InvoiceId})");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[DUPLICATE] ERRO ao salvar nova fatura: {ex.Message}");
+                    Debug.WriteLine($"[DUPLICATE] Inner Exception: {ex.InnerException?.Message}");
+                    Debug.WriteLine($"[DUPLICATE] Stack trace: {ex.StackTrace}");
+                    
+                    // Retornar erro mais detalhado
+                    var errorMessage = ex.InnerException?.Message ?? ex.Message;
+                    return OperationResult<InvoiceDto>.CreateFailure(
+                        $"Erro ao salvar nova fatura: {errorMessage}");
                 }
 
-                Debug.WriteLine($"Fatura duplicada com sucesso. {copiedProductsCount} produtos copiados.");
+                // Copiar todos os produtos da fatura original E atualizar o estoque
+                var copiedProductsCount = 0;
+                var stockUpdates = new List<string>();
+                
+                foreach (var originalProduct in originalProducts)
+                {
+                    try
+                    {
+                        // Copiar o produto para a nova fatura
+                        var newProduct = new InvoiceProduct
+                        {
+                            InvoiceId = created.InvoiceId,
+                            ProductId = originalProduct.ProductId,
+                            Quantity = originalProduct.Quantity,
+                            UnitPrice = originalProduct.UnitPrice,
+                            DiscountPercentage = originalProduct.DiscountPercentage,
+                            TaxRate = originalProduct.TaxRate
+                        };
+
+                        await _invoiceProductRepository.AddAsync(newProduct);
+                        copiedProductsCount++;
+
+                        // Atualizar o estoque (deduzir a quantidade)
+                        var stock = await _stockRepository.GetByProductIdAsync(originalProduct.ProductId);
+                        if (stock != null)
+                        {
+                            var previousQty = stock.Quantity;
+                            var newQty = stock.Quantity - (int)originalProduct.Quantity;
+
+                            Debug.WriteLine($"[DUPLICATE] Atualizando estoque - Produto: {originalProduct.ProductId}, " +
+                                          $"Qtd Anterior: {previousQty}, Nova Qtd: {newQty}, Deduzido: {originalProduct.Quantity}");
+
+                            // Atualizar quantidade com nota explicativa
+                            await _stockRepository.UpdateQuantityAsync(
+                                originalProduct.ProductId,
+                                newQty,
+                                userId,
+                                $"Dedução automática - Duplicação da fatura {originalInvoice.InvoiceNumber} para {created.InvoiceNumber}");
+
+                            var productName = originalProduct.Product?.Name ?? $"Produto {originalProduct.ProductId}";
+                            stockUpdates.Add($"{productName}: {previousQty} → {newQty} (-{originalProduct.Quantity})");
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"[DUPLICATE] AVISO: Stock não encontrado para produto {originalProduct.ProductId}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[DUPLICATE] ERRO ao processar produto {originalProduct.ProductId}: {ex.Message}");
+                        // Continuar com os outros produtos mesmo se um falhar
+                    }
+                }
+
+                Debug.WriteLine($"[DUPLICATE] Duplicação concluída com sucesso!");
+                Debug.WriteLine($"[DUPLICATE] - {copiedProductsCount} produtos copiados");
+                Debug.WriteLine($"[DUPLICATE] - {stockUpdates.Count} atualizações de estoque realizadas");
+                if (stockUpdates.Any())
+                {
+                    Debug.WriteLine($"[DUPLICATE] Atualizações de estoque:");
+                    foreach (var update in stockUpdates)
+                    {
+                        Debug.WriteLine($"[DUPLICATE]   - {update}");
+                    }
+                }
 
                 var dto = _mapper.Map<InvoiceDto>(created);
                 
                 return OperationResult<InvoiceDto>.CreateSuccess(
                     dto, 
-                    $"Fatura duplicada com sucesso! {copiedProductsCount} produto(s) copiado(s).");
+                    $"Fatura duplicada com sucesso! {copiedProductsCount} produto(s) copiado(s) e estoque atualizado.");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Erro ao duplicar fatura: {ex.Message}");
+                Debug.WriteLine($"[DUPLICATE] ERRO GERAL ao duplicar fatura: {ex.Message}");
+                Debug.WriteLine($"[DUPLICATE] Inner Exception: {ex.InnerException?.Message}");
+                Debug.WriteLine($"[DUPLICATE] Stack trace: {ex.StackTrace}");
+                
+                var errorMessage = ex.InnerException?.Message ?? ex.Message;
                 return OperationResult<InvoiceDto>.CreateFailure(
-                    "Erro ao duplicar fatura.", 
-                    new[] { ex.Message });
+                    $"Erro ao duplicar fatura: {errorMessage}");
             }
         }
     }
