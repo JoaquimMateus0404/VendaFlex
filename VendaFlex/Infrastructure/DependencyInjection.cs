@@ -57,6 +57,7 @@ namespace VendaFlex.Infrastructure
             services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
             services.AddSingleton<IFileStorageService, FileStorageService>();
             services.AddScoped<IReceiptPrintService, ReceiptPrintService>();
+            services.AddScoped<IPdfGeneratorService, PdfGeneratorService>();
 
             // Repositórios
             services.AddScoped<UserRepository>();

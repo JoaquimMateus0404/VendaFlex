@@ -27,6 +27,7 @@ namespace VendaFlex.ViewModels.Sales
         private readonly IPersonService _personService;
         private readonly IUserService _userService;
         private readonly IReceiptPrintService _printService;
+        private readonly IPdfGeneratorService _pdfGeneratorService;
         private readonly IInvoiceService _invoiceService;
         private readonly IInvoiceProductService _invoiceProductService;
         private readonly IPaymentService _paymentService;
@@ -418,6 +419,7 @@ namespace VendaFlex.ViewModels.Sales
             ICurrentUserContext currentUserContext,
             IPersonService personService,
             IReceiptPrintService printService,
+            IPdfGeneratorService pdfGeneratorService,
             IInvoiceService invoiceService,
             IInvoiceProductService invoiceProductService,
             IPaymentService paymentService,
@@ -430,6 +432,7 @@ namespace VendaFlex.ViewModels.Sales
             _currentUserContext = currentUserContext ?? throw new ArgumentNullException(nameof(currentUserContext));
             _personService = personService ?? throw new ArgumentNullException(nameof(personService));
             _printService = printService ?? throw new ArgumentNullException(nameof(printService));
+            _pdfGeneratorService = pdfGeneratorService ?? throw new ArgumentNullException(nameof(pdfGeneratorService));
             _invoiceService = invoiceService ?? throw new ArgumentNullException(nameof(invoiceService));
             _invoiceProductService = invoiceProductService ?? throw new ArgumentNullException(nameof(invoiceProductService));
             _paymentService = paymentService ?? throw new ArgumentNullException(nameof(paymentService));
@@ -1028,15 +1031,74 @@ namespace VendaFlex.ViewModels.Sales
                     IsLoading = true;
                     ShowMessage("Gerando PDF...");
 
-                    // TODO: Implementar geração de PDF
-                    await Task.Delay(1000);
+                    // Buscar dados completos da fatura
+                    var invoiceResult = await _invoiceService.GetByIdAsync(SelectedInvoice.InvoiceId);
+                    if (!invoiceResult.Success || invoiceResult.Data == null)
+                    {
+                        ShowMessage($"Erro ao buscar fatura: {invoiceResult.Message}", true);
+                        return;
+                    }
 
-                    ShowMessage($"PDF gerado: {dialog.FileName}");
+                    var invoice = invoiceResult.Data;
+
+                    // Buscar configurações da empresa
+                    var companyResult = await _companyConfigService.GetAsync();
+                    if (!companyResult.Success || companyResult.Data == null)
+                    {
+                        ShowMessage("Erro: Configuração da empresa não encontrada", true);
+                        return;
+                    }
+
+                    var company = companyResult.Data;
+
+                    // Buscar itens da fatura
+                    var itemsResult = await _invoiceProductService.GetByInvoiceIdAsync(invoice.InvoiceId);
+                    var items = itemsResult.Success && itemsResult.Data != null
+                        ? itemsResult.Data
+                        : Enumerable.Empty<InvoiceProductDto>();
+
+                    // Buscar dados do cliente (se configurado)
+                    PersonDto? customer = null;
+                    if (company.IncludeCustomerData && invoice.PersonId > 0)
+                    {
+                        var customerResult = await _personService.GetByIdAsync(invoice.PersonId);
+                        if (customerResult.Success && customerResult.Data != null)
+                        {
+                            customer = customerResult.Data;
+                        }
+                    }
+
+                    // Gerar o PDF
+                    await _pdfGeneratorService.GenerateInvoicePdfAsync(
+                        company,
+                        invoice,
+                        items,
+                        customer,
+                        dialog.FileName);
+
+                    ShowMessage($"PDF gerado com sucesso!");
+                    
+                    // Perguntar se deseja abrir o arquivo
+                    var result = MessageBox.Show(
+                        "PDF gerado com sucesso!\n\nDeseja abrir o arquivo?",
+                        "PDF Gerado",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Information);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = dialog.FileName,
+                            UseShellExecute = true
+                        });
+                    }
                 }
             }
             catch (Exception ex)
             {
                 ShowMessage($"Erro ao gerar PDF: {ex.Message}", true);
+                Debug.WriteLine($"Erro detalhado ao gerar PDF: {ex}");
             }
             finally
             {
@@ -1583,10 +1645,6 @@ namespace VendaFlex.ViewModels.Sales
             {
                 ShowMessage($"Erro ao aplicar acréscimo: {ex.Message}", true);
                 Debug.WriteLine($"Exp: Erro ao aplicar acréscimo: {ex.Message}");
-            }
-            finally
-            {
-                IsLoading = false;
             }
         }
 */

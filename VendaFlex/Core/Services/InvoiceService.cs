@@ -10,19 +10,23 @@ using VendaFlex.Data.Repositories;
 namespace VendaFlex.Core.Services
 {
     /// <summary>
-    /// Servi�o para gest�o de faturas e opera��es relacionadas.
+    /// Serviço para gestão de faturas e operações relacionadas.
     /// </summary>
     public class InvoiceService : IInvoiceService
     {
         private readonly InvoiceRepository _invoiceRepository;
+        private readonly InvoiceProductRepository _invoiceProductRepository;
         private readonly IValidator<InvoiceDto> _invoiceValidator;
         private readonly IMapper _mapper;
+        
         public InvoiceService(
             InvoiceRepository invoiceRepository,
+            InvoiceProductRepository invoiceProductRepository,
             IValidator<InvoiceDto> invoiceValidator,
             IMapper mapper)
         {
             _invoiceRepository = invoiceRepository;
+            _invoiceProductRepository = invoiceProductRepository;
             _invoiceValidator = invoiceValidator;
             _mapper = mapper;
         }
@@ -32,14 +36,14 @@ namespace VendaFlex.Core.Services
             try
             {
                 if (invoice == null)
-                    return OperationResult<InvoiceDto>.CreateFailure("Fatura � obrigat�ria.");
+                    return OperationResult<InvoiceDto>.CreateFailure("Fatura é obrigatória.");
 
                 var validation = await _invoiceValidator.ValidateAsync(invoice);
                 if (!validation.IsValid)
-                    return OperationResult<InvoiceDto>.CreateFailure("Dados inv�lidos.", validation.Errors.Select(e => e.ErrorMessage));
+                    return OperationResult<InvoiceDto>.CreateFailure("Dados inválidos.", validation.Errors.Select(e => e.ErrorMessage));
 
                 if (await _invoiceRepository.NumberExistsAsync(invoice.InvoiceNumber))
-                    return OperationResult<InvoiceDto>.CreateFailure("N�mero de fatura j� est� em uso.");
+                    return OperationResult<InvoiceDto>.CreateFailure("N�mero de fatura já está em uso.");
 
                 var entity = _mapper.Map<Invoice>(invoice);
                 var created = await _invoiceRepository.AddAsync(entity);
@@ -216,18 +220,18 @@ namespace VendaFlex.Core.Services
             try
             {
                 if (invoice == null)
-                    return OperationResult<InvoiceDto>.CreateFailure("Fatura � obrigat�ria.");
+                    return OperationResult<InvoiceDto>.CreateFailure("Fatura é obrigatória.");
 
                 var validation = await _invoiceValidator.ValidateAsync(invoice);
                 if (!validation.IsValid)
-                    return OperationResult<InvoiceDto>.CreateFailure("Dados inv�lidos.", validation.Errors.Select(e => e.ErrorMessage));
+                    return OperationResult<InvoiceDto>.CreateFailure("Dados inválidos.", validation.Errors.Select(e => e.ErrorMessage));
 
                 var existing = await _invoiceRepository.GetByIdAsync(invoice.InvoiceId);
                 if (existing == null)
-                    return OperationResult<InvoiceDto>.CreateFailure("Fatura n�o encontrada.");
+                    return OperationResult<InvoiceDto>.CreateFailure("Fatura não encontrada.");
 
                 if (await _invoiceRepository.NumberExistsAsync(invoice.InvoiceNumber, invoice.InvoiceId))
-                    return OperationResult<InvoiceDto>.CreateFailure("N�mero de fatura j� est� em uso.");
+                    return OperationResult<InvoiceDto>.CreateFailure("Número de fatura já está em uso.");
 
                 _mapper.Map(invoice, existing);
                 var updated = await _invoiceRepository.UpdateAsync(existing);
@@ -312,12 +316,24 @@ namespace VendaFlex.Core.Services
                 if (originalInvoice == null)
                     return OperationResult<InvoiceDto>.CreateFailure("Fatura não encontrada.");
 
+                // Buscar produtos da fatura original
+                var originalProducts = await _invoiceProductRepository.GetByInvoiceIdAsync(invoiceId);
+                
+                if (!originalProducts.Any())
+                {
+                    return OperationResult<InvoiceDto>.CreateFailure(
+                        "Não é possível duplicar uma fatura sem produtos.");
+                }
+
                 // Criar nova fatura baseada na original
                 var newInvoice = new Invoice
                 {
                     PersonId = originalInvoice.PersonId,
                     UserId = originalInvoice.UserId,
                     Date = DateTime.Now,
+                    DueDate = originalInvoice.DueDate.HasValue 
+                        ? DateTime.Now.AddDays((originalInvoice.DueDate.Value - originalInvoice.Date).Days)
+                        : null,
                     InvoiceNumber = $"{originalInvoice.InvoiceNumber}-COPIA-{DateTime.Now:yyyyMMddHHmmss}",
                     Status = InvoiceStatus.Draft,
                     SubTotal = originalInvoice.SubTotal,
@@ -326,18 +342,47 @@ namespace VendaFlex.Core.Services
                     ShippingCost = originalInvoice.ShippingCost,
                     Total = originalInvoice.Total,
                     PaidAmount = 0, // Nova fatura começa sem pagamento
-                    Notes = $"Cópia da fatura {originalInvoice.InvoiceNumber}",
-                    InternalNotes = originalInvoice.InternalNotes
+                    Notes = $"Cópia da fatura {originalInvoice.InvoiceNumber} - {DateTime.Now:dd/MM/yyyy}",
+                    InternalNotes = $"Duplicada da fatura #{originalInvoice.InvoiceNumber}. " + 
+                                  (originalInvoice.InternalNotes ?? string.Empty),
+                    CreatedAt = DateTime.UtcNow
                 };
 
+                // Salvar a nova fatura
                 var created = await _invoiceRepository.AddAsync(newInvoice);
-                var dto = _mapper.Map<InvoiceDto>(created);
 
-                return OperationResult<InvoiceDto>.CreateSuccess(dto, "Fatura duplicada com sucesso.");
+                // Copiar todos os produtos da fatura original
+                var copiedProductsCount = 0;
+                foreach (var originalProduct in originalProducts)
+                {
+                    var newProduct = new InvoiceProduct
+                    {
+                        InvoiceId = created.InvoiceId,
+                        ProductId = originalProduct.ProductId,
+                        Quantity = originalProduct.Quantity,
+                        UnitPrice = originalProduct.UnitPrice,
+                        DiscountPercentage = originalProduct.DiscountPercentage,
+                        TaxRate = originalProduct.TaxRate
+                    };
+
+                    await _invoiceProductRepository.AddAsync(newProduct);
+                    copiedProductsCount++;
+                }
+
+                Debug.WriteLine($"Fatura duplicada com sucesso. {copiedProductsCount} produtos copiados.");
+
+                var dto = _mapper.Map<InvoiceDto>(created);
+                
+                return OperationResult<InvoiceDto>.CreateSuccess(
+                    dto, 
+                    $"Fatura duplicada com sucesso! {copiedProductsCount} produto(s) copiado(s).");
             }
             catch (Exception ex)
             {
-                return OperationResult<InvoiceDto>.CreateFailure("Erro ao duplicar fatura.", new[] { ex.Message });
+                Debug.WriteLine($"Erro ao duplicar fatura: {ex.Message}");
+                return OperationResult<InvoiceDto>.CreateFailure(
+                    "Erro ao duplicar fatura.", 
+                    new[] { ex.Message });
             }
         }
     }
