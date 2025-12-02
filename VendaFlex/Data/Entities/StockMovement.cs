@@ -57,6 +57,7 @@ namespace VendaFlex.Data.Entities
         Adjustment = 3, //Ajuste
         Transfer = 4, //Transferência
         Return = 5, //Retorno
-        Loss = 6 //Perda
+        Loss = 6, //Perda
+        Reservation = 7 //Reserva
     }
 }

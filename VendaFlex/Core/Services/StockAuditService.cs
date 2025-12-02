@@ -169,7 +169,7 @@ namespace VendaFlex.Core.Services
                     PreviousQuantity = availableBefore,
                     NewQuantity = availableBefore - quantity,
                     Date = DateTime.UtcNow,
-                    Type = StockMovementType.Exit,
+                    Type = StockMovementType.Reservation,
                     Notes = notes ?? $"Reserva de estoque: {quantity} unidades",
                     Reference = reference ?? $"STOCK-RSV-{productId}-{DateTime.UtcNow:yyyyMMddHHmmss}"
                 };

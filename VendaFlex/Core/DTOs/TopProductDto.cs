@@ -21,6 +21,16 @@ namespace VendaFlex.Core.DTOs
         public decimal Revenue { get; set; }
 
         /// <summary>
+        /// Compatibilidade com antigas bindings: valor total
+        /// </summary>
+        public decimal TotalValue => Revenue;
+
+        /// <summary>
+        /// Preço médio de venda (Receita / Quantidade)
+        /// </summary>
+        public decimal AveragePrice => QuantitySold > 0 ? Revenue / QuantitySold : 0;
+
+        /// <summary>
         /// Receita formatada (ex: "Kz 85.400,00")
         /// </summary>
         public string RevenueFormatted => $"Kz {Revenue:N2}";

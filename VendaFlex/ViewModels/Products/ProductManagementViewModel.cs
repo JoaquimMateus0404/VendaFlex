@@ -516,7 +516,78 @@ namespace VendaFlex.ViewModels.Products
 
         #endregion
 
+        #region Wizard Properties (Multi-Step Product Creation)
 
+        private int _currentStep = 1;
+        public int CurrentStep
+        {
+            get => _currentStep;
+            set
+            {
+                if (Set(ref _currentStep, value))
+                {
+                    OnPropertyChanged(nameof(IsStep1));
+                    OnPropertyChanged(nameof(IsStep2));
+                    OnPropertyChanged(nameof(IsStep3));
+                    OnPropertyChanged(nameof(IsFirstStep));
+                    OnPropertyChanged(nameof(IsLastStep));
+                    OnPropertyChanged(nameof(StepProgress));
+                }
+            }
+        }
+
+        public bool IsStep1 => CurrentStep == 1;
+        public bool IsStep2 => CurrentStep == 2;
+        public bool IsStep3 => CurrentStep == 3;
+        public bool IsFirstStep => CurrentStep == 1;
+        public bool IsLastStep => CurrentStep == 3;
+        public double StepProgress => (CurrentStep / 3.0) * 100;
+
+        // Stock properties for Step 2
+        private int _initialStockQuantity;
+        public int InitialStockQuantity
+        {
+            get => _initialStockQuantity;
+            set => Set(ref _initialStockQuantity, value);
+        }
+
+        private decimal _initialStockCost;
+        public decimal InitialStockCost
+        {
+            get => _initialStockCost;
+            set => Set(ref _initialStockCost, value);
+        }
+
+        private string? _initialStockNotes;
+        public string? InitialStockNotes
+        {
+            get => _initialStockNotes;
+            set => Set(ref _initialStockNotes, value);
+        }
+
+        // Expiration properties for Step 3
+        private DateTime _initialExpirationDate = DateTime.Now.AddMonths(6);
+        public DateTime InitialExpirationDate
+        {
+            get => _initialExpirationDate;
+            set => Set(ref _initialExpirationDate, value);
+        }
+
+        private string? _initialBatchNumber;
+        public string? InitialBatchNumber
+        {
+            get => _initialBatchNumber;
+            set => Set(ref _initialBatchNumber, value);
+        }
+
+        private string? _initialExpirationNotes;
+        public string? InitialExpirationNotes
+        {
+            get => _initialExpirationNotes;
+            set => Set(ref _initialExpirationNotes, value);
+        }
+
+        #endregion
 
         #region Filters and Search
 
@@ -727,6 +798,13 @@ namespace VendaFlex.ViewModels.Products
             set => Set(ref _nearExpirationCount, value);
         }
 
+        private decimal _totalStockValue;
+        public decimal TotalStockValue
+        {
+            get => _totalStockValue;
+            set => Set(ref _totalStockValue, value);
+        }
+
         #endregion
 
         #region Commands
@@ -769,6 +847,11 @@ namespace VendaFlex.ViewModels.Products
         public ICommand PreviousPageCommand { get; private set; } = null!;
         public ICommand NextPageCommand { get; private set; } = null!;
         public ICommand LastPageCommand { get; private set; } = null!;
+
+        // Wizard Commands
+        public ICommand NextStepCommand { get; private set; } = null!;
+        public ICommand PreviousStepCommand { get; private set; } = null!;
+        public ICommand FinishWizardCommand { get; private set; } = null!;
 
         #endregion
 
@@ -815,6 +898,11 @@ namespace VendaFlex.ViewModels.Products
             PreviousPageCommand = new RelayCommand(_ => CurrentPage--, _ => CurrentPage > 1);
             NextPageCommand = new RelayCommand(_ => CurrentPage++, _ => CurrentPage < TotalPages);
             LastPageCommand = new RelayCommand(_ => CurrentPage = TotalPages, _ => CurrentPage < TotalPages);
+
+            // Wizard Commands
+            NextStepCommand = new RelayCommand(_ => NextStep(), _ => CanGoToNextStep());
+            PreviousStepCommand = new RelayCommand(_ => PreviousStep(), _ => !IsFirstStep);
+            FinishWizardCommand = new RelayCommand(async _ => await FinishWizardAsync(), _ => CanFinishWizard());
         }
 
         private void InitializeCollections()
@@ -1017,6 +1105,8 @@ namespace VendaFlex.ViewModels.Products
         private void OpenProductForm()
         {
             ClearProductForm();
+            ResetWizard();
+            CurrentStep = 1;
             IsProductFormOpen = true;
         }
 
@@ -1730,6 +1820,258 @@ namespace VendaFlex.ViewModels.Products
             // Calcular ExpiredCount manualmente já que IsExpired não existe no DTO
             ExpiredCount = Expirations.Count(e => e.ExpirationDate < DateTime.Now);
             NearExpirationCount = NearExpirations.Count;
+            
+            // Calculate total stock value (Quantity * Sale Price)
+            TotalStockValue = Products
+                .Where(p => p.Status == ProductStatus.Active)
+                .Sum(p => p.CurrentStock * p.SalePrice);
+        }
+
+        #endregion
+
+        #region Wizard Methods
+
+        private void NextStep()
+        {
+            if (CurrentStep < 3)
+            {
+                CurrentStep++;
+            }
+        }
+
+        private void PreviousStep()
+        {
+            if (CurrentStep > 1)
+            {
+                CurrentStep--;
+            }
+        }
+
+        private bool CanGoToNextStep()
+        {
+            return CurrentStep switch
+            {
+                1 => ValidateStep1(), // Product basic info
+                2 => ValidateStep2(), // Stock info
+                _ => false
+            };
+        }
+
+        private bool ValidateStep1()
+        {
+            // Validate required product fields
+            if (string.IsNullOrWhiteSpace(ProductName))
+                return false;
+
+            if (ProductCategoryId <= 0)
+                return false;
+
+            if (ProductSalePrice <= 0)
+                return false;
+
+            return true;
+        }
+
+        private bool ValidateStep2()
+        {
+            // Validate stock fields
+            if (ProductControlsStock && InitialStockQuantity < 0)
+                return false;
+
+            return true;
+        }
+
+        private bool CanFinishWizard()
+        {
+            // Can finish if on step 3 and all required fields are valid
+            if (CurrentStep != 3)
+                return false;
+
+            // If product has expiration date, validate expiration fields
+            if (ProductHasExpirationDate)
+            {
+                if (string.IsNullOrWhiteSpace(InitialBatchNumber))
+                    return false;
+
+                if (InitialExpirationDate <= DateTime.Now)
+                    return false;
+            }
+
+            return true;
+        }
+
+        private async Task FinishWizardAsync()
+        {
+            try
+            {
+                IsSaving = true;
+                ShowStatusMessage("Salvando produto...", false);
+
+                // Validações extras antes de criar
+                if (ProductCategoryId <= 0)
+                {
+                    ShowStatusMessage("❌ Selecione uma categoria válida", true);
+                    return;
+                }
+
+                if (ProductSupplierId <= 0)
+                {
+                    ShowStatusMessage("❌ Selecione um fornecedor válido", true);
+                    return;
+                }
+
+                // Step 1: Create Product
+                var productDto = new ProductDto
+                {
+                    ProductId = 0, // New product
+                    Code = ProductCode ?? string.Empty,
+                    InternalCode = ProductCode ?? $"PROD-{DateTime.Now:yyyyMMddHHmmss}",
+                    ExternalCode = ProductCode ?? $"EXT-{DateTime.Now:yyyyMMddHHmmss}",
+                    Name = ProductName,
+                    Description = ProductDescription ?? string.Empty,
+                    ShortDescription = ProductShortDescription ?? string.Empty,
+                    Barcode = ProductBarcode ?? string.Empty,
+                    SKU = ProductSKU ?? string.Empty,
+                    Weight = ProductWeight ?? string.Empty,
+                    Dimensions = ProductDimensions ?? string.Empty,
+                    CategoryId = ProductCategoryId,
+                    SupplierId = ProductSupplierId,
+                    SalePrice = ProductSalePrice,
+                    CostPrice = ProductCostPrice,
+                    DiscountPercentage = ProductDiscountPercentage,
+                    TaxRate = ProductTaxRate,
+                    PhotoUrl = ProductPhotoUrl ?? string.Empty,
+                    Status = ProductStatus,
+                    IsFeatured = ProductIsFeatured,
+                    AllowBackorder = ProductAllowBackorder,
+                    DisplayOrder = ProductDisplayOrder,
+                    ControlsStock = ProductControlsStock,
+                    MinimumStock = ProductMinimumStock,
+                    MaximumStock = ProductMaximumStock,
+                    ReorderPoint = ProductReorderPoint,
+                    HasExpirationDate = ProductHasExpirationDate,
+                    ExpirationDays = ProductExpirationDays,
+                    ExpirationWarningDays = ProductExpirationWarningDays
+                };
+
+                Debug.WriteLine($"[WIZARD] Tentando criar produto: {productDto.Name}");
+                var result = await _productService.AddAsync(productDto);
+
+                if (!result.Success || result.Data == null)
+                {
+                    var errorMsg = result.Errors?.FirstOrDefault() ?? result.Message ?? "Erro ao criar produto";
+                    ShowStatusMessage($"❌ {errorMsg}", true);
+                    Debug.WriteLine($"[WIZARD ERROR] Erro ao criar produto: {errorMsg}");
+                    if (result.Errors != null)
+                    {
+                        foreach (var error in result.Errors)
+                        {
+                            Debug.WriteLine($"[WIZARD ERROR] - {error}");
+                        }
+                    }
+                    return;
+                }
+
+                var createdProduct = result.Data;
+
+                // Step 2: Create Initial Stock (if controls stock and quantity > 0)
+                if (ProductControlsStock && InitialStockQuantity > 0)
+                {
+                    Debug.WriteLine($"[WIZARD] Criando estoque inicial - ProductId: {createdProduct.ProductId}, Quantity: {InitialStockQuantity}");
+                    
+                    var stockDto = new StockDto
+                    {
+                        ProductId = createdProduct.ProductId,
+                        Quantity = InitialStockQuantity
+                    };
+
+                    var stockResult = await _stockService.AddAsync(stockDto);
+
+                    if (!stockResult.Success)
+                    {
+                        ShowStatusMessage($"❌ Produto criado, mas erro ao criar estoque: {stockResult.Message}", true);
+                        Debug.WriteLine($"[WIZARD ERROR] Erro ao criar estoque:");
+                        if (stockResult.Errors != null)
+                        {
+                            foreach (var error in stockResult.Errors)
+                            {
+                                Debug.WriteLine($"[WIZARD ERROR] - {error}");
+                            }
+                        }
+                        // Continue anyway
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"[WIZARD] ✅ Estoque criado com sucesso!");
+                    }
+                }
+
+                // Step 3: Create Expiration Date (if has expiration and quantity > 0)
+                if (ProductHasExpirationDate && !string.IsNullOrWhiteSpace(InitialBatchNumber) && InitialStockQuantity > 0)
+                {
+                    Debug.WriteLine($"[WIZARD] Criando data de validade - ProductId: {createdProduct.ProductId}, Date: {InitialExpirationDate}, Batch: {InitialBatchNumber}");
+                    
+                    var expirationDto = new ExpirationDto
+                    {
+                        ProductId = createdProduct.ProductId,
+                        ExpirationDate = InitialExpirationDate,
+                        Quantity = InitialStockQuantity,
+                        BatchNumber = InitialBatchNumber,
+                        Notes = InitialExpirationNotes ?? string.Empty
+                    };
+
+                    var expirationResult = await _expirationService.AddAsync(expirationDto);
+
+                    if (!expirationResult.Success)
+                    {
+                        ShowStatusMessage($"❌ Produto e estoque criados, mas erro ao criar validade: {expirationResult.Message}", true);
+                        Debug.WriteLine($"[WIZARD ERROR] Erro ao criar validade:");
+                        if (expirationResult.Errors != null)
+                        {
+                            foreach (var error in expirationResult.Errors)
+                            {
+                                Debug.WriteLine($"[WIZARD ERROR] - {error}");
+                            }
+                        }
+                        // Continue anyway
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"[WIZARD] ✅ Data de validade criada com sucesso!");
+                    }
+                }
+
+                ShowStatusMessage("✅ Produto criado com sucesso com estoque e validade!", false);
+                await LoadDataAsync();
+                CancelProductForm();
+            }
+            catch (Exception ex)
+            {
+                ShowStatusMessage($"❌ Erro ao salvar: {ex.Message}", true);
+                Debug.WriteLine($"[WIZARD EXCEPTION] {ex.GetType().Name}: {ex.Message}");
+                Debug.WriteLine($"[WIZARD EXCEPTION] StackTrace: {ex.StackTrace}");
+                
+                if (ex.InnerException != null)
+                {
+                    Debug.WriteLine($"[WIZARD EXCEPTION] InnerException: {ex.InnerException.Message}");
+                    Debug.WriteLine($"[WIZARD EXCEPTION] InnerException StackTrace: {ex.InnerException.StackTrace}");
+                }
+            }
+            finally
+            {
+                IsSaving = false;
+            }
+        }
+
+        private void ResetWizard()
+        {
+            CurrentStep = 1;
+            InitialStockQuantity = 0;
+            InitialStockCost = 0;
+            InitialStockNotes = null;
+            InitialExpirationDate = DateTime.Now.AddMonths(6);
+            InitialBatchNumber = null;
+            InitialExpirationNotes = null;
         }
 
         #endregion

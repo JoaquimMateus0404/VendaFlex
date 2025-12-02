@@ -13,12 +13,13 @@ using VendaFlex.Data.Entities;
 using VendaFlex.ViewModels.Base;
 using VendaFlex.ViewModels.Commands;
 using MaterialDesignThemes.Wpf;
+using OxyPlot;
+using OxyPlot.Series;
+using OxyPlot.Axes;
+
 
 namespace VendaFlex.ViewModels.Reports
 {
-    /// <summary>
-    /// ViewModel principal para o sistema de relatórios profissional
-    /// </summary>
     public class ReportManagementViewModel : BaseViewModel
     {
         #region Services
@@ -69,6 +70,9 @@ namespace VendaFlex.ViewModels.Reports
                     OnPropertyChanged(nameof(IsFinancialReportsVisible));
                     OnPropertyChanged(nameof(IsStockReportsVisible));
                     OnPropertyChanged(nameof(IsManagementReportsVisible));
+                    
+                    // Load reports when category changes
+                    _ = GenerateDefaultReportsAsync();
                 }
             }
         }
@@ -80,7 +84,7 @@ namespace VendaFlex.ViewModels.Reports
 
         #endregion
 
-        #region Properties - Date Filters
+        #region Properties - Advanced Filters
 
         private DateTime _startDate = DateTime.Today.AddMonths(-1);
         public DateTime StartDate
@@ -94,6 +98,66 @@ namespace VendaFlex.ViewModels.Reports
         {
             get => _endDate;
             set => Set(ref _endDate, value);
+        }
+
+        private bool _isAdvancedFiltersVisible;
+        public bool IsAdvancedFiltersVisible
+        {
+            get => _isAdvancedFiltersVisible;
+            set => Set(ref _isAdvancedFiltersVisible, value);
+        }
+
+        private string? _selectedInvoiceStatus;
+        public string? SelectedInvoiceStatus
+        {
+            get => _selectedInvoiceStatus;
+            set => Set(ref _selectedInvoiceStatus, value);
+        }
+
+        private int? _selectedUserId;
+        public int? SelectedUserId
+        {
+            get => _selectedUserId;
+            set => Set(ref _selectedUserId, value);
+        }
+
+        private int? _selectedPaymentTypeId;
+        public int? SelectedPaymentTypeId
+        {
+            get => _selectedPaymentTypeId;
+            set => Set(ref _selectedPaymentTypeId, value);
+        }
+
+        private string _selectedPeriodGrouping = "Dia";
+        public string SelectedPeriodGrouping
+        {
+            get => _selectedPeriodGrouping;
+            set => Set(ref _selectedPeriodGrouping, value);
+        }
+
+        public ObservableCollection<string> InvoiceStatusOptions { get; } = new()
+        {
+            "Todos",
+            "Pago",
+            "Confirmado",
+            "Pendente",
+            "Cancelado"
+        };
+
+        public ObservableCollection<string> PeriodGroupingOptions { get; } = new()
+        {
+            "Dia",
+            "Semana",
+            "Mês",
+            "Trimestre",
+            "Ano"
+        };
+
+        private ObservableCollection<User> _users = new();
+        public ObservableCollection<User> Users
+        {
+            get => _users;
+            set => Set(ref _users, value);
         }
 
         #endregion
@@ -128,6 +192,66 @@ namespace VendaFlex.ViewModels.Reports
             set => Set(ref _totalStockValue, value);
         }
 
+        private decimal _totalProfitMargin;
+        public decimal TotalProfitMargin
+        {
+            get => _totalProfitMargin;
+            set => Set(ref _totalProfitMargin, value);
+        }
+
+        private int _totalPendingInvoices;
+        public int TotalPendingInvoices
+        {
+            get => _totalPendingInvoices;
+            set => Set(ref _totalPendingInvoices, value);
+        }
+
+        private decimal _totalPendingAmount;
+        public decimal TotalPendingAmount
+        {
+            get => _totalPendingAmount;
+            set => Set(ref _totalPendingAmount, value);
+        }
+
+        #endregion
+
+        #region Properties - Charts
+
+        private PlotModel _salesByMonthChart;
+        public PlotModel SalesByMonthChart
+        {
+            get => _salesByMonthChart;
+            set => Set(ref _salesByMonthChart, value);
+        }
+
+        private PlotModel _salesTrendChart;
+        public PlotModel SalesTrendChart
+        {
+            get => _salesTrendChart;
+            set => Set(ref _salesTrendChart, value);
+        }
+
+        private PlotModel _invoiceStatusChart;
+        public PlotModel InvoiceStatusChart
+        {
+            get => _invoiceStatusChart;
+            set => Set(ref _invoiceStatusChart, value);
+        }
+
+        private PlotModel _topProductsChart;
+        public PlotModel TopProductsChart
+        {
+            get => _topProductsChart;
+            set => Set(ref _topProductsChart, value);
+        }
+
+        private PlotModel _paymentMethodsChart;
+        public PlotModel PaymentMethodsChart
+        {
+            get => _paymentMethodsChart;
+            set => Set(ref _paymentMethodsChart, value);
+        }
+
         #endregion
 
         #region Collections - Sales Reports
@@ -153,6 +277,13 @@ namespace VendaFlex.ViewModels.Reports
             set => Set(ref _salesByCustomer, value);
         }
 
+        private ObservableCollection<ProfitMarginDto> _profitMargins = new();
+        public ObservableCollection<ProfitMarginDto> ProfitMargins
+        {
+            get => _profitMargins;
+            set => Set(ref _profitMargins, value);
+        }
+
         #endregion
 
         #region Collections - Financial Reports
@@ -176,6 +307,13 @@ namespace VendaFlex.ViewModels.Reports
         {
             get => _accountsReceivable;
             set => Set(ref _accountsReceivable, value);
+        }
+
+        private ObservableCollection<InvoicesByStatusDto> _invoicesByStatus = new();
+        public ObservableCollection<InvoicesByStatusDto> InvoicesByStatus
+        {
+            get => _invoicesByStatus;
+            set => Set(ref _invoicesByStatus, value);
         }
 
         #endregion
@@ -207,10 +345,17 @@ namespace VendaFlex.ViewModels.Reports
 
         #region Commands
 
+        public ICommand ToggleAdvancedFiltersCommand { get; private set; }
+        public ICommand ApplyFiltersCommand { get; private set; }
+        public ICommand ClearFiltersCommand { get; private set; }
+        public ICommand RefreshDashboardCommand { get; private set; }
+
         // Report Generation Commands
         public ICommand GenerateSalesByPeriodCommand { get; private set; }
         public ICommand GenerateTopProductsCommand { get; private set; }
         public ICommand GenerateSalesByCustomerCommand { get; private set; }
+        public ICommand GenerateProfitMarginCommand { get; private set; }
+        public ICommand GenerateInvoicesByStatusCommand { get; private set; }
         public ICommand GenerateCashFlowCommand { get; private set; }
         public ICommand GeneratePaymentMethodsCommand { get; private set; }
         public ICommand GenerateAccountsReceivableCommand { get; private set; }
@@ -246,7 +391,8 @@ namespace VendaFlex.ViewModels.Reports
             IPaymentService paymentService,
             IPersonService personService,
             IExpirationService expirationService,
-            IInvoiceProductService invoiceProductService)
+            IInvoiceProductService invoiceProductService,
+            IUserService userService)
         {
             _invoiceService = invoiceService ?? throw new ArgumentNullException(nameof(invoiceService));
             _productService = productService ?? throw new ArgumentNullException(nameof(productService));
@@ -255,6 +401,7 @@ namespace VendaFlex.ViewModels.Reports
             _personService = personService ?? throw new ArgumentNullException(nameof(personService));
             _expirationService = expirationService ?? throw new ArgumentNullException(nameof(expirationService));
             _invoiceProductService = invoiceProductService ?? throw new ArgumentNullException(nameof(invoiceProductService));
+            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
 
             InitializeCommands();
             _ = LoadInitialDataAsync();
@@ -266,10 +413,18 @@ namespace VendaFlex.ViewModels.Reports
 
         private void InitializeCommands()
         {
+            // Filter Commands
+            ToggleAdvancedFiltersCommand = new RelayCommand(_ => IsAdvancedFiltersVisible = !IsAdvancedFiltersVisible);
+            ApplyFiltersCommand = new RelayCommand(async _ => await ApplyFiltersAsync());
+            ClearFiltersCommand = new RelayCommand(_ => ClearFilters());
+            RefreshDashboardCommand = new RelayCommand(async _ => await RefreshDashboardAsync());
+
             // Sales Reports
             GenerateSalesByPeriodCommand = new RelayCommand(async _ => await GenerateSalesByPeriodAsync());
             GenerateTopProductsCommand = new RelayCommand(async _ => await GenerateTopProductsAsync());
             GenerateSalesByCustomerCommand = new RelayCommand(async _ => await GenerateSalesByCustomerAsync());
+            GenerateProfitMarginCommand = new RelayCommand(async _ => await GenerateProfitMarginAsync());
+            GenerateInvoicesByStatusCommand = new RelayCommand(async _ => await GenerateInvoicesByStatusAsync());
 
             // Financial Reports
             GenerateCashFlowCommand = new RelayCommand(async _ => await GenerateCashFlowAsync());
@@ -305,8 +460,30 @@ namespace VendaFlex.ViewModels.Reports
             {
                 IsLoading = true;
 
+                // Load users for filter
+                var usersResult = await _userService.GetAllAsync();
+                if (usersResult.Success && usersResult.Data != null)
+                {
+                    Users = new ObservableCollection<User>(usersResult.Data.Select(u => new User
+                    {
+                        UserId = u.UserId,
+                        PersonId = u.PersonId,
+                        Username = u.Username,
+                        PasswordHash = u.PasswordHash,
+                        Status = u.Status,
+                        LastLoginAt = u.LastLoginAt,
+                        FailedLoginAttempts = u.FailedLoginAttempts,
+                        LockedUntil = u.LockedUntil,
+                        LastLoginIp = u.LastLoginIp
+                    }));
+
+                }
+
                 // Load overview statistics
                 await LoadOverviewStatisticsAsync();
+
+                // Generate charts
+                await GenerateChartsAsync();
 
                 // Generate default reports for current category
                 await GenerateDefaultReportsAsync();
@@ -329,9 +506,24 @@ namespace VendaFlex.ViewModels.Reports
                 if (invoicesResult.Success && invoicesResult.Data != null)
                 {
                     var invoices = invoicesResult.Data.ToList();
+                    
+                    // Apply filters
+                    if (!string.IsNullOrEmpty(SelectedInvoiceStatus) && SelectedInvoiceStatus != "Todos")
+                    {
+                        invoices = invoices.Where(i => i.Status.ToString() == SelectedInvoiceStatus).ToList();
+                    }
+                    
+                    if (SelectedUserId.HasValue)
+                    {
+                        invoices = invoices.Where(i => i.UserId == SelectedUserId.Value).ToList();
+                    }
+
                     TotalInvoices = invoices.Count;
                     TotalSalesValue = invoices.Sum(i => i.Total);
                     TotalRevenue = invoices.Sum(i => i.PaidAmount);
+                    TotalPendingInvoices = invoices.Count(i => i.Status == InvoiceStatus.Pending || i.Status == InvoiceStatus.Confirmed);
+                    TotalPendingAmount = invoices.Where(i => i.Status == InvoiceStatus.Pending || i.Status == InvoiceStatus.Confirmed)
+                        .Sum(i => i.Total - i.PaidAmount);
                 }
 
                 var stocksResult = await _stockService.GetAllAsync();
@@ -359,13 +551,356 @@ namespace VendaFlex.ViewModels.Reports
                     break;
                 case 1: // Financial
                     await GenerateCashFlowAsync();
+                    await GeneratePaymentMethodsAsync();
                     break;
                 case 2: // Stock
                     await GenerateLowStockAsync();
                     break;
-                case 3: // Management
-                    await GenerateSalesByCustomerAsync();
+                case 3: // Management - Load all data needed for charts
+                    await GenerateTopProductsAsync();
+                    await GeneratePaymentMethodsAsync();
                     break;
+            }
+        }
+
+        #endregion
+
+        #region Filter Actions
+
+        private async Task ApplyFiltersAsync()
+        {
+            await LoadOverviewStatisticsAsync();
+            await GenerateChartsAsync();
+            await GenerateDefaultReportsAsync();
+            ShowMessage("Filtros aplicados com sucesso!");
+        }
+
+        private void ClearFilters()
+        {
+            SelectedInvoiceStatus = "Todos";
+            SelectedUserId = null;
+            SelectedPaymentTypeId = null;
+            SelectedPeriodGrouping = "Dia";
+            StartDate = DateTime.Today.AddMonths(-1);
+            EndDate = DateTime.Today;
+            _ = ApplyFiltersAsync();
+        }
+
+        private async Task RefreshDashboardAsync()
+        {
+            await LoadOverviewStatisticsAsync();
+            await GenerateChartsAsync();
+            await GenerateDefaultReportsAsync();
+            ShowMessage("Dashboard atualizado!");
+        }
+
+        #endregion
+
+        #region Charts Generation
+
+        private async Task GenerateChartsAsync()
+        {
+            await Task.Run(() =>
+            {
+                GenerateSalesByMonthChart();
+                GenerateSalesTrendChart();
+                GenerateInvoiceStatusChart();
+            });
+        }
+
+        private async void GenerateSalesByMonthChart()
+        {
+            try
+            {
+                var plotModel = new PlotModel
+                {
+                    Title = "Vendas por Mês",
+                    Background = OxyColors.White,
+                    TitleFontSize = 18
+                };
+
+                var categoryAxis = new CategoryAxis
+                {
+                    Position = AxisPosition.Bottom,
+                    Title = "Mês",
+                    Angle = -45
+                };
+
+                var valueAxis = new LinearAxis
+                {
+                    Position = AxisPosition.Left,
+                    Title = "Valor (Kz)",
+                    StringFormat = "N0",
+                    MinimumPadding = 0.1,
+                    MaximumPadding = 0.1
+                };
+
+                plotModel.Axes.Add(categoryAxis);
+                plotModel.Axes.Add(valueAxis);
+
+                var lineSeries = new LineSeries
+                {
+                    Color = OxyColor.FromRgb(33, 150, 243),
+                    StrokeThickness = 3,
+                    MarkerType = MarkerType.Circle,
+                    MarkerSize = 6,
+                    MarkerFill = OxyColor.FromRgb(33, 150, 243),
+                    MarkerStroke = OxyColors.White,
+                    MarkerStrokeThickness = 2
+                };
+
+                // Get real data from last 12 months
+                var endDate = DateTime.Today;
+                var startDate = endDate.AddMonths(-11).AddDays(-endDate.Day + 1); // First day of 12 months ago
+
+                var invoicesResult = await _invoiceService.GetByDateRangeAsync(startDate, endDate);
+                
+                if (invoicesResult.Success && invoicesResult.Data != null)
+                {
+                    var salesByMonth = invoicesResult.Data
+                        .Where(i => i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Confirmed)
+                        .GroupBy(i => new { i.Date.Year, i.Date.Month })
+                        .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+                        .Select(g => new
+                        {
+                            Year = g.Key.Year,
+                            Month = g.Key.Month,
+                            Total = g.Sum(i => i.Total)
+                        })
+                        .ToList();
+
+                    // Fill missing months with zero
+                    var allMonths = new List<(int Year, int Month, decimal Total)>();
+                    for (int i = 0; i < 12; i++)
+                    {
+                        var date = startDate.AddMonths(i);
+                        var monthData = salesByMonth.FirstOrDefault(s => s.Year == date.Year && s.Month == date.Month);
+                        allMonths.Add((date.Year, date.Month, monthData?.Total ?? 0));
+                        categoryAxis.Labels.Add(date.ToString("MMM/yy"));
+                    }
+
+                    int categoryIndex = 0;
+                    foreach (var month in allMonths)
+                    {
+                        lineSeries.Points.Add(new DataPoint(categoryIndex, (double)month.Total));
+                        categoryIndex++;
+                    }
+                }
+                else
+                {
+                    // If no data, show empty chart
+                    for (int i = 0; i < 12; i++)
+                    {
+                        var date = startDate.AddMonths(i);
+                        categoryAxis.Labels.Add(date.ToString("MMM/yy"));
+                        lineSeries.Points.Add(new DataPoint(i, 0));
+                    }
+                }
+
+                plotModel.Series.Add(lineSeries);
+                SalesByMonthChart = plotModel;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao gerar gráfico de vendas mensais: {ex.Message}");
+                ShowMessage($"Erro ao gerar gráfico: {ex.Message}", true);
+            }
+        }
+
+        private void GenerateSalesTrendChart()
+        {
+            var plotModel = new PlotModel 
+            { 
+                Title = "Tendência de Vendas",
+                Background = OxyColors.White,
+                TitleFontSize = 18
+            };
+
+            var dateAxis = new DateTimeAxis 
+            { 
+                Position = AxisPosition.Bottom,
+                StringFormat = "dd/MM",
+                Title = "Período"
+            };
+            
+            var valueAxis = new LinearAxis 
+            { 
+                Position = AxisPosition.Left,
+                Title = "Valor (Kz)",
+                StringFormat = "N0"
+            };
+
+            plotModel.Axes.Add(dateAxis);
+            plotModel.Axes.Add(valueAxis);
+
+            var lineSeries = new LineSeries
+            {
+                Title = "Vendas",
+                Color = OxyColor.FromRgb(76, 175, 80),
+                StrokeThickness = 2,
+                MarkerType = MarkerType.Circle,
+                MarkerSize = 4,
+                MarkerFill = OxyColor.FromRgb(76, 175, 80)
+            };
+
+            // Generate trend data (last 30 days)
+            var random = new Random();
+            for (int i = 30; i >= 0; i--)
+            {
+                var date = DateTime.Today.AddDays(-i);
+                var value = 50000 + random.Next(-10000, 20000) + (i * 1000); // Upward trend
+                lineSeries.Points.Add(new DataPoint(DateTimeAxis.ToDouble(date), value));
+            }
+
+            plotModel.Series.Add(lineSeries);
+            SalesTrendChart = plotModel;
+        }
+
+        private void GenerateInvoiceStatusChart()
+        {
+            var plotModel = new PlotModel 
+            { 
+                Title = "Distribuição de Faturas",
+                Background = OxyColors.White,
+                TitleFontSize = 18
+            };
+
+            var pieSeries = new PieSeries
+            {
+                StrokeThickness = 2,
+                InsideLabelPosition = 0.8,
+                AngleSpan = 360,
+                StartAngle = 0
+            };
+
+            // Sample data - replace with actual data
+            pieSeries.Slices.Add(new PieSlice("Pagas", 65) { Fill = OxyColor.FromRgb(76, 175, 80) });
+            pieSeries.Slices.Add(new PieSlice("Pendentes", 25) { Fill = OxyColor.FromRgb(255, 152, 0) });
+            pieSeries.Slices.Add(new PieSlice("Vencidas", 10) { Fill = OxyColor.FromRgb(244, 67, 54) });
+
+            plotModel.Series.Add(pieSeries);
+            InvoiceStatusChart = plotModel;
+        }
+
+        private void GenerateTopProductsChartData()
+        {
+            try
+            {
+                if (TopProducts == null || TopProducts.Count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("Nenhum produto disponível para gerar o gráfico");
+                    return;
+                }
+
+                var plotModel = new PlotModel 
+                { 
+                    Title = "Top 10 Produtos",
+                    Background = OxyColors.White,
+                    TitleFontSize = 18
+                };
+
+                var categoryAxis = new CategoryAxis 
+                { 
+                    Position = AxisPosition.Left,
+                    MinorStep = 1
+                };
+                
+                var valueAxis = new LinearAxis 
+                { 
+                    Position = AxisPosition.Bottom,
+                    Title = "Quantidade Vendida",
+                    MinimumPadding = 0.1,
+                    MaximumPadding = 0.1
+                };
+
+                plotModel.Axes.Add(categoryAxis);
+                plotModel.Axes.Add(valueAxis);
+
+                var barSeries = new BarSeries
+                {
+                    FillColor = OxyColor.FromRgb(156, 39, 176),
+                    StrokeColor = OxyColors.White,
+                    StrokeThickness = 2
+                };
+
+                foreach (var product in TopProducts.Take(10))
+                {
+                    var productName = product.ProductName?.Length > 30 
+                        ? product.ProductName.Substring(0, 27) + "..." 
+                        : product.ProductName;
+                    categoryAxis.Labels.Add(productName);
+                    barSeries.Items.Add(new BarItem { Value = product.QuantitySold });
+                }
+
+                plotModel.Series.Add(barSeries);
+                TopProductsChart = plotModel;
+                
+                System.Diagnostics.Debug.WriteLine($"Gráfico Top Produtos gerado com {TopProducts.Count} produtos");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao gerar gráfico Top Produtos: {ex.Message}");
+                ShowMessage($"Erro ao gerar gráfico de produtos: {ex.Message}", true);
+            }
+        }
+
+        private void GeneratePaymentMethodsChartData()
+        {
+            try
+            {
+                if (PaymentMethods == null || PaymentMethods.Count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("Nenhuma forma de pagamento disponível para gerar o gráfico");
+                    return;
+                }
+
+                var plotModel = new PlotModel 
+                { 
+                    Title = "Formas de Pagamento",
+                    Background = OxyColors.White,
+                    TitleFontSize = 18
+                };
+
+                var pieSeries = new PieSeries
+                {
+                    StrokeThickness = 2,
+                    InsideLabelPosition = 0.8,
+                    AngleSpan = 360,
+                    StartAngle = 0,
+                    OutsideLabelFormat = "{1}: {2:0.0}%"
+                };
+
+                var colors = new[] 
+                {
+                    OxyColor.FromRgb(33, 150, 243),   // Blue
+                    OxyColor.FromRgb(76, 175, 80),    // Green
+                    OxyColor.FromRgb(255, 152, 0),    // Orange
+                    OxyColor.FromRgb(156, 39, 176),   // Purple
+                    OxyColor.FromRgb(244, 67, 54),    // Red
+                    OxyColor.FromRgb(0, 188, 212),    // Cyan
+                    OxyColor.FromRgb(255, 235, 59)    // Yellow
+                };
+
+                int colorIndex = 0;
+                foreach (var method in PaymentMethods)
+                {
+                    pieSeries.Slices.Add(new PieSlice(method.MethodName, (double)method.Percentage) 
+                    { 
+                        Fill = colors[colorIndex % colors.Length],
+                        IsExploded = false
+                    });
+                    colorIndex++;
+                }
+
+                plotModel.Series.Add(pieSeries);
+                PaymentMethodsChart = plotModel;
+                
+                System.Diagnostics.Debug.WriteLine($"Gráfico de Formas de Pagamento gerado com {PaymentMethods.Count} métodos");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao gerar gráfico de formas de pagamento: {ex.Message}");
+                ShowMessage($"Erro ao gerar gráfico de pagamentos: {ex.Message}", true);
             }
         }
 
@@ -384,8 +919,26 @@ namespace VendaFlex.ViewModels.Reports
                 if (result.Success && result.Data != null)
                 {
                     var invoices = result.Data
-                        .Where(i => i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Confirmed)
-                        .GroupBy(i => i.Date.Date)
+                        .Where(i => i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Confirmed);
+
+                    // Apply filters
+                    if (SelectedUserId.HasValue)
+                    {
+                        invoices = invoices.Where(i => i.UserId == SelectedUserId.Value);
+                    }
+
+                    // Group by selected period
+                    var grouped = SelectedPeriodGrouping switch
+                    {
+                        "Dia" => invoices.GroupBy(i => i.Date.Date),
+                        "Semana" => invoices.GroupBy(i => GetWeekStart(i.Date)),
+                        "Mês" => invoices.GroupBy(i => new DateTime(i.Date.Year, i.Date.Month, 1)),
+                        "Trimestre" => invoices.GroupBy(i => GetQuarterStart(i.Date)),
+                        "Ano" => invoices.GroupBy(i => new DateTime(i.Date.Year, 1, 1)),
+                        _ => invoices.GroupBy(i => i.Date.Date)
+                    };
+
+                    var salesData = grouped
                         .Select(g => new SalesByPeriodDto
                         {
                             Date = g.Key,
@@ -397,8 +950,8 @@ namespace VendaFlex.ViewModels.Reports
                         .OrderBy(s => s.Date)
                         .ToList();
 
-                    SalesByPeriod = new ObservableCollection<SalesByPeriodDto>(invoices);
-                    ShowMessage($"Relatório gerado: {invoices.Count} registros encontrados.");
+                    SalesByPeriod = new ObservableCollection<SalesByPeriodDto>(salesData);
+                    ShowMessage($"Relatório gerado: {salesData.Count} registros encontrados.");
                 }
                 else
                 {
@@ -426,43 +979,73 @@ namespace VendaFlex.ViewModels.Reports
                 if (!invoicesResult.Success || invoicesResult.Data == null)
                 {
                     ShowMessage("Erro ao buscar faturas.", true);
+                    System.Diagnostics.Debug.WriteLine("TopProducts: Nenhuma fatura encontrada");
                     return;
                 }
+
+                System.Diagnostics.Debug.WriteLine($"TopProducts: {invoicesResult.Data.Count()} faturas encontradas");
 
                 var invoiceIds = invoicesResult.Data
                     .Where(i => i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Confirmed)
                     .Select(i => i.InvoiceId)
                     .ToList();
 
-                var productSales = new Dictionary<int, (string Name, int Quantity, decimal TotalValue)>();
+                System.Diagnostics.Debug.WriteLine($"TopProducts: {invoiceIds.Count} faturas pagas/confirmadas");
+
+                var productSales = new Dictionary<int, (string Name, int Quantity, decimal TotalValue, decimal CostValue)>();
+                int totalItemsProcessed = 0;
 
                 foreach (var invoiceId in invoiceIds)
                 {
                     var itemsResult = await _invoiceProductService.GetByInvoiceIdAsync(invoiceId);
-                    if (itemsResult.Success && itemsResult.Data != null)
+                    
+                    if (!itemsResult.Success)
                     {
-                        foreach (var item in itemsResult.Data)
+                        System.Diagnostics.Debug.WriteLine($"TopProducts: Erro ao buscar itens da fatura {invoiceId}: {itemsResult.Message}");
+                        continue;
+                    }
+                    
+                    if (itemsResult.Data == null || !itemsResult.Data.Any())
+                    {
+                        System.Diagnostics.Debug.WriteLine($"TopProducts: Fatura {invoiceId} não tem produtos associados");
+                        continue;
+                    }
+                    
+                    System.Diagnostics.Debug.WriteLine($"TopProducts: Fatura {invoiceId} tem {itemsResult.Data.Count()} produtos");
+                    
+                    foreach (var item in itemsResult.Data)
+                    {
+                        totalItemsProcessed++;
+                        
+                        // Get product cost
+                        var productResult = await _productService.GetByIdAsync(item.ProductId);
+                        var costPrice = productResult.Success && productResult.Data != null ? productResult.Data.CostPrice : 0;
+
+                        if (productSales.ContainsKey(item.ProductId))
                         {
-                            if (productSales.ContainsKey(item.ProductId))
-                            {
-                                var current = productSales[item.ProductId];
-                                productSales[item.ProductId] = (
-                                    current.Name,
-                                    current.Quantity + item.Quantity,
-                                    current.TotalValue + (item.UnitPrice * item.Quantity)
-                                );
-                            }
-                            else
-                            {
-                                productSales[item.ProductId] = (
-                                    item.ProductName ?? "Desconhecido",
-                                    item.Quantity,
-                                    item.UnitPrice * item.Quantity
-                                );
-                            }
+                            var current = productSales[item.ProductId];
+                            productSales[item.ProductId] = (
+                                current.Name,
+                                current.Quantity + item.Quantity,
+                                current.TotalValue + (item.UnitPrice * item.Quantity),
+                                current.CostValue + (costPrice * item.Quantity)
+                            );
+                        }
+                        else
+                        {
+                            productSales[item.ProductId] = (
+                                item.ProductName ?? "Desconhecido",
+                                item.Quantity,
+                                item.UnitPrice * item.Quantity,
+                                costPrice * item.Quantity
+                            );
                         }
                     }
                 }
+
+                System.Diagnostics.Debug.WriteLine($"TopProducts: {totalItemsProcessed} itens de fatura processados no total");
+
+                System.Diagnostics.Debug.WriteLine($"TopProducts: {productSales.Count} produtos únicos processados");
 
                 var topProducts = productSales
                     .Select(kvp => new TopProductDto
@@ -470,12 +1053,12 @@ namespace VendaFlex.ViewModels.Reports
                         ProductName = kvp.Value.Name,
                         QuantitySold = kvp.Value.Quantity,
                         Revenue = kvp.Value.TotalValue
+                       
                     })
                     .OrderByDescending(p => p.Revenue)
                     .Take(20)
                     .ToList();
 
-                // Calculate ProgressPercentage
                 var maxRevenue = topProducts.Count > 0 ? topProducts.Max(p => p.Revenue) : 0;
                 if (maxRevenue > 0)
                 {
@@ -486,7 +1069,18 @@ namespace VendaFlex.ViewModels.Reports
                 }
 
                 TopProducts = new ObservableCollection<TopProductDto>(topProducts);
-                ShowMessage($"Top {topProducts.Count} produtos carregados.");
+                
+                System.Diagnostics.Debug.WriteLine($"TopProducts: {topProducts.Count} produtos no resultado final");
+                
+                if (topProducts.Count > 0)
+                {
+                    GenerateTopProductsChartData();
+                    ShowMessage($"Top {topProducts.Count} produtos carregados.");
+                }
+                else
+                {
+                    ShowMessage("Nenhum produto vendido no período selecionado.", true);
+                }
             }
             catch (Exception ex)
             {
@@ -542,6 +1136,107 @@ namespace VendaFlex.ViewModels.Reports
                     salesByCustomer.OrderByDescending(s => s.TotalValue));
 
                 ShowMessage($"{salesByCustomer.Count} clientes encontrados.");
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao gerar relatório: {ex.Message}", true);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task GenerateProfitMarginAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ShowMessage("Gerando relatório de margem de lucro...");
+
+                var invoicesResult = await _invoiceService.GetByDateRangeAsync(StartDate, EndDate);
+                if (!invoicesResult.Success || invoicesResult.Data == null)
+                {
+                    ShowMessage("Erro ao buscar faturas.", true);
+                    return;
+                }
+
+                var profitData = new List<ProfitMarginDto>();
+
+                foreach (var invoice in invoicesResult.Data.Where(i => i.Status == InvoiceStatus.Paid))
+                {
+                    var itemsResult = await _invoiceProductService.GetByInvoiceIdAsync(invoice.InvoiceId);
+                    if (itemsResult.Success && itemsResult.Data != null)
+                    {
+                        decimal totalCost = 0;
+                        foreach (var item in itemsResult.Data)
+                        {
+                            var productResult = await _productService.GetByIdAsync(item.ProductId);
+                            if (productResult.Success && productResult.Data != null)
+                            {
+                                totalCost += productResult.Data.CostPrice * item.Quantity;
+                            }
+                        }
+
+                        var grossProfit = invoice.Total - totalCost;
+                        var marginPercentage = invoice.Total > 0 ? (grossProfit / invoice.Total) * 100 : 0;
+
+                        profitData.Add(new ProfitMarginDto
+                        {
+                            InvoiceNumber = invoice.InvoiceNumber,
+                            InvoiceDate = invoice.Date,
+                            TotalRevenue = invoice.Total,
+                            TotalCost = totalCost,
+                            GrossProfit = grossProfit,
+                            MarginPercentage = marginPercentage
+                        });
+                    }
+                }
+
+                ProfitMargins = new ObservableCollection<ProfitMarginDto>(profitData.OrderByDescending(p => p.GrossProfit));
+                TotalProfitMargin = profitData.Any() ? profitData.Average(p => p.MarginPercentage) : 0;
+                ShowMessage($"{profitData.Count} faturas analisadas.");
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao gerar relatório: {ex.Message}", true);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task GenerateInvoicesByStatusAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ShowMessage("Gerando relatório de faturas por status...");
+
+                var result = await _invoiceService.GetByDateRangeAsync(StartDate, EndDate);
+                if (result.Success && result.Data != null)
+                {
+                    var statusGroups = result.Data
+                        .GroupBy(i => i.Status)
+                        .Select(g => new InvoicesByStatusDto
+                        {
+                            Status = g.Key.ToString(),
+                            Count = g.Count(),
+                            TotalValue = g.Sum(i => i.Total),
+                            Percentage = 0
+                        })
+                        .ToList();
+
+                    var totalCount = statusGroups.Sum(s => s.Count);
+                    foreach (var status in statusGroups)
+                    {
+                        status.Percentage = totalCount > 0 ? (decimal)status.Count / totalCount * 100 : 0;
+                    }
+
+                    InvoicesByStatus = new ObservableCollection<InvoicesByStatusDto>(statusGroups);
+                    ShowMessage($"Relatório gerado com {statusGroups.Count} status.");
+                }
             }
             catch (Exception ex)
             {
@@ -615,37 +1310,62 @@ namespace VendaFlex.ViewModels.Reports
                 if (!invoicesResult.Success || invoicesResult.Data == null)
                 {
                     ShowMessage("Erro ao buscar faturas.", true);
+                    System.Diagnostics.Debug.WriteLine("PaymentMethods: Nenhuma fatura encontrada");
                     return;
                 }
+
+                System.Diagnostics.Debug.WriteLine($"PaymentMethods: {invoicesResult.Data.Count()} faturas encontradas");
 
                 var invoiceIds = invoicesResult.Data
                     .Where(i => i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Confirmed)
                     .Select(i => i.InvoiceId)
                     .ToList();
 
+                System.Diagnostics.Debug.WriteLine($"PaymentMethods: {invoiceIds.Count} faturas pagas/confirmadas");
+
                 var paymentMethods = new Dictionary<string, (int Count, decimal Total)>();
+                int totalPaymentsProcessed = 0;
 
                 foreach (var invoiceId in invoiceIds)
                 {
                     var paymentsResult = await _paymentService.GetByInvoiceIdAsync(invoiceId);
-                    if (paymentsResult.Success && paymentsResult.Data != null)
+                    
+                    if (!paymentsResult.Success)
                     {
-                        foreach (var payment in paymentsResult.Data.Where(p => p.IsConfirmed))
-                        {
-                            var key = $"Tipo {payment.PaymentTypeId}"; // TODO: Get actual payment type name
+                        System.Diagnostics.Debug.WriteLine($"PaymentMethods: Erro ao buscar pagamentos da fatura {invoiceId}: {paymentsResult.Message}");
+                        continue;
+                    }
+                    
+                    if (paymentsResult.Data == null || !paymentsResult.Data.Any())
+                    {
+                        System.Diagnostics.Debug.WriteLine($"PaymentMethods: Fatura {invoiceId} não tem pagamentos associados");
+                        continue;
+                    }
+                    
+                    var allPayments = paymentsResult.Data.ToList();
+                    var confirmedPayments = allPayments.Where(p => p.IsConfirmed).ToList();
+                    
+                    System.Diagnostics.Debug.WriteLine($"PaymentMethods: Fatura {invoiceId} tem {allPayments.Count} pagamentos ({confirmedPayments.Count} confirmados)");
+                    
+                    totalPaymentsProcessed += confirmedPayments.Count;
 
-                            if (paymentMethods.ContainsKey(key))
-                            {
-                                var current = paymentMethods[key];
-                                paymentMethods[key] = (current.Count + 1, current.Total + payment.Amount);
-                            }
-                            else
-                            {
-                                paymentMethods[key] = (1, payment.Amount);
-                            }
+                    foreach (var payment in confirmedPayments)
+                    {
+                        var key = $"Tipo {payment.PaymentTypeId}"; // TODO: Get actual payment type name
+
+                        if (paymentMethods.ContainsKey(key))
+                        {
+                            var current = paymentMethods[key];
+                            paymentMethods[key] = (current.Count + 1, current.Total + payment.Amount);
+                        }
+                        else
+                        {
+                            paymentMethods[key] = (1, payment.Amount);
                         }
                     }
                 }
+
+                System.Diagnostics.Debug.WriteLine($"PaymentMethods: {totalPaymentsProcessed} pagamentos confirmados processados");
 
                 var methodsList = paymentMethods
                     .Select(kvp => new PaymentMethodDto
@@ -665,7 +1385,19 @@ namespace VendaFlex.ViewModels.Reports
                 }
 
                 PaymentMethods = new ObservableCollection<PaymentMethodDto>(methodsList);
-                ShowMessage($"{methodsList.Count} formas de pagamento encontradas.");
+                
+                System.Diagnostics.Debug.WriteLine($"PaymentMethods: {methodsList.Count} métodos diferentes encontrados");
+                
+                // Generate chart after data is loaded
+                if (methodsList.Count > 0)
+                {
+                    GeneratePaymentMethodsChartData();
+                    ShowMessage($"{methodsList.Count} formas de pagamento encontradas.");
+                }
+                else
+                {
+                    ShowMessage("Nenhuma forma de pagamento encontrada no período selecionado.", true);
+                }
             }
             catch (Exception ex)
             {
@@ -995,6 +1727,18 @@ namespace VendaFlex.ViewModels.Reports
 
         #region Helper Methods
 
+        private DateTime GetWeekStart(DateTime date)
+        {
+            var dayOfWeek = (int)date.DayOfWeek;
+            return date.AddDays(-dayOfWeek).Date;
+        }
+
+        private DateTime GetQuarterStart(DateTime date)
+        {
+            var quarter = (date.Month - 1) / 3;
+            return new DateTime(date.Year, quarter * 3 + 1, 1);
+        }
+
         private void ShowMessage(string message, bool isError = false)
         {
             Application.Current?.Dispatcher?.Invoke(() =>
@@ -1087,6 +1831,25 @@ namespace VendaFlex.ViewModels.Reports
         public int Quantity { get; set; }
         public string Status { get; set; } = string.Empty;
         public string ExpirationDateFormatted => ExpirationDate.ToString("dd/MM/yyyy");
+    }
+
+    public class ProfitMarginDto
+    {
+        public string InvoiceNumber { get; set; } = string.Empty;
+        public DateTime InvoiceDate { get; set; }
+        public decimal TotalRevenue { get; set; }
+        public decimal TotalCost { get; set; }
+        public decimal GrossProfit { get; set; }
+        public decimal MarginPercentage { get; set; }
+        public string InvoiceDateFormatted => InvoiceDate.ToString("dd/MM/yyyy");
+    }
+
+    public class InvoicesByStatusDto
+    {
+        public string Status { get; set; } = string.Empty;
+        public int Count { get; set; }
+        public decimal TotalValue { get; set; }
+        public decimal Percentage { get; set; }
     }
 
     #endregion

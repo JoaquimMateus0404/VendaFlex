@@ -94,88 +94,126 @@
                 </Grid>
             </materialDesign:Card>
 
-            <!-- Statistics Cards -->
-            <materialDesign:Card Grid.Row="0" Margin="0,80,0,8" Padding="16" UniformCornerRadius="8">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+            <!-- Statistics Cards with Gradients -->
+            <Grid Grid.Row="0" Margin="0,80,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                    <!-- Total Products -->
-                    <Border Grid.Column="0" Background="{DynamicResource PrimaryHueMidBrush}" 
-                            CornerRadius="8" Padding="16" Margin="4">
-                        <StackPanel>
-                            <materialDesign:PackIcon Kind="Package" Width="32" Height="32" 
-                                                     Foreground="White"/>
-                            <TextBlock Text="{Binding TotalProducts}" 
-                                       FontSize="28" FontWeight="Bold" 
-                                       Foreground="White" Margin="0,8,0,0"/>
-                            <TextBlock Text="Total de Produtos" 
-                                       Foreground="White" Opacity="0.9"/>
-                        </StackPanel>
-                    </Border>
+                <!-- Total Products Card -->
+                <Border Grid.Column="0" CornerRadius="12" Padding="20" Margin="6">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#667eea" Offset="0"/>
+                            <GradientStop Color="#764ba2" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.15" Color="Black"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="Package" Width="36" Height="36" 
+                                                Foreground="White" Opacity="0.9"/>
+                        <TextBlock Text="Total de Produtos" FontSize="13" Margin="0,12,0,4"
+                                  Foreground="White" Opacity="0.85"/>
+                        <TextBlock Text="{Binding TotalProducts}"
+                                  FontSize="32" FontWeight="Bold"
+                                  Foreground="White"/>
+                    </StackPanel>
+                </Border>
 
-                    <!-- Active Products -->
-                    <Border Grid.Column="1" Background="#4CAF50" 
-                            CornerRadius="8" Padding="16" Margin="4">
-                        <StackPanel>
-                            <materialDesign:PackIcon Kind="CheckCircle" Width="32" Height="32" 
-                                                     Foreground="White"/>
-                            <TextBlock Text="{Binding ActiveProducts}" 
-                                       FontSize="28" FontWeight="Bold" 
-                                       Foreground="White" Margin="0,8,0,0"/>
-                            <TextBlock Text="Produtos Ativos" 
-                                       Foreground="White" Opacity="0.9"/>
-                        </StackPanel>
-                    </Border>
+                <!-- Active Products Card -->
+                <Border Grid.Column="1" CornerRadius="12" Padding="20" Margin="6">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#43e97b" Offset="0"/>
+                            <GradientStop Color="#38f9d7" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.15" Color="Black"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="CheckCircle" Width="36" Height="36" 
+                                                Foreground="White" Opacity="0.9"/>
+                        <TextBlock Text="Produtos Ativos" FontSize="13" Margin="0,12,0,4"
+                                  Foreground="White" Opacity="0.85"/>
+                        <TextBlock Text="{Binding ActiveProducts}"
+                                  FontSize="32" FontWeight="Bold"
+                                  Foreground="White"/>
+                    </StackPanel>
+                </Border>
 
-                    <!-- Low Stock -->
-                    <Border Grid.Column="2" Background="#FF9800" 
-                            CornerRadius="8" Padding="16" Margin="4">
-                        <StackPanel>
-                            <materialDesign:PackIcon Kind="AlertCircle" Width="32" Height="32" 
-                                                     Foreground="White"/>
-                            <TextBlock Text="{Binding LowStockCount}" 
-                                       FontSize="28" FontWeight="Bold" 
-                                       Foreground="White" Margin="0,8,0,0"/>
-                            <TextBlock Text="Estoque Baixo" 
-                                       Foreground="White" Opacity="0.9"/>
-                        </StackPanel>
-                    </Border>
+                <!-- Stock Value Card -->
+                <Border Grid.Column="2" CornerRadius="12" Padding="20" Margin="6">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#4facfe" Offset="0"/>
+                            <GradientStop Color="#00f2fe" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.15" Color="Black"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="CurrencyUsd" Width="36" Height="36" 
+                                                Foreground="White" Opacity="0.9"/>
+                        <TextBlock Text="Valor em Estoque" FontSize="13" Margin="0,12,0,4"
+                                  Foreground="White" Opacity="0.85"/>
+                        <TextBlock Text="{Binding TotalStockValue, StringFormat='Kz {0:N2}'}"
+                                  FontSize="28" FontWeight="Bold"
+                                  Foreground="White"/>
+                    </StackPanel>
+                </Border>
 
-                    <!-- Expired -->
-                    <Border Grid.Column="3" Background="#F44336" 
-                            CornerRadius="8" Padding="16" Margin="4">
-                        <StackPanel>
-                            <materialDesign:PackIcon Kind="CalendarRemove" Width="32" Height="32" 
-                                                     Foreground="White"/>
-                            <TextBlock Text="{Binding ExpiredCount}" 
-                                       FontSize="28" FontWeight="Bold" 
-                                       Foreground="White" Margin="0,8,0,0"/>
-                            <TextBlock Text="Produtos Vencidos" 
-                                       Foreground="White" Opacity="0.9"/>
-                        </StackPanel>
-                    </Border>
+                <!-- Low Stock Card -->
+                <Border Grid.Column="3" CornerRadius="12" Padding="20" Margin="6">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#f093fb" Offset="0"/>
+                            <GradientStop Color="#f5576c" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.15" Color="Black"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="AlertCircle" Width="36" Height="36" 
+                                                Foreground="White" Opacity="0.9"/>
+                        <TextBlock Text="Estoque Baixo" FontSize="13" Margin="0,12,0,4"
+                                  Foreground="White" Opacity="0.85"/>
+                        <TextBlock Text="{Binding LowStockCount}"
+                                  FontSize="32" FontWeight="Bold"
+                                  Foreground="White"/>
+                    </StackPanel>
+                </Border>
 
-                    <!-- Near Expiration -->
-                    <Border Grid.Column="4" Background="#9C27B0" 
-                            CornerRadius="8" Padding="16" Margin="4">
-                        <StackPanel>
-                            <materialDesign:PackIcon Kind="CalendarAlert" Width="32" Height="32" 
-                                                     Foreground="White"/>
-                            <TextBlock Text="{Binding NearExpirationCount}" 
-                                       FontSize="28" FontWeight="Bold" 
-                                       Foreground="White" Margin="0,8,0,0"/>
-                            <TextBlock Text="Próximo ao Vencimento" 
-                                       Foreground="White" Opacity="0.9"/>
-                        </StackPanel>
-                    </Border>
-                </Grid>
-            </materialDesign:Card>
+                <!-- Near Expiration Card -->
+                <Border Grid.Column="4" CornerRadius="12" Padding="20" Margin="6">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#fa709a" Offset="0"/>
+                            <GradientStop Color="#fee140" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.15" Color="Black"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="CalendarAlert" Width="36" Height="36" 
+                                                Foreground="White" Opacity="0.9"/>
+                        <TextBlock Text="Próximo ao Vencimento" FontSize="13" Margin="0,12,0,4"
+                                  Foreground="White" Opacity="0.85"/>
+                        <TextBlock Text="{Binding NearExpirationCount}"
+                                  FontSize="32" FontWeight="Bold"
+                                  Foreground="White"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
 
             <!-- Tab Control -->
             <TabControl Grid.Row="1" 
@@ -824,367 +862,756 @@
         <Grid Background="#AA000000" 
               Visibility="{Binding IsProductFormOpen, Converter={StaticResource BooleanToVisibilityConverter}}"
               Panel.ZIndex="999">
-            <materialDesign:Card Width="850" 
-                                 MaxHeight="700"
+            <materialDesign:Card Width="950" 
+                                 MaxHeight="750"
                                  VerticalAlignment="Center"
-                                 Padding="24">
+                                 Padding="32">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
-                        <TextBlock Text="{Binding ProductId, Converter={StaticResource BoolToStringConverter}, ConverterParameter=Editar Produto|Novo Produto}"
-                                   Style="{StaticResource MaterialDesignHeadline5TextBlock}"
-                                   Margin="0,0,0,24"/>
+                        <!-- Header com Progress Indicator -->
+                        <Grid Margin="0,0,0,24">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
-                        <!-- Informações Básicas -->
-                        <TextBlock Text="Informações Básicas" 
-                                   Style="{StaticResource SectionHeaderStyle}"/>
-                        
-                        <Grid Margin="0,0,0,16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Row="0"
+                                       Text="{Binding ProductId, Converter={StaticResource BoolToStringConverter}, ConverterParameter=Editar Produto|Novo Produto}"
+                                       Style="{StaticResource MaterialDesignHeadline5TextBlock}"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,12"/>
 
-                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                <TextBox Text="{Binding ProductCode}"
-                                         materialDesign:HintAssist.Hint="Código*"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Margin="0,0,0,16"/>
+                            <!-- Step Indicator -->
+                            <Grid Grid.Row="1" Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-                                <TextBox Text="{Binding ProductName, UpdateSourceTrigger=PropertyChanged}"
-                                         materialDesign:HintAssist.Hint="Nome do Produto*"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Margin="0,0,0,16"/>
-
-                                <TextBox Text="{Binding ProductBarcode}"
-                                         materialDesign:HintAssist.Hint="Código de Barras"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Margin="0,0,0,16"/>
-
-                                <TextBox Text="{Binding ProductSKU}"
-                                         materialDesign:HintAssist.Hint="SKU"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Margin="0,0,0,16"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                <ComboBox ItemsSource="{Binding Categories}"
-                                          SelectedValue="{Binding ProductCategoryId}"
-                                          SelectedValuePath="CategoryId"
-                                          DisplayMemberPath="Name"
-                                          materialDesign:HintAssist.Hint="Categoria*"
-                                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                          Margin="0,0,0,16"/>
-
-                                <ComboBox ItemsSource="{Binding Suppliers}"
-                                          SelectedValue="{Binding ProductSupplierId}"
-                                          SelectedValuePath="PersonId"
-                                          DisplayMemberPath="Name"
-                                          materialDesign:HintAssist.Hint="Fornecedor*"
-                                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                          Margin="0,0,0,16"/>
-
-                                <ComboBox SelectedItem="{Binding ProductStatus}"
-                                          materialDesign:HintAssist.Hint="Status*"
-                                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                          Margin="0,0,0,16">
-                                    <entities:ProductStatus>Active</entities:ProductStatus>
-                                    <entities:ProductStatus>Inactive</entities:ProductStatus>
-                                    <entities:ProductStatus>Discontinued</entities:ProductStatus>
-                                    <entities:ProductStatus>OutOfStock</entities:ProductStatus>
-                                </ComboBox>
-
-                                <TextBox Text="{Binding ProductDisplayOrder}"
-                                         materialDesign:HintAssist.Hint="Ordem de Exibição"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Margin="0,0,0,16"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Descrições -->
-                        <TextBlock Text="Descrições" 
-                                   Style="{StaticResource SectionHeaderStyle}"/>
-                        
-                        <TextBox Text="{Binding ProductShortDescription}"
-                                 materialDesign:HintAssist.Hint="Descrição Curta"
-                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                 AcceptsReturn="True"
-                                 MinLines="2"
-                                 MaxLines="3"
-                                 Margin="0,0,0,16"/>
-
-                        <TextBox Text="{Binding ProductDescription}"
-                                 materialDesign:HintAssist.Hint="Descrição Completa"
-                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                 AcceptsReturn="True"
-                                 MinLines="3"
-                                 MaxLines="5"
-                                 Margin="0,0,0,16"/>
-
-                        <!-- Preços e Impostos -->
-                        <TextBlock Text="Preços e Impostos" 
-                                   Style="{StaticResource SectionHeaderStyle}"/>
-                        
-                        <Grid Margin="0,0,0,16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                <TextBox Text="{Binding ProductCostPrice, StringFormat=N2}"
-                                         materialDesign:HintAssist.Hint="Preço de Custo*"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Margin="0,0,0,16"/>
-
-                                <TextBox Text="{Binding ProductSalePrice, StringFormat=N2}"
-                                         materialDesign:HintAssist.Hint="Preço de Venda*"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Margin="0,0,0,16"/>
-
-                                <TextBox Text="{Binding ProductDiscountPercentage, StringFormat=N2}"
-                                         materialDesign:HintAssist.Hint="Desconto (%)"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Margin="0,0,0,16"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                <TextBox Text="{Binding ProductTaxRate, StringFormat=N2}"
-                                         materialDesign:HintAssist.Hint="Taxa de Imposto (%)"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Margin="0,0,0,16"/>
-
-                                <TextBox Text="{Binding ProfitMargin, StringFormat=N2}"
-                                         materialDesign:HintAssist.Hint="Margem de Lucro (%)"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         IsReadOnly="True"
-                                         Margin="0,0,0,16"/>
-
-                                <TextBox Text="{Binding FinalPrice, StringFormat=C2}"
-                                         materialDesign:HintAssist.Hint="Preço Final"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         IsReadOnly="True"
-                                         Margin="0,0,0,16"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Características Físicas -->
-                        <TextBlock Text="Características Físicas" 
-                                   Style="{StaticResource SectionHeaderStyle}"/>
-                        
-                        <Grid Margin="0,0,0,16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                <TextBox Text="{Binding ProductWeight}"
-                                         materialDesign:HintAssist.Hint="Peso (ex: 1.5kg, 500g)"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Margin="0,0,0,16"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                <TextBox Text="{Binding ProductDimensions}"
-                                         materialDesign:HintAssist.Hint="Dimensões (ex: 10x20x30cm)"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Margin="0,0,0,16"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Controle de Estoque -->
-                        <TextBlock Text="Controle de Estoque" 
-                                   Style="{StaticResource SectionHeaderStyle}"/>
-                        
-                        <Grid Margin="0,0,0,16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                <TextBox Text="{Binding ProductMinimumStock}"
-                                         materialDesign:HintAssist.Hint="Estoque Mínimo"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="1" Margin="4,0">
-                                <TextBox Text="{Binding ProductMaximumStock}"
-                                         materialDesign:HintAssist.Hint="Estoque Máximo"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="2" Margin="8,0,0,0">
-                                <TextBox Text="{Binding ProductReorderPoint}"
-                                         materialDesign:HintAssist.Hint="Ponto de Reposição"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Controle de Validade -->
-                        <TextBlock Text="Controle de Validade" 
-                                   Style="{StaticResource SectionHeaderStyle}"/>
-                        
-                        <Grid Margin="0,0,0,16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                <TextBox Text="{Binding ProductExpirationDays}"
-                                         materialDesign:HintAssist.Hint="Dias até Validade"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Margin="0,0,0,16"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                <TextBox Text="{Binding ProductExpirationWarningDays}"
-                                         materialDesign:HintAssist.Hint="Dias de Aviso de Validade"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Margin="0,0,0,16"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Imagem -->
-                        <TextBlock Text="Imagem do Produto" 
-                                   Style="{StaticResource SectionHeaderStyle}"/>
-
-                            <Border >
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <!-- Logo Preview -->
-                                    <Border Grid.Column="0"
-                                           Width="120" 
-                                           Height="120"
-                                           Background="#F1F5F9"
-                                           CornerRadius="12"
-                                           BorderBrush="#E2E8F0"
-                                           BorderThickness="2"
-                                           Margin="0,0,24,0">
-                                        <Grid>
-                                            <!-- Placeholder -->
-                                            <StackPanel VerticalAlignment="Center" 
-                                                       HorizontalAlignment="Center"
-                                                       Visibility="{Binding HasImage, Converter={StaticResource InverseBoolToVisibilityConverter}}">
-                                                <materialDesign:PackIcon Kind="ImageOutline" 
-                                                                        Width="48" 
-                                                                        Height="48"
-                                                                        Foreground="#94A3B8"/>
-                                                <TextBlock Text="Sem Imagem" 
-                                                          FontSize="11" 
-                                                          Foreground="#94A3B8"
-                                                          HorizontalAlignment="Center"
-                                                          Margin="0,8,0,0"/>
-                                            </StackPanel>
-
-                                            <!-- Logo Image -->
-                                            <Image Source="{Binding ProductPhotoUrl, Converter={StaticResource StringToImageSourceConverter}}"
-                                                  Stretch="Uniform"
-                                                  Visibility="{Binding HasImage, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                        </Grid>
+                                <!-- Step 1 -->
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Border Width="32" Height="32" 
+                                            CornerRadius="16"
+                                            Margin="0,0,8,0">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#E2E8F0"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding CurrentStep}" Value="1">
+                                                        <Setter Property="Background" Value="#667eea"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="1" 
+                                                   Foreground="White"
+                                                   FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
                                     </Border>
-
-                                    <!-- Logo Actions -->
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock Text="Imagem do produto" 
-                                                  Margin="0,0,0,8"/>
-                                        <TextBlock Text="Adicione a imagem do produto"
-                                                  FontSize="13"
-                                                  Foreground="#64748B"
-                                                  TextWrapping="Wrap"
-                                                  Margin="0,0,0,16"/>
-
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Command="{Binding  UploadProductPhotoCommand}"
-                                                   Style="{StaticResource MaterialDesignOutlinedButton}"
-                                                   Height="40"
-                                                   Padding="20,0">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon Kind="Upload" 
-                                                                            Width="18" 
-                                                                            Height="18"
-                                                                            VerticalAlignment="Center"/>
-                                                    <TextBlock Text="Selecionar Logo" 
-                                                              Margin="8,0,0,0"
-                                                              VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Button>
-
-                                            <Button Command="{Binding RemoveProductPhotoCommand}"
-                                                   Style="{StaticResource MaterialDesignOutlinedButton}"
-                                                   Height="40"
-                                                   Padding="20,0"
-                                                   Margin="12,0,0,0"
-                                                   Visibility="{Binding HasLogo, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon Kind="Delete" 
-                                                                            Width="18" 
-                                                                            Height="18"
-                                                                            VerticalAlignment="Center"/>
-                                                    <TextBlock Text="Remover" 
-                                                              Margin="8,0,0,0"
-                                                              VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </StackPanel>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="Informações" 
+                                                   FontSize="13" 
+                                                   FontWeight="Medium"
+                                                   Foreground="{Binding IsStep1, Mode=OneWay, Converter={StaticResource BoolToColorConverter}, ConverterParameter=#667eea|#64748B}"/>
+                                        <TextBlock Text="Básicas" 
+                                                   FontSize="11"
+                                                   Foreground="#94A3B8"/>
                                     </StackPanel>
-                                </Grid>
+                                </StackPanel>
+
+                                <!-- Connector 1 -->
+                                <Rectangle Grid.Column="1" 
+                                           Width="60" 
+                                           Height="2"
+                                           Margin="16,0">
+                                    <Rectangle.Style>
+                                        <Style TargetType="Rectangle">
+                                            <Setter Property="Fill" Value="#E2E8F0"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CurrentStep}" Value="2">
+                                                    <Setter Property="Fill" Value="#667eea"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding CurrentStep}" Value="3">
+                                                    <Setter Property="Fill" Value="#667eea"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Rectangle.Style>
+                                </Rectangle>
+
+                                <!-- Step 2 -->
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Border Width="32" Height="32" 
+                                            CornerRadius="16"
+                                            Margin="0,0,8,0">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#E2E8F0"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding CurrentStep}" Value="2">
+                                                        <Setter Property="Background" Value="#43e97b"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="2" 
+                                                   Foreground="White"
+                                                   FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="Estoque" 
+                                                   FontSize="13" 
+                                                   FontWeight="Medium"
+                                                   Foreground="{Binding IsStep2, Mode=OneWay, Converter={StaticResource BoolToColorConverter}, ConverterParameter=#43e97b|#64748B}"/>
+                                        <TextBlock Text="Inicial" 
+                                                   FontSize="11"
+                                                   Foreground="#94A3B8"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Connector 2 -->
+                                <Rectangle Grid.Column="3" 
+                                           Width="60" 
+                                           Height="2"
+                                           Margin="16,0">
+                                    <Rectangle.Style>
+                                        <Style TargetType="Rectangle">
+                                            <Setter Property="Fill" Value="#E2E8F0"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CurrentStep}" Value="3">
+                                                    <Setter Property="Fill" Value="#43e97b"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Rectangle.Style>
+                                </Rectangle>
+
+                                <!-- Step 3 -->
+                                <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Border Width="32" Height="32" 
+                                            CornerRadius="16"
+                                            Margin="0,0,8,0">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#E2E8F0"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding CurrentStep}" Value="3">
+                                                        <Setter Property="Background" Value="#f093fb"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="3" 
+                                                   Foreground="White"
+                                                   FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="Validade" 
+                                                   FontSize="13" 
+                                                   FontWeight="Medium"
+                                                   Foreground="{Binding IsStep3, Mode=OneWay, Converter={StaticResource BoolToColorConverter}, ConverterParameter=#f093fb|#64748B}"/>
+                                        <TextBlock Text="(Opcional)" 
+                                                   FontSize="11"
+                                                   Foreground="#94A3B8"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Progress Bar -->
+                            <ProgressBar Grid.Row="2" 
+                                         Value="{Binding StepProgress, Mode=OneWay}"
+                                         Height="4"
+                                         Minimum="0"
+                                         Maximum="100"
+                                         Foreground="#667eea"
+                                         Background="#E2E8F0"
+                                         BorderThickness="0"/>
+                        </Grid>
+
+                        <!-- STEP 1: Informações Básicas do Produto -->
+                        <StackPanel Visibility="{Binding IsStep1, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            
+                            <TextBlock Text="Informações Básicas do Produto" 
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="#1E293B"
+                                       Margin="0,0,0,8"/>
+                            
+                            <TextBlock Text="Preencha as informações essenciais do produto"
+                                       FontSize="13"
+                                       Foreground="#64748B"
+                                       Margin="0,0,0,24"/>
+                            
+                            <!-- Identificação -->
+                            <TextBlock Text="Identificação" 
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="#475569"
+                                       Margin="0,0,0,12"/>
+                            
+                            <Grid Margin="0,0,0,24">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                    <TextBox Text="{Binding ProductCode}"
+                                             materialDesign:HintAssist.Hint="Código*"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             Margin="0,0,0,16"/>
+
+                                    <TextBox Text="{Binding ProductName, UpdateSourceTrigger=PropertyChanged}"
+                                             materialDesign:HintAssist.Hint="Nome do Produto*"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             Margin="0,0,0,16"/>
+
+                                    <TextBox Text="{Binding ProductBarcode}"
+                                             materialDesign:HintAssist.Hint="Código de Barras"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             Margin="0,0,0,16"/>
+
+                                    <TextBox Text="{Binding ProductSKU}"
+                                             materialDesign:HintAssist.Hint="SKU"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                    <ComboBox ItemsSource="{Binding Categories}"
+                                              SelectedValue="{Binding ProductCategoryId}"
+                                              SelectedValuePath="CategoryId"
+                                              DisplayMemberPath="Name"
+                                              materialDesign:HintAssist.Hint="Categoria*"
+                                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                              Margin="0,0,0,16"/>
+
+                                    <ComboBox ItemsSource="{Binding Suppliers}"
+                                              SelectedValue="{Binding ProductSupplierId}"
+                                              SelectedValuePath="PersonId"
+                                              DisplayMemberPath="Name"
+                                              materialDesign:HintAssist.Hint="Fornecedor*"
+                                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                              Margin="0,0,0,16"/>
+
+                                    <ComboBox SelectedItem="{Binding ProductStatus}"
+                                              materialDesign:HintAssist.Hint="Status*"
+                                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                              Margin="0,0,0,16">
+                                        <entities:ProductStatus>Active</entities:ProductStatus>
+                                        <entities:ProductStatus>Inactive</entities:ProductStatus>
+                                        <entities:ProductStatus>Discontinued</entities:ProductStatus>
+                                        <entities:ProductStatus>OutOfStock</entities:ProductStatus>
+                                    </ComboBox>
+
+                                    <TextBox Text="{Binding ProductDisplayOrder}"
+                                             materialDesign:HintAssist.Hint="Ordem de Exibição"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Descrições -->
+                            <TextBlock Text="Descrições" 
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="#475569"
+                                       Margin="0,0,0,12"/>
+                            
+                            <TextBox Text="{Binding ProductShortDescription}"
+                                     materialDesign:HintAssist.Hint="Descrição Curta"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     AcceptsReturn="True"
+                                     MinLines="2"
+                                     MaxLines="3"
+                                     TextWrapping="Wrap"
+                                     Margin="0,0,0,16"/>
+
+                            <TextBox Text="{Binding ProductDescription}"
+                                     materialDesign:HintAssist.Hint="Descrição Completa"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     AcceptsReturn="True"
+                                     MinLines="3"
+                                     MaxLines="5"
+                                     TextWrapping="Wrap"
+                                     Margin="0,0,0,24"/>
+
+                            <!-- Preços e Impostos -->
+                            <TextBlock Text="Preços e Impostos" 
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="#475569"
+                                       Margin="0,0,0,12"/>
+                            
+                            <Grid Margin="0,0,0,24">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                    <TextBox Text="{Binding ProductCostPrice, StringFormat=N2}"
+                                             materialDesign:HintAssist.Hint="Preço de Custo*"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             Margin="0,0,0,16"/>
+
+                                    <TextBox Text="{Binding ProductSalePrice, StringFormat=N2}"
+                                             materialDesign:HintAssist.Hint="Preço de Venda*"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             Margin="0,0,0,16"/>
+
+                                    <TextBox Text="{Binding ProductDiscountPercentage, StringFormat=N2}"
+                                             materialDesign:HintAssist.Hint="Desconto (%)"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                    <TextBox Text="{Binding ProductTaxRate, StringFormat=N2}"
+                                             materialDesign:HintAssist.Hint="Taxa de Imposto (%)"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             Margin="0,0,0,16"/>
+
+                                    <TextBox Text="{Binding ProfitMargin, StringFormat=N2}"
+                                             materialDesign:HintAssist.Hint="Margem de Lucro (%)"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             IsReadOnly="True"
+                                             Margin="0,0,0,16"/>
+
+                                    <TextBox Text="{Binding FinalPrice, StringFormat=C2}"
+                                             materialDesign:HintAssist.Hint="Preço Final"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             IsReadOnly="True"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Características Físicas -->
+                            <TextBlock Text="Características Físicas" 
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="#475569"
+                                       Margin="0,0,0,12"/>
+                            
+                            <Grid Margin="0,0,0,24">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                    <TextBox Text="{Binding ProductWeight}"
+                                             materialDesign:HintAssist.Hint="Peso (ex: 1.5kg, 500g)"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                    <TextBox Text="{Binding ProductDimensions}"
+                                             materialDesign:HintAssist.Hint="Dimensões (ex: 10x20x30cm)"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Controle de Estoque -->
+                            <TextBlock Text="Controle de Estoque" 
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="#475569"
+                                       Margin="0,0,0,12"/>
+                            
+                            <Grid Margin="0,0,0,24">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                    <TextBox Text="{Binding ProductMinimumStock}"
+                                             materialDesign:HintAssist.Hint="Estoque Mínimo"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Margin="4,0">
+                                    <TextBox Text="{Binding ProductMaximumStock}"
+                                             materialDesign:HintAssist.Hint="Estoque Máximo"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" Margin="8,0,0,0">
+                                    <TextBox Text="{Binding ProductReorderPoint}"
+                                             materialDesign:HintAssist.Hint="Ponto de Reposição"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Controle de Validade -->
+                            <TextBlock Text="Controle de Validade" 
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="#475569"
+                                       Margin="0,0,0,12"/>
+                            
+                            <Grid Margin="0,0,0,24">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                    <TextBox Text="{Binding ProductExpirationDays}"
+                                             materialDesign:HintAssist.Hint="Dias até Validade"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                    <TextBox Text="{Binding ProductExpirationWarningDays}"
+                                             materialDesign:HintAssist.Hint="Dias de Aviso de Validade"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Imagem do Produto -->
+                            <TextBlock Text="Imagem do Produto" 
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="#475569"
+                                       Margin="0,0,0,12"/>
+
+                            <Grid Margin="0,0,0,24">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Logo Preview -->
+                                <Border Grid.Column="0"
+                                        Width="120"
+                                        Height="120"
+                                        BorderBrush="#E2E8F0"
+                                        BorderThickness="2"
+                                        CornerRadius="8"
+                                        Margin="0,0,16,0">
+                                    <Grid>
+                                        <Image Source="{Binding ProductPhotoUrl}"
+                                               Stretch="UniformToFill"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Sem Imagem"
+                                                   Foreground="#94A3B8"
+                                                   FontSize="12"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ProductPhotoUrl}" Value="">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding ProductPhotoUrl}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </Border>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBox Text="{Binding ProductPhotoUrl}"
+                                             materialDesign:HintAssist.Hint="URL da Imagem"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             Margin="0,0,0,12"/>
+                                    
+                                    <TextBlock Text="Cole a URL da imagem do produto"
+                                               FontSize="12"
+                                               Foreground="#64748B"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Configurações -->
+                            <TextBlock Text="Configurações" 
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="#475569"
+                                       Margin="0,0,0,12"/>
+                            
+                            <Grid Margin="0,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                    <CheckBox Content="Controla Estoque"
+                                              IsChecked="{Binding ProductControlsStock}"
+                                              FontWeight="Medium"
+                                              Margin="0,8"/>
+
+                                    <CheckBox Content="Possui Data de Validade"
+                                              IsChecked="{Binding ProductHasExpirationDate}"
+                                              FontWeight="Medium"
+                                              Margin="0,8"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                    <CheckBox Content="Produto em Destaque"
+                                              IsChecked="{Binding ProductIsFeatured}"
+                                              FontWeight="Medium"
+                                              Margin="0,8"/>
+
+                                    <CheckBox Content="Permite Backorder"
+                                              IsChecked="{Binding ProductAllowBackorder}"
+                                              FontWeight="Medium"
+                                              Margin="0,8"/>
+                                </StackPanel>
+                            </Grid>
+
+                        </StackPanel>
+
+                        <!-- STEP 2: Estoque Inicial -->
+                        <StackPanel Visibility="{Binding IsStep2, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            
+                            <TextBlock Text="Estoque Inicial do Produto" 
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="#1E293B"
+                                       Margin="0,0,0,8"/>
+                            
+                            <TextBlock Text="Configure o estoque inicial deste produto"
+                                       FontSize="13"
+                                       Foreground="#64748B"
+                                       Margin="0,0,0,24"/>
+
+                            <Border Background="#F8FAFC"
+                                    BorderBrush="#E2E8F0"
+                                    BorderThickness="2"
+                                    CornerRadius="12"
+                                    Padding="24"
+                                    Margin="0,0,0,24">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                        <materialDesign:PackIcon Kind="InformationOutline"
+                                                                 Width="20"
+                                                                 Height="20"
+                                                                 Foreground="#3B82F6"
+                                                                 VerticalAlignment="Top"
+                                                                 Margin="0,2,12,0"/>
+                                        <TextBlock TextWrapping="Wrap"
+                                                   FontSize="13"
+                                                   Foreground="#475569">
+                                            <Run Text="Defina a quantidade inicial de estoque para este produto."/>
+                                            <LineBreak/>
+                                            <Run Text="Esta será registrada como uma movimentação de entrada no histórico."/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </StackPanel>
                             </Border>
 
-                        <!-- Opções Adicionais -->
-                        <TextBlock Text="Opções Adicionais" 
-                                   Style="{StaticResource SectionHeaderStyle}"/>
-                        
-                        <Grid Margin="0,0,0,16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                    <TextBox Text="{Binding InitialStockQuantity, UpdateSourceTrigger=PropertyChanged}"
+                                             materialDesign:HintAssist.Hint="Quantidade Inicial*"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             Margin="0,0,0,16"/>
+
+                                    <TextBox Text="{Binding InitialStockCost, StringFormat=N2}"
+                                             materialDesign:HintAssist.Hint="Custo Unitário*"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                    <TextBox Text="{Binding InitialStockNotes}"
+                                             materialDesign:HintAssist.Hint="Observações"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             AcceptsReturn="True"
+                                             MinLines="4"
+                                             MaxLines="6"
+                                             TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Grid>
+
+                        </StackPanel>
+
+                        <!-- STEP 3: Data de Validade -->
+                        <StackPanel Visibility="{Binding IsStep3, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            
+                            <TextBlock Text="Data de Validade do Produto" 
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="#1E293B"
+                                       Margin="0,0,0,8"/>
+                            
+                            <TextBlock Text="Configure a data de validade para o lote inicial (opcional)"
+                                       FontSize="13"
+                                       Foreground="#64748B"
+                                       Margin="0,0,0,24"/>
+
+                            <!-- Aviso se não tem HasExpirationDate -->
+                            <Border Background="#FEF3C7"
+                                    BorderBrush="#FCD34D"
+                                    BorderThickness="2"
+                                    CornerRadius="12"
+                                    Padding="24"
+                                    Margin="0,0,0,24"
+                                    Visibility="{Binding ProductHasExpirationDate, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="AlertOutline"
+                                                             Width="24"
+                                                             Height="24"
+                                                             Foreground="#F59E0B"
+                                                             VerticalAlignment="Top"
+                                                             Margin="0,2,12,0"/>
+                                    <TextBlock TextWrapping="Wrap"
+                                               FontSize="13"
+                                               Foreground="#92400E">
+                                        <Run Text="Este produto não está configurado para controlar data de validade."/>
+                                        <LineBreak/>
+                                        <Run Text="Você pode pular esta etapa clicando em 'Finalizar'."/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Campos de validade -->
+                            <Border Background="#F8FAFC"
+                                    BorderBrush="#E2E8F0"
+                                    BorderThickness="2"
+                                    CornerRadius="12"
+                                    Padding="24"
+                                    Margin="0,0,0,24"
+                                    Visibility="{Binding ProductHasExpirationDate, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                        <materialDesign:PackIcon Kind="CalendarOutline"
+                                                                 Width="20"
+                                                                 Height="20"
+                                                                 Foreground="#10B981"
+                                                                 VerticalAlignment="Top"
+                                                                 Margin="0,2,12,0"/>
+                                        <TextBlock TextWrapping="Wrap"
+                                                   FontSize="13"
+                                                   Foreground="#475569">
+                                            <Run Text="Registre a data de validade do lote inicial."/>
+                                            <LineBreak/>
+                                            <Run Text="Esta informação é importante para o controle de qualidade."/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Grid Visibility="{Binding ProductHasExpirationDate, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                    <DatePicker SelectedDate="{Binding InitialExpirationDate}"
+                                                materialDesign:HintAssist.Hint="Data de Validade*"
+                                                Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                                                Margin="0,0,0,16"/>
+
+                                    <TextBox Text="{Binding InitialBatchNumber}"
+                                             materialDesign:HintAssist.Hint="Número do Lote"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                    <TextBox Text="{Binding InitialExpirationNotes}"
+                                             materialDesign:HintAssist.Hint="Observações"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             AcceptsReturn="True"
+                                             MinLines="6"
+                                             MaxLines="8"
+                                             TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Grid>
+
+                        </StackPanel>
+
+                        <!-- Botões de Navegação do Wizard -->
+                        <Grid Margin="0,32,0,0">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                <CheckBox Content="Controla Estoque"
-                                          IsChecked="{Binding ProductControlsStock}"
-                                          Margin="0,0,0,8"/>
-
-                                <CheckBox Content="Possui Data de Validade"
-                                          IsChecked="{Binding ProductHasExpirationDate}"
-                                          Margin="0,0,0,8"/>
-
-                                <CheckBox Content="Produto em Destaque"
-                                          IsChecked="{Binding ProductIsFeatured}"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                <CheckBox Content="Permite Pedido em Falta (Backorder)"
-                                          IsChecked="{Binding ProductAllowBackorder}"
-                                          Margin="0,0,0,8"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Botões de Ação -->
-                        <Grid Margin="0,16,0,0">
-                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <Button Grid.Column="1"
+                            <!-- Botão Anterior -->
+                            <Button Grid.Column="0"
+                                    Command="{Binding PreviousStepCommand}"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                    Height="40"
+                                    Padding="24,0"
+                                    Visibility="{Binding IsStep1, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="ChevronLeft" 
+                                                             Width="20" 
+                                                             Height="20"
+                                                             VerticalAlignment="Center"/>
+                                    <TextBlock Text="Anterior" 
+                                               Margin="8,0,0,0"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Botão Cancelar -->
+                            <Button Grid.Column="2"
                                     Command="{Binding CancelProductCommand}"
                                     Style="{StaticResource MaterialDesignFlatButton}"
                                     Content="Cancelar"
-                                    Margin="0,0,8,0"/>
+                                    Height="40"
+                                    Padding="24,0"
+                                    Margin="0,0,12,0"/>
 
-                            <Button Grid.Column="2"
-                                    Command="{Binding SaveProductCommand}"
+                            <!-- Botão Próximo (Steps 1 e 2) -->
+                            <Button Grid.Column="3"
+                                    Command="{Binding NextStepCommand}"
                                     Style="{StaticResource MaterialDesignRaisedButton}"
-                                    Content="Salvar"/>
+                                    Height="40"
+                                    Padding="24,0"
+                                    Visibility="{Binding IsStep3, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Próximo" 
+                                               VerticalAlignment="Center"/>
+                                    <materialDesign:PackIcon Kind="ChevronRight" 
+                                                             Width="20" 
+                                                             Height="20"
+                                                             Margin="8,0,0,0"
+                                                             VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Botão Finalizar (Step 3) -->
+                            <Button Grid.Column="3"
+                                    Command="{Binding FinishWizardCommand}"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Height="40"
+                                    Padding="24,0"
+                                    Visibility="{Binding IsStep3, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Check" 
+                                                             Width="20" 
+                                                             Height="20"
+                                                             VerticalAlignment="Center"/>
+                                    <TextBlock Text="Finalizar" 
+                                               Margin="8,0,0,0"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </Grid>
                     </StackPanel>
                 </ScrollViewer>
