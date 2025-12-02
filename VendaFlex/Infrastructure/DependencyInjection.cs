@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using VendaFlex.Core.DTOs;
@@ -26,9 +26,11 @@ using VendaFlex.ViewModels.Products;
 using VendaFlex.UI.Views.Stock;
 using VendaFlex.ViewModels.Stock;
 using VendaFlex.UI.Views.Persons;
+using VendaFlex.UI.Views.Reports;
 using VendaFlex.ViewModels.Persons;
 using VendaFlex.UI.Views.Users;
 using VendaFlex.ViewModels.Users;
+using VendaFlex.ViewModels.Reports;
 
 namespace VendaFlex.Infrastructure
 {
@@ -156,6 +158,9 @@ namespace VendaFlex.Infrastructure
 
             services.AddTransient<InvoiceManagementView>();
             services.AddTransient<InvoiceManagementViewModel>();
+
+            services.AddTransient<ReportManagementView>();
+            services.AddTransient<ReportManagementViewModel>();
 
             //
             return services;

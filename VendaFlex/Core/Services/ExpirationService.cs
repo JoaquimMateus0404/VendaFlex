@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FluentValidation;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
@@ -175,6 +175,21 @@ namespace VendaFlex.Core.Services
             }
         }
 
+        public async Task<OperationResult<IEnumerable<ExpirationDto>>> GetExpiringAsync(int days)
+        {
+            try
+            {
+                var entities = await _expirationRepository.GetNearExpirationAsync(days);
+                var dtos = _mapper.Map<IEnumerable<ExpirationDto>>(entities);
+                return OperationResult<IEnumerable<ExpirationDto>>.CreateSuccess(dtos, $"{dtos.Count()} expiração(ões) prestes a vencer.");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<IEnumerable<ExpirationDto>>.CreateFailure(
+                    "Erro ao buscar expirações prestes a vencer.",
+                    new[] { ex.Message });
+            }
+        }
         public async Task<int> GetExpiredQuantityByProductAsync(int productId)
         {
             try

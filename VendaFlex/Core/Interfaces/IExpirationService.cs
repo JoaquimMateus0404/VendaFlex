@@ -1,4 +1,4 @@
-﻿using VendaFlex.Core.Utils;
+using VendaFlex.Core.Utils;
 using VendaFlex.Core.DTOs;
 
 namespace VendaFlex.Core.Interfaces
@@ -39,6 +39,13 @@ namespace VendaFlex.Core.Interfaces
         /// </summary>
         /// <returns>Lista de expirações próximas do vencimento.</returns>
         Task<OperationResult<IEnumerable<ExpirationDto>>> GetNearExpirationAsync();
+
+        /// <summary>
+        /// Obtém as expirações que vencerão dentro do número de dias especificado.
+        /// </summary>
+        /// <param name="days">Número de dias para buscar expirações futuras.</param>
+        /// <returns>Lista de expirações que vencerão no período.</returns>
+        Task<OperationResult<IEnumerable<ExpirationDto>>> GetExpiringAsync(int days);
 
         /// <summary>
         /// Obtém expirações pelo número de lote.

@@ -60,6 +60,11 @@ namespace VendaFlex.Infrastructure.Navigation
         void NavigateToInvoiceManagement();
 
         /// <summary>
+        /// Navega para a tela de gestão de relatórios
+        /// </summary>
+        void NavigateToReportManagement();
+
+        /// <summary>
         /// Fecha a janela atual
         /// </summary>
         void CloseCurrentWindow();

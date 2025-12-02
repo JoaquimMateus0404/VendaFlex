@@ -19,6 +19,8 @@ using VendaFlex.UI.Views.Persons;
 using VendaFlex.ViewModels.Persons;
 using VendaFlex.UI.Views.Users;
 using VendaFlex.ViewModels.Users;
+using VendaFlex.UI.Views.Reports;
+using VendaFlex.ViewModels.Reports;
 
 namespace VendaFlex.Infrastructure.Navigation
 {
@@ -357,6 +359,33 @@ namespace VendaFlex.Infrastructure.Navigation
             }
         }
 
+        public void NavigateToReportManagement()
+        {
+            _logger.LogInformation("Navegando para tela de Gestão de Relatórios");
+            try
+            {
+                NavigateToPage<ReportManagementView, ReportManagementViewModel>(
+                    "VendaFlex - Gestão de Relatórios",
+                    new NavigationOptions
+                    {
+                        Mode = NavigationMode.Stack,
+                        Width = 1400,
+                        Height = 900,
+                        WindowStyle = WindowStyle.SingleBorderWindow,
+                        ResizeMode = ResizeMode.CanResize,
+                        WindowState = WindowState.Maximized,
+                        StartupLocation = WindowStartupLocation.CenterScreen,
+                        ShowInTaskbar = true,
+                        Topmost = false
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao navegar para Gestão de Relatórios");
+                throw;
+            }
+        }
         #endregion
         public void NavigateToPage<TView, TViewModel>(string title, double width = 1000, double height = 700, bool closeCurrent = false)
             where TView : System.Windows.Controls.Page

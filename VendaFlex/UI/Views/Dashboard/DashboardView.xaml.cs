@@ -1,4 +1,4 @@
-﻿﻿using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -287,5 +287,10 @@ namespace VendaFlex.UI.Views.Dashboard
         }
 
         #endregion
+
+        private void ReportsButton_Click(object sender, RoutedEventArgs e)
+        {
+            _navigationService.NavigateToReportManagement();
+        }
     }
 }

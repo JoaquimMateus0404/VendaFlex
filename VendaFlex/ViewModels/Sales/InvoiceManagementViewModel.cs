@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -496,7 +496,7 @@ namespace VendaFlex.ViewModels.Sales
             {
                 IsLoading = false;
             }
-        }  //SelectedInvoiceHistory
+        }  
 
         private async Task LoadPaymentTypesAsync()
         {
@@ -545,7 +545,7 @@ namespace VendaFlex.ViewModels.Sales
                         .Skip((PageNumber - 1) * PageSize)
                         .Take(PageSize);
 
-                    // Mapear para lista com dados do cliente e operador
+                    // Mapear para lista com dados do cliente e operador  OperatorName
                     var listItems = new List<InvoiceListItemDto>();
                     foreach (var invoice in pagedInvoices)
                     {
@@ -638,9 +638,18 @@ namespace VendaFlex.ViewModels.Sales
                 }
             }
 
-            // TODO: Carregar dados do operador quando tiver acesso ao UserService
-            listItem.OperatorName = "Operador";
-            listItem.OperatorRole = "Vendedor";
+            var userResult = await _userService.GetByIdAsync(invoice.UserId);
+            if (userResult.Success && userResult.Data != null)
+            {
+                var operador = userResult.Data;
+                listItem.OperatorName = operador.Username;
+                listItem.OperatorRole = "Vendedor";
+            }
+            else
+            {
+                listItem.OperatorName = "Operador";
+                listItem.OperatorRole = "Vendedor";
+            }
 
             return listItem;
         }
@@ -920,7 +929,6 @@ namespace VendaFlex.ViewModels.Sales
             }
         }
 
-
         private async Task LoadStockImpactAsync()
         {
             try
@@ -1195,8 +1203,16 @@ namespace VendaFlex.ViewModels.Sales
         {
             if (SelectedInvoice == null) return;
 
+            if (SelectedInvoice.Status == InvoiceStatus.Cancelled)
+            {
+                ShowMessage("Não é possível emitir nota de crédito para fatura cancelada", true);
+                return;
+            }
+
             var result = MessageBox.Show(
-                "Deseja emitir uma nota de crédito para esta fatura?\nIsso criará um documento de devolução/estorno.",
+                $"Emitir nota de crédito para {SelectedInvoice.InvoiceNumber}?\n\n" +
+                "Usada para:\n• Devoluções\n• Correção de valores\n• Cancelamentos parciais\n\n" +
+                "Será criada uma fatura com valor negativo.",
                 "Nota de Crédito",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
@@ -1208,16 +1224,147 @@ namespace VendaFlex.ViewModels.Sales
                 IsLoading = true;
                 ShowMessage("Emitindo nota de crédito...");
 
-                // TODO: Implementar emissão de nota de crédito
-                await Task.Delay(1000);
+                var invoiceResult = await _invoiceService.GetByIdAsync(SelectedInvoice.InvoiceId);
+                if (!invoiceResult.Success || invoiceResult.Data == null)
+                {
+                    ShowMessage($"Erro ao buscar fatura: {invoiceResult.Message}", true);
+                    return;
+                }
 
-                ShowMessage("Nota de crédito emitida com sucesso!");
+                var originalInvoice = invoiceResult.Data;
+                var companyResult = await _companyConfigService.GetAsync();
+                
+
+                if (!companyResult.Success || companyResult.Data == null)
+                {
+                    ShowMessage("Erro ao buscar configurações", true);
+                    return;
+                }
+
+                var userId = _currentUserContext.UserId ?? originalInvoice.UserId;
+
+                string invoiceNumber;
+                var generatedNumber = await _companyConfigService.GenerateInvoiceNumberAsync();
+
+                if (generatedNumber.Success && !string.IsNullOrEmpty(generatedNumber.Data))
+                {
+                    invoiceNumber = generatedNumber.Data;  // ✅ CORRETO
+                }
+                else
+                {
+                    // Fallback: gerar manualmente
+                    invoiceNumber = $"NC-{DateTime.Now:yyyyMMdd}-{originalInvoice.InvoiceId}";  // ✅ CORRETO
+                }
+
+                var creditNote = new InvoiceDto
+                {
+                    InvoiceNumber = invoiceNumber,
+                    PersonId = originalInvoice.PersonId,
+                    UserId = userId,
+                    Date = DateTime.UtcNow,
+                    Status = InvoiceStatus.Confirmed,
+                    SubTotal = -originalInvoice.SubTotal,
+                    TaxAmount = -originalInvoice.TaxAmount,
+                    DiscountAmount = 0,
+                    ShippingCost = 0,
+                    Total = -originalInvoice.Total,
+                    PaidAmount = -originalInvoice.Total,
+                    Notes = $"Nota de Crédito ref. {originalInvoice.InvoiceNumber}\nEmitida em {DateTime.Now:dd/MM/yyyy HH:mm}",
+                    InternalNotes = $"NOTA DE CRÉDITO - Ref: {originalInvoice.InvoiceNumber}\nUsuário: {userId}\nValor: Kz {originalInvoice.Total:N2}"
+                };
+
+                var createResult = await _invoiceService.AddAsync(creditNote);
+                if (!createResult.Success || createResult.Data == null)
+                {
+                    ShowMessage($"Erro ao criar nota: {createResult.Message}", true);
+                    Debug.WriteLine($"Erro ao criar nota: {createResult.Message}");
+
+                    var validationErrors = createResult.Errors != null
+                        ? string.Join(" | ", createResult.Errors)
+                        : "Nenhum detalhe";
+
+                    Debug.WriteLine("Erros de validação: " + validationErrors);
+
+                    return;
+                }
+
+                var created = createResult.Data;
+                Debug.WriteLine($"[CREDIT NOTE] Criada: {created.InvoiceNumber}");
+
+                var itemsResult = await _invoiceProductService.GetByInvoiceIdAsync(originalInvoice.InvoiceId);
+                if (itemsResult.Success && itemsResult.Data != null)
+                {
+                    foreach (var item in itemsResult.Data)
+                    {
+                        var creditItem = new InvoiceProductDto
+                        {
+                            InvoiceId = created.InvoiceId,
+                            ProductId = item.ProductId,
+                            Quantity = item.Quantity,
+                            UnitPrice = -item.UnitPrice,
+                            DiscountPercentage = 0,
+                            TaxRate = item.TaxRate
+                        };
+
+                        var invoiceProduct = await _invoiceProductService.AddAsync(creditItem);
+
+                        if (invoiceProduct.Success && invoiceProduct.Data != null)
+                        {
+                            try
+                            {
+                                var stock = await _stockService.GetByProductIdAsync(item.ProductId);
+                                if (stock.Success && stock.Data != null)
+                                {
+                                    await _stockService.UpdateQuantityAsync(
+                                        item.ProductId,
+                                        stock.Data.Quantity + (int)item.Quantity,
+                                        userId,
+                                        $"Restauração - NC #{created.InvoiceNumber}");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"Aviso restaurar estoque: {ex.Message}");
+                            }
+                        }
+                        else
+                        {
+                            var validationErrors = invoiceProduct.Errors != null
+                                ? string.Join(" | ", invoiceProduct.Errors)
+                                : "Nenhum detalhe";
+
+                            Debug.WriteLine("Erros de validação: " + validationErrors);
+                            Debug.WriteLine($"Mensagem: {invoiceProduct.Message}");
+                        }
+                       
+                    }
+                }
+
+                var payment = new PaymentDto
+                {
+                    InvoiceId = created.InvoiceId,
+                    PaymentTypeId = 1,
+                    Amount = -originalInvoice.Total,
+                    PaymentDate = DateTime.Now,
+                    Reference = $"NC-{originalInvoice.InvoiceNumber}",
+                    Notes = $"Crédito automático - NC {created.InvoiceNumber}",
+                    IsConfirmed = true
+                };
+
+                await _paymentService.AddAsync(payment);
+
+                originalInvoice.InternalNotes += $"\n[{DateTime.Now:dd/MM/yyyy HH:mm}] Nota de Crédito: {created.InvoiceNumber}";
+                await _invoiceService.UpdateAsync(originalInvoice);
+
+                ShowMessage($"✅ Nota de Crédito {created.InvoiceNumber} emitida! Valor: Kz {originalInvoice.Total:N2}");
+
                 await SearchAsync();
                 await UpdateStatisticsAsync();
             }
             catch (Exception ex)
             {
-                ShowMessage($"Erro ao emitir nota de crédito: {ex.Message}", true);
+                ShowMessage($"Erro: {ex.Message}", true);
+                Debug.WriteLine($"[CREDIT NOTE] ERRO: {ex}");
             }
             finally
             {
@@ -1229,8 +1376,16 @@ namespace VendaFlex.ViewModels.Sales
         {
             if (SelectedInvoice == null) return;
 
+            if (SelectedInvoice.Status == InvoiceStatus.Cancelled)
+            {
+                ShowMessage("Não é possível emitir nota de débito para fatura cancelada", true);
+                return;
+            }
+
             var result = MessageBox.Show(
-                "Deseja emitir uma nota de débito para esta fatura?\nIsso criará um documento de cobrança adicional.",
+                $"Emitir nota de débito para {SelectedInvoice.InvoiceNumber}?\n\n" +
+                "Usada para:\n• Juros por atraso\n• Correção de valores\n• Taxas adicionais\n• Multas\n\n" +
+                "Será criada uma nova fatura de cobrança.",
                 "Nota de Débito",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
@@ -1242,16 +1397,94 @@ namespace VendaFlex.ViewModels.Sales
                 IsLoading = true;
                 ShowMessage("Emitindo nota de débito...");
 
-                // TODO: Implementar emissão de nota de débito
-                await Task.Delay(1000);
+                var invoiceResult = await _invoiceService.GetByIdAsync(SelectedInvoice.InvoiceId);
+                if (!invoiceResult.Success || invoiceResult.Data == null)
+                {
+                    ShowMessage($"Erro ao buscar fatura: {invoiceResult.Message}", true);
+                    return;
+                }
 
-                ShowMessage("Nota de débito emitida com sucesso!");
+                var originalInvoice = invoiceResult.Data;
+                var companyResult = await _companyConfigService.GetAsync();
+                
+                if (!companyResult.Success || companyResult.Data == null)
+                {
+                    ShowMessage("Erro ao buscar configurações", true);
+                    return;
+                }
+
+                var company = companyResult.Data;
+                var userId = _currentUserContext.UserId ?? originalInvoice.UserId;
+                
+                // 10% do valor original como exemplo
+                decimal debitAmount = originalInvoice.Total * 0.10m;
+                
+                
+                string invoiceNumber;
+                var generatedNumber = await _companyConfigService.GenerateInvoiceNumberAsync();
+
+                if (generatedNumber.Success && !string.IsNullOrEmpty(generatedNumber.Data))
+                {
+                    invoiceNumber = generatedNumber.Data;  // ✅ CORRETO
+                }
+                else
+                {
+                    // Fallback: gerar manualmente
+                    invoiceNumber = $"ND-{DateTime.Now:yyyyMMdd}-{originalInvoice.InvoiceId}";  // ✅ CORRETO
+                }
+
+                var debitNote = new InvoiceDto
+                {
+                    InvoiceNumber = invoiceNumber,
+                    PersonId = originalInvoice.PersonId,
+                    UserId = userId,
+                    Date = DateTime.UtcNow,
+                    DueDate = DateTime.UtcNow.AddDays(15),
+                    Status = InvoiceStatus.Pending,
+                    SubTotal = debitAmount,
+                    TaxAmount = debitAmount * (company.DefaultTaxRate / 100),
+                    DiscountAmount = 0,
+                    ShippingCost = 0,
+                    Total = debitAmount + (debitAmount * (company.DefaultTaxRate / 100)),
+                    PaidAmount = 0,
+                    Notes = $"Nota de Débito ref. {originalInvoice.InvoiceNumber}\n" +
+                            $"Cobrança adicional: Juros/Multa\n" +
+                            $"Base: Kz {originalInvoice.Total:N2} (10%)\n" +
+                            $"Emitida: {DateTime.Now:dd/MM/yyyy}\n" +
+                            $"Vencimento: {DateTime.Now.AddDays(15):dd/MM/yyyy}",
+                    InternalNotes = $"NOTA DE DÉBITO - Ref: {originalInvoice.InvoiceNumber}\n" +
+                                   $"Usuário: {userId}\n" +
+                                   $"Valor adicional: Kz {debitAmount:N2}\n" +
+                                   $"Motivo: Juros/Multa/Correção",
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedByUserId = userId
+                };
+
+                var createResult = await _invoiceService.AddAsync(debitNote);
+                if (!createResult.Success || createResult.Data == null)
+                {
+                    ShowMessage($"Erro ao criar nota: {createResult.Message}", true);
+                    return;
+                }
+
+                var created = createResult.Data;
+                Debug.WriteLine($"[DEBIT NOTE] Criada: {created.InvoiceNumber}");
+
+                originalInvoice.InternalNotes += $"\n[{DateTime.Now:dd/MM/yyyy HH:mm}] Nota de Débito: {created.InvoiceNumber} - Adicional: Kz {debitAmount:N2}";
+                await _invoiceService.UpdateAsync(originalInvoice);
+
+                ShowMessage($"✅ Nota de Débito {created.InvoiceNumber} emitida!\n" +
+                           $"Valor adicional: Kz {debitAmount:N2}\n" +
+                           $"Total: Kz {created.Total:N2}\n" +
+                           $"Vencimento: {created.DueDate:dd/MM/yyyy}");
+
                 await SearchAsync();
                 await UpdateStatisticsAsync();
             }
             catch (Exception ex)
             {
-                ShowMessage($"Erro ao emitir nota de débito: {ex.Message}", true);
+                ShowMessage($"Erro: {ex.Message}", true);
+                Debug.WriteLine($"[DEBIT NOTE] ERRO: {ex}");
             }
             finally
             {
@@ -1646,7 +1879,6 @@ namespace VendaFlex.ViewModels.Sales
                 ShowMessage($"Erro ao aplicar acréscimo: {ex.Message}", true);
                 Debug.WriteLine($"Exp: Erro ao aplicar acréscimo: {ex.Message}");
             }
-        }
 */
         
        private bool CanChangePaymentType(object? parameter)
