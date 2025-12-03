@@ -1914,13 +1914,39 @@ namespace VendaFlex.ViewModels.Products
                     return;
                 }
 
+                // Verificar se a categoria realmente existe na lista carregada
+                Debug.WriteLine($"[WIZARD] Categorias disponíveis: {string.Join(", ", Categories.Select(c => $"ID={c.CategoryId} Nome={c.Name}"))}");
+                
+                var categoryExists = Categories.Any(c => c.CategoryId == ProductCategoryId);
+                if (!categoryExists)
+                {
+                    ShowStatusMessage("❌ A categoria selecionada não existe. Recarregue os dados.", true);
+                    Debug.WriteLine($"[WIZARD ERROR] CategoryId {ProductCategoryId} não encontrado na lista de categorias");
+                    return;
+                }
+
                 if (ProductSupplierId <= 0)
                 {
                     ShowStatusMessage("❌ Selecione um fornecedor válido", true);
                     return;
                 }
 
+                // Verificar se o fornecedor realmente existe na lista carregada
+                var supplierExists = Suppliers.Any(s => s.PersonId == ProductSupplierId);
+                if (!supplierExists)
+                {
+                    ShowStatusMessage("❌ O fornecedor selecionado não existe. Recarregue os dados.", true);
+                    Debug.WriteLine($"[WIZARD ERROR] SupplierId {ProductSupplierId} não encontrado na lista de fornecedores");
+                    Debug.WriteLine($"[WIZARD ERROR] Fornecedores disponíveis: {string.Join(", ", Suppliers.Select(s => $"{s.PersonId}:{s.Name}"))}");
+                    return;
+                }
+
                 // Step 1: Create Product
+                Debug.WriteLine($"[WIZARD] ProductCategoryId: {ProductCategoryId}");
+                Debug.WriteLine($"[WIZARD] ProductSupplierId: {ProductSupplierId}");
+                Debug.WriteLine($"[WIZARD] Categorias carregadas: {Categories.Count}");
+                Debug.WriteLine($"[WIZARD] Fornecedores carregados: {Suppliers.Count}");
+                
                 var productDto = new ProductDto
                 {
                     ProductId = 0, // New product

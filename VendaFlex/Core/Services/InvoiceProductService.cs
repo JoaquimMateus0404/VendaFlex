@@ -43,9 +43,15 @@ namespace VendaFlex.Core.Services
                 var dto = _mapper.Map<InvoiceProductDto>(created);
                 return OperationResult<InvoiceProductDto>.CreateSuccess(dto, "Item adicionado à fatura com sucesso.");
             }
+            catch (DbUpdateException ex)
+            {
+                var innerMessage = ex.InnerException?.Message ?? ex.Message;
+                return OperationResult<InvoiceProductDto>.CreateFailure("Erro ao adicionar item à fatura.", new[] { $"DbUpdateException: {innerMessage}" });
+            }
             catch (Exception ex)
             {
-                return OperationResult<InvoiceProductDto>.CreateFailure("Erro ao adicionar item à fatura.", new[] { ex.Message });
+                var innerMessage = ex.InnerException?.Message ?? ex.Message;
+                return OperationResult<InvoiceProductDto>.CreateFailure("Erro ao adicionar item à fatura.", new[] { innerMessage });
             }
         }
 

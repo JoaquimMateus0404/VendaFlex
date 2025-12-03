@@ -8,7 +8,7 @@ using VendaFlex.Data.Entities;
 namespace VendaFlex.Data.Repositories
 {
     /// <summary>
-    /// Repositório para operações relacionadas a faturas/vendas.
+    /// Repositï¿½rio para operaï¿½ï¿½es relacionadas a faturas/vendas.
     /// </summary>
     public class InvoiceRepository
     {
@@ -34,6 +34,7 @@ namespace VendaFlex.Data.Repositories
         public async Task<IEnumerable<Invoice>> GetAllAsync()
         {
             return await _context.Invoices
+                .Where(i => !i.IsDeleted)
                 .Include(i => i.Person)
                 .Include(i => i.User)
                 .AsNoTracking()
@@ -66,7 +67,7 @@ namespace VendaFlex.Data.Repositories
                 throw new InvalidOperationException($"Invoice with ID {entity.InvoiceId} not found.");
             }
 
-            // Atualizar apenas as propriedades necessárias, excluindo navegação
+            // Atualizar apenas as propriedades necessï¿½rias, excluindo navegaï¿½ï¿½o
             _context.Entry(existingEntity).CurrentValues.SetValues(entity);
             
             await _context.SaveChangesAsync();
@@ -87,6 +88,7 @@ namespace VendaFlex.Data.Repositories
         public async Task<Invoice?> GetByNumberAsync(string invoiceNumber)
         {
             return await _context.Invoices
+                .Where(i => !i.IsDeleted)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(i => i.InvoiceNumber == invoiceNumber);
         }
@@ -94,7 +96,7 @@ namespace VendaFlex.Data.Repositories
         public async Task<IEnumerable<Invoice>> GetByStatusAsync(InvoiceStatus status)
         {
             return await _context.Invoices
-                .Where(i => i.Status == status)
+                .Where(i => !i.IsDeleted && i.Status == status)
                 .AsNoTracking()
                 .OrderByDescending(i => i.Date)
                 .ToListAsync();
@@ -103,7 +105,7 @@ namespace VendaFlex.Data.Repositories
         public async Task<IEnumerable<Invoice>> GetByPersonIdAsync(int personId)
         {
             return await _context.Invoices
-                .Where(i => i.PersonId == personId)
+                .Where(i => !i.IsDeleted && i.PersonId == personId)
                 .AsNoTracking()
                 .OrderByDescending(i => i.Date)
                 .ToListAsync();
@@ -111,16 +113,30 @@ namespace VendaFlex.Data.Repositories
 
         public async Task<IEnumerable<Invoice>> GetByDateRangeAsync(DateTime start, DateTime end)
         {
-            return await _context.Invoices
-                .Where(i => i.Date >= start && i.Date <= end)
+            // Normalizar datas: start Ã s 00:00:00 e end Ã s 23:59:59
+            var startDate = start.Date; // 00:00:00
+            var endDate = end.Date.AddDays(1).AddTicks(-1); // 23:59:59.9999999
+            
+            Debug.WriteLine($"[InvoiceRepository] GetByDateRangeAsync - Start: {startDate:yyyy-MM-dd HH:mm:ss}, End: {endDate:yyyy-MM-dd HH:mm:ss}");
+            
+            var result = await _context.Invoices
+                .Where(i => !i.IsDeleted && i.Date >= startDate && i.Date <= endDate)
                 .AsNoTracking()
                 .OrderByDescending(i => i.Date)
                 .ToListAsync();
+            
+            Debug.WriteLine($"[InvoiceRepository] GetByDateRangeAsync - Encontradas {result.Count} faturas");
+            foreach (var inv in result)
+            {
+                Debug.WriteLine($"  - Fatura {inv.InvoiceNumber}, Data: {inv.Date:yyyy-MM-dd HH:mm:ss}, Status: {inv.Status}, Total: {inv.Total}");
+            }
+            
+            return result;
         }
 
         public async Task<bool> ExistsAsync(int id)
         {
-            return await _context.Invoices.AnyAsync(i => i.InvoiceId == id);
+            return await _context.Invoices.AnyAsync(i => i.InvoiceId == id && !i.IsDeleted);
         }
 
         public async Task<bool> NumberExistsAsync(string invoiceNumber, int? excludeId = null)
@@ -128,14 +144,15 @@ namespace VendaFlex.Data.Repositories
             if (string.IsNullOrWhiteSpace(invoiceNumber)) return false;
             if (excludeId.HasValue)
             {
-                return await _context.Invoices.AnyAsync(i => i.InvoiceNumber == invoiceNumber && i.InvoiceId != excludeId.Value);
+                return await _context.Invoices.AnyAsync(i => !i.IsDeleted && i.InvoiceNumber == invoiceNumber && i.InvoiceId != excludeId.Value);
             }
-            return await _context.Invoices.AnyAsync(i => i.InvoiceNumber == invoiceNumber);
+            return await _context.Invoices.AnyAsync(i => !i.IsDeleted && i.InvoiceNumber == invoiceNumber);
         }
 
         public async Task<IEnumerable<Invoice>> GetPagedAsync(int pageNumber, int pageSize)
         {
             return await _context.Invoices
+                .Where(i => !i.IsDeleted)
                 .OrderByDescending(i => i.Date)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
@@ -145,7 +162,7 @@ namespace VendaFlex.Data.Repositories
 
         public async Task<int> GetTotalCountAsync()
         {
-            return await _context.Invoices.CountAsync();
+            return await _context.Invoices.CountAsync(i => !i.IsDeleted);
         }
         #endregion
     }

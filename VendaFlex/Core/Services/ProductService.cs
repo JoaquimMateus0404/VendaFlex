@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AutoMapper;
 using FluentValidation;
 using FluentValidation.Results;
@@ -44,6 +45,7 @@ namespace VendaFlex.Core.Services
                 var validation = await _productValidator.ValidateAsync(product);
                 if (!validation.IsValid)
                 {
+                    Debug.WriteLine($"Erro ao cadastrar produto: {string.Join(", ", validation.Errors.Select(e => e.ErrorMessage))}");
                     return OperationResult<ProductDto>.CreateFailure(
                         "Dados inválidos.",
                         validation.Errors.Select(e => e.ErrorMessage));
@@ -78,8 +80,42 @@ namespace VendaFlex.Core.Services
 
                 return OperationResult<ProductDto>.CreateSuccess(resultDto, "Produto cadastrado com sucesso.");
             }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+            {
+                Debug.WriteLine($"[PRODUCT SERVICE] DbUpdateException: {dbEx.Message}");
+                Debug.WriteLine($"[PRODUCT SERVICE] InnerException: {dbEx.InnerException?.Message}");
+                
+                var errorMsg = dbEx.InnerException?.Message ?? dbEx.Message;
+                
+                // Extrair mensagem mais amigável
+                if (errorMsg.Contains("FOREIGN KEY constraint"))
+                {
+                    if (errorMsg.Contains("FK_Products_Categories"))
+                        return OperationResult<ProductDto>.CreateFailure("Categoria inválida ou não encontrada.");
+                    if (errorMsg.Contains("FK_Products_Suppliers") || errorMsg.Contains("FK_Products_People"))
+                        return OperationResult<ProductDto>.CreateFailure("Fornecedor inválido ou não encontrado.");
+                }
+                
+                if (errorMsg.Contains("UNIQUE constraint") || errorMsg.Contains("duplicate"))
+                {
+                    if (errorMsg.Contains("Barcode"))
+                        return OperationResult<ProductDto>.CreateFailure("Código de barras já existe.");
+                    if (errorMsg.Contains("SKU"))
+                        return OperationResult<ProductDto>.CreateFailure("SKU já existe.");
+                    if (errorMsg.Contains("Code"))
+                        return OperationResult<ProductDto>.CreateFailure("Código já existe.");
+                }
+                
+                return OperationResult<ProductDto>.CreateFailure(
+                    "Erro ao cadastrar produto no banco de dados.",
+                    new[] { errorMsg });
+            }
             catch (Exception ex)
             {
+                Debug.WriteLine($"[PRODUCT SERVICE] Exception: {ex.GetType().Name}");
+                Debug.WriteLine($"[PRODUCT SERVICE] Message: {ex.Message}");
+                Debug.WriteLine($"[PRODUCT SERVICE] StackTrace: {ex.StackTrace}");
+                
                 return OperationResult<ProductDto>.CreateFailure(
                     "Erro ao cadastrar produto.",
                     new[] { ex.Message });

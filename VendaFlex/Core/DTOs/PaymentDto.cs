@@ -9,6 +9,6 @@ namespace VendaFlex.Core.DTOs
         public DateTime PaymentDate { get; set; }
         public string Reference { get; set; }
         public string Notes { get; set; }
-        public bool IsConfirmed { get; set; }
+        public bool IsConfirmed { get; set; } = true; // Pagamentos são confirmados por padrão
     }
 }

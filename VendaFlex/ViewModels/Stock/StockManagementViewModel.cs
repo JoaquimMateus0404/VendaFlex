@@ -775,11 +775,11 @@ namespace VendaFlex.ViewModels.Stock
             LowStockCount = LowStockProducts.Count;
             OutOfStockCount = OutOfStockProducts.Count;
 
-            // Calculate total stock value (requires product cost price)
+            
             var productsDict = Products.ToDictionary(p => p.ProductId);
             TotalStockValue = Stocks
                 .Where(s => productsDict.ContainsKey(s.ProductId))
-                .Sum(s => productsDict[s.ProductId].CostPrice * s.Quantity);
+                .Sum(s => productsDict[s.ProductId].SalePrice * s.Quantity);
 
             // Count today's movements
             var today = DateTime.Today;

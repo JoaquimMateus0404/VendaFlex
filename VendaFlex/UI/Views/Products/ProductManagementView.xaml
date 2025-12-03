@@ -1298,7 +1298,7 @@
                                         CornerRadius="8"
                                         Margin="0,0,16,0">
                                     <Grid>
-                                        <Image Source="{Binding ProductPhotoUrl}"
+                                        <Image Source="{Binding ProductPhotoUrl, Converter={StaticResource StringToImageSourceConverter}}"
                                                Stretch="UniformToFill"
                                                VerticalAlignment="Center"
                                                HorizontalAlignment="Center"/>

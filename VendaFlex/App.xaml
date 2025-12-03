@@ -22,6 +22,7 @@
             
             <!-- Converters Globais -->
             <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
+            <converters:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
             
         </ResourceDictionary>
     </Application.Resources>

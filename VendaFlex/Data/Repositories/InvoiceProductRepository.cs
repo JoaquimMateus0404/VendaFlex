@@ -22,6 +22,8 @@ namespace VendaFlex.Data.Repositories
         {
             return await _context.InvoiceProducts
                 .Include(ip => ip.Product)
+                .Include(ip => ip.Invoice)
+                .Where(ip => !ip.Invoice.IsDeleted && !ip.Product.IsDeleted)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(ip => ip.InvoiceProductId == id);
         }
@@ -30,7 +32,8 @@ namespace VendaFlex.Data.Repositories
         {
             return await _context.InvoiceProducts
                 .Include(ip => ip.Product)
-                .Where(ip => ip.InvoiceId == invoiceId)
+                .Include(ip => ip.Invoice)
+                .Where(ip => ip.InvoiceId == invoiceId && !ip.Invoice.IsDeleted && !ip.Product.IsDeleted)
                 .AsNoTracking()
                 .ToListAsync();
         }
@@ -85,6 +88,8 @@ namespace VendaFlex.Data.Repositories
             var query = await _context.InvoiceProducts
                 .AsNoTracking()
                 .Include(ip => ip.Product)
+                .Include(ip => ip.Invoice)
+                .Where(ip => !ip.Invoice.IsDeleted && !ip.Product.IsDeleted)
                 .GroupBy(ip => new { ip.ProductId, ip.Product.Name })
                 .Select(g => new TopProductDto
                 {

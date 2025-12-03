@@ -1,4 +1,4 @@
-﻿<Page x:Class="VendaFlex.UI.Views.Sales.PdvView"
+<Page x:Class="VendaFlex.UI.Views.Sales.PdvView"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -146,12 +146,14 @@
                                                                 <Button Command="{Binding DataContext.SelectCustomerFromSuggestionsCommand, 
                                                                         RelativeSource={RelativeSource AncestorType=Page}}"
                                                                         CommandParameter="{Binding}" 
+                                                                        Margin="0,5"
+                                                                        MinHeight="40"
                                                                         Style="{DynamicResource MaterialDesignFlatButton}"
-                                                                        Padding="12" HorizontalContentAlignment="Left">
-                                                                    <StackPanel>
+                                                                        Padding="0" HorizontalContentAlignment="Left">
+                                                                    <StackPanel >
                                                                         <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
                                                                         <TextBlock Text="{Binding TaxId}" 
-                                                                                   Style="{DynamicResource MaterialDesignCaptionTextBlock}"/>
+                                                                                   Style="{DynamicResource MaterialDesignCaptionTextBlock}" />
                                                                     </StackPanel>
                                                                 </Button>
                                                             </DataTemplate>

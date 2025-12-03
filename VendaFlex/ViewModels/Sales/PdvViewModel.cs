@@ -1067,8 +1067,8 @@ namespace VendaFlex.ViewModels.Sales
                     Total = GrandTotal,
                     PaidAmount = AmountPaid,
                     ShippingCost = TaxTotal,
-                    Notes = "Teste de pagamento",
-                    InternalNotes = "Pagamento"
+                    Notes = $"Venda finalizada no PDV em {DateTime.Now:dd/MM/yyyy HH:mm}",
+                    InternalNotes = "Fatura gerada pelo sistema PDV VendaFlex",
 
                 };
                 Debug.WriteLine("[Fatura] DTO montado");
@@ -1100,19 +1100,22 @@ namespace VendaFlex.ViewModels.Sales
                         Quantity = item.Quantity,
                         UnitPrice = item.UnitPrice,
                         DiscountPercentage = discountPercent,
-                        TaxRate = TaxRatePercent
+                        TaxRate = TaxRatePercent // assumindo taxa fixa para todos os itens
                     };
 
+                    Debug.WriteLine($"[Item] Tentando adicionar produto {item.ProductId} à fatura {invoiceId}");
                     var addItemResult = await _invoiceProductService.AddAsync(invItem);
-                    Debug.WriteLine($"[Item] Produto {item.ProductId} adicionado à fatura");
+                    
                     if (!addItemResult.Success)
                     {
                         StatusMessage = addItemResult.Message ?? "Falha ao salvar item de fatura.";
                         if (addItemResult.Errors?.Any() == true)
                             StatusMessage += "\n• " + string.Join("\n• ", addItemResult.Errors);
-                        Debug.WriteLine($"[Item] Falha ao salvar produto {item.ProductId}: Erro: ", StatusMessage);
+                        Debug.WriteLine($"[Item] Falha ao salvar produto {item.ProductId}: {StatusMessage}");
                         return;
                     }
+                    
+                    Debug.WriteLine($"[Item] Produto {item.ProductId} adicionado à fatura com sucesso");
                 }
 
                 // 5) Persistir pagamentos
@@ -1125,7 +1128,8 @@ namespace VendaFlex.ViewModels.Sales
                         Amount = p.Amount,
                         PaymentDate = DateTime.Now,
                         Notes = "Pagamento",
-                        Reference = invoiceNumber
+                        Reference = invoiceNumber,
+                        IsConfirmed = true // Pagamento confirmado no PDV
                     };
 
                     var addPayResult = await _paymentService.AddAsync(payment);

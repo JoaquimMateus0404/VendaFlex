@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -74,26 +75,66 @@ namespace VendaFlex.Data.Repositories
         /// </summary>
         public async Task<Product> AddAsync(Product entity)
         {
-            if (entity == null)
-                throw new ArgumentNullException(nameof(entity));
+            try
+            {
+                if (entity == null)
+                    throw new ArgumentNullException(nameof(entity));
 
-            // Garantir que as navegações não sejam rastreadas se estiverem carregadas
-            if (entity.Category != null)
-            {
-                _context.Entry(entity.Category).State = EntityState.Unchanged;
-            }
-            if (entity.Supplier != null)
-            {
-                _context.Entry(entity.Supplier).State = EntityState.Unchanged;
-            }
-            if (entity.Stock != null)
-            {
-                _context.Entry(entity.Stock).State = EntityState.Unchanged;
-            }
+                Debug.WriteLine($"[PRODUCT REPOSITORY] Adicionando produto: {entity.Name}");
+                Debug.WriteLine($"[PRODUCT REPOSITORY] CategoryId: {entity.CategoryId}");
+                Debug.WriteLine($"[PRODUCT REPOSITORY] SupplierId: {entity.SupplierId}");
 
-            await _context.Products.AddAsync(entity);
-            await _context.SaveChangesAsync();
-            return entity;
+                // Verificar se a categoria existe no banco
+                var categoryExists = await _context.Categories.AnyAsync(c => c.CategoryId == entity.CategoryId);
+                Debug.WriteLine($"[PRODUCT REPOSITORY] Categoria existe no banco? {categoryExists}");
+
+                // Verificar se o fornecedor existe no banco
+                var supplierExists = await _context.Persons.AnyAsync(p => p.PersonId == entity.SupplierId);
+                Debug.WriteLine($"[PRODUCT REPOSITORY] Fornecedor existe no banco? {supplierExists}");
+
+                // SOLUÇÃO: Desanexar completamente as entidades de navegação do contexto
+                // Isso evita conflitos de tracking do EF Core
+                if (entity.Category != null)
+                {
+                    Debug.WriteLine($"[PRODUCT REPOSITORY] Category.CategoryId: {entity.Category.CategoryId}");
+                    Debug.WriteLine($"[PRODUCT REPOSITORY] Desanexando Category do contexto...");
+                    _context.Entry(entity.Category).State = EntityState.Detached;
+                }
+                if (entity.Supplier != null)
+                {
+                    Debug.WriteLine($"[PRODUCT REPOSITORY] Supplier.PersonId: {entity.Supplier.PersonId}");
+                    Debug.WriteLine($"[PRODUCT REPOSITORY] Desanexando Supplier do contexto...");
+                    _context.Entry(entity.Supplier).State = EntityState.Detached;
+                }
+                if (entity.Stock != null)
+                {
+                    Debug.WriteLine($"[PRODUCT REPOSITORY] Desanexando Stock do contexto...");
+                    _context.Entry(entity.Stock).State = EntityState.Detached;
+                }
+                
+                Debug.WriteLine($"[PRODUCT REPOSITORY] Verificando FKs antes de AddAsync:");
+                Debug.WriteLine($"[PRODUCT REPOSITORY]   - CategoryId: {entity.CategoryId}");
+                Debug.WriteLine($"[PRODUCT REPOSITORY]   - SupplierId: {entity.SupplierId}");
+
+                Debug.WriteLine($"[PRODUCT REPOSITORY] Chamando AddAsync...");
+                await _context.Products.AddAsync(entity);
+                
+                Debug.WriteLine($"[PRODUCT REPOSITORY] Chamando SaveChangesAsync...");
+                await _context.SaveChangesAsync();
+                
+                Debug.WriteLine($"[PRODUCT REPOSITORY] Produto adicionado com sucesso! ProductId: {entity.ProductId}");
+                return entity;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[PRODUCT REPOSITORY] ERRO: {ex.GetType().Name}");
+                Debug.WriteLine($"[PRODUCT REPOSITORY] Mensagem: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Debug.WriteLine($"[PRODUCT REPOSITORY] InnerException: {ex.InnerException.Message}");
+                }
+                throw;
+            }
         }
 
         /// <summary>

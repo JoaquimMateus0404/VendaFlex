@@ -17,8 +17,8 @@ namespace VendaFlex.Data.Configurations
                 .HasForeignKey(ip => ip.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Filtros compat�veis com Invoice (tem filtro global) e Product (tem filtro global)
-            builder.HasQueryFilter(ip => !ip.Invoice.IsDeleted && !ip.Product.IsDeleted);
+            // Removido filtro global que causava problemas ao inserir novos registros
+            // O filtro será aplicado apenas nas queries quando necessário
         }
     }
 }
