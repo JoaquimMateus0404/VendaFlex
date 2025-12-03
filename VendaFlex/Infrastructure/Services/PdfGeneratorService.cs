@@ -48,7 +48,7 @@ namespace VendaFlex.Infrastructure.Services
                         {
                             page.Size(PageSizes.A4);
                             page.Margin(40);
-                            page.DefaultTextStyle(x => x.FontSize(10));
+                            page.DefaultTextStyle(x => x.FontSize(8));
 
                             page.Header().Element(c => ComposeHeader(c, companyConfig, invoice));
                             page.Content().Element(c => ComposeContent(c, companyConfig, invoice, itemsList, customer));
@@ -112,7 +112,7 @@ namespace VendaFlex.Infrastructure.Services
 
                         // Nome da empresa com destaque
                         col.Item().Text(company.CompanyName)
-                            .FontSize(18)
+                            .FontSize(14)
                             .Bold()
                             .FontColor(Colors.Blue.Darken3);
 
@@ -162,7 +162,7 @@ namespace VendaFlex.Infrastructure.Services
                             // Título do documento
                             cardCol.Item()
                                 .Background(Colors.Blue.Darken2)
-                                .Padding(12)
+                                .Padding(6)
                                 .AlignCenter()
                                 .Text("FATURA")
                                 .FontSize(22)
@@ -644,7 +644,7 @@ namespace VendaFlex.Infrastructure.Services
 
         private void ComposeNotes(IContainer container, string notes)
         {
-            container.Background(Colors.Yellow.Lighten4).Padding(10).Column(column =>
+            container.Background(Colors.Yellow.Lighten4).Padding(5).Column(column =>
             {
                 column.Item().Text("OBSERVAÇÕES").FontSize(10).Bold();
                 column.Item().PaddingTop(5).Text(notes).FontSize(9);
@@ -757,7 +757,7 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(40);
-                        page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Arial"));
+                        page.DefaultTextStyle(x => x.FontSize(8).FontFamily("Arial"));
 
                         page.Header().Element(c => ComposeModernReportHeader(c, companyConfig, "Vendas por Período",
                             "Análise temporal de vendas e performance", startDate, endDate));
@@ -828,13 +828,13 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Blue.Darken1).Padding(12).Text("Data")
+                        header.Cell().Background(Colors.Blue.Darken1).Padding(6).Text("Data")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Blue.Darken1).Padding(12).AlignRight().Text("Faturas")
+                        header.Cell().Background(Colors.Blue.Darken1).Padding(6).AlignRight().Text("Faturas")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Blue.Darken1).Padding(12).AlignRight().Text("Valor Total (Kz)")
+                        header.Cell().Background(Colors.Blue.Darken1).Padding(6).AlignRight().Text("Valor Total (Kz)")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Blue.Darken1).Padding(12).AlignRight().Text("Ticket Médio (Kz)")
+                        header.Cell().Background(Colors.Blue.Darken1).Padding(6).AlignRight().Text("Ticket Médio (Kz)")
                             .FontSize(10).Bold().FontColor(Colors.White);
                     });
 
@@ -849,22 +849,22 @@ namespace VendaFlex.Infrastructure.Services
                             bgColor = Colors.Green.Lighten5;
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).Row(row =>
+                            .Padding(5).Row(row =>
                             {
                                 row.AutoItem().Text("📅 ").FontSize(11);
                                 row.AutoItem().Text(sale.DateFormatted).FontSize(9).SemiBold().FontColor(Colors.Grey.Darken2);
                             });
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Text(sale.InvoiceCount.ToString())
+                            .Padding(5).AlignRight().Text(sale.InvoiceCount.ToString())
                             .FontSize(9).Bold().FontColor(Colors.Blue.Medium);
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Text($"{sale.TotalValue:N2}")
+                            .Padding(5).AlignRight().Text($"{sale.TotalValue:N2}")
                             .FontSize(9).Bold().FontColor(Colors.Green.Darken1);
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Row(row =>
+                            .Padding(5).AlignRight().Row(row =>
                             {
                                 row.AutoItem().Text($"{avgTicketDay:N2}").FontSize(9).FontColor(Colors.Grey.Darken2);
                                 if (isHighPerformance)
@@ -939,7 +939,7 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(40);
-                        page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Arial"));
+                        page.DefaultTextStyle(x => x.FontSize(8).FontFamily("Arial"));
 
                         page.Header().Element(c => ComposeModernReportHeader(c, companyConfig, "Top Produtos Mais Vendidos",
                             "Ranking de performance de produtos", startDate, endDate));
@@ -1065,15 +1065,15 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Purple.Darken1).Padding(12).AlignCenter().Text("Rank")
+                        header.Cell().Background(Colors.Purple.Darken1).Padding(6).AlignCenter().Text("Rank")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Purple.Darken1).Padding(12).Text("Produto")
+                        header.Cell().Background(Colors.Purple.Darken1).Padding(6).Text("Produto")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Purple.Darken1).Padding(12).AlignRight().Text("Qtd Vendida")
+                        header.Cell().Background(Colors.Purple.Darken1).Padding(6).AlignRight().Text("Qtd Vendida")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Purple.Darken1).Padding(12).AlignRight().Text("Receita (Kz)")
+                        header.Cell().Background(Colors.Purple.Darken1).Padding(6).AlignRight().Text("Receita (Kz)")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Purple.Darken1).Padding(12).AlignRight().Text("% Total")
+                        header.Cell().Background(Colors.Purple.Darken1).Padding(6).AlignRight().Text("% Total")
                             .FontSize(10).Bold().FontColor(Colors.White);
                     });
 
@@ -1087,22 +1087,22 @@ namespace VendaFlex.Infrastructure.Services
                         var medal = rank == 1 ? "🥇" : rank == 2 ? "🥈" : rank == 3 ? "🥉" : "";
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignCenter().Text($"{medal} {rank}")
+                            .Padding(5).AlignCenter().Text($"{medal} {rank}")
                             .FontSize(9).Bold().FontColor(Colors.Grey.Darken2);
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).Text(product.ProductName).FontSize(9).FontColor(Colors.Grey.Darken2);
+                            .Padding(5).Text(product.ProductName).FontSize(9).FontColor(Colors.Grey.Darken2);
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Text(product.QuantitySold.ToString())
+                            .Padding(5).AlignRight().Text(product.QuantitySold.ToString())
                             .FontSize(9).Bold().FontColor(Colors.Blue.Medium);
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Text($"{product.Revenue:N2}")
+                            .Padding(5).AlignRight().Text($"{product.Revenue:N2}")
                             .FontSize(9).Bold().FontColor(Colors.Green.Darken1);
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Background(Colors.Purple.Medium)
+                            .Padding(5).AlignRight().Background(Colors.Purple.Medium)
                             .Padding(4).Text($"{percentage:N1}%").FontSize(8).Bold().FontColor(Colors.White);
 
                         rank++;
@@ -1126,7 +1126,7 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(40);
-                        page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Arial"));
+                        page.DefaultTextStyle(x => x.FontSize(8).FontFamily("Arial"));
 
                         page.Header().Element(c => ComposeModernReportHeader(c, companyConfig, "Vendas por Cliente",
                             "Análise de performance e comportamento de clientes", startDate, endDate));
@@ -1183,7 +1183,7 @@ namespace VendaFlex.Infrastructure.Services
                             {
                                 col.Item().AlignCenter().Text("⭐ VIP").FontSize(11).Bold().FontColor(Colors.Orange.Darken2);
                                 col.Item().PaddingTop(5).AlignCenter().Text(vip.ToString())
-                            .FontSize(18).Bold().FontColor(Colors.Orange.Darken1);
+                            .FontSize(14).Bold().FontColor(Colors.Orange.Darken1);
                                 col.Item().PaddingTop(3).AlignCenter().Text(">200% da média")
                             .FontSize(8).FontColor(Colors.Grey.Darken1);
                             });
@@ -1195,7 +1195,7 @@ namespace VendaFlex.Infrastructure.Services
                             {
                                 col.Item().AlignCenter().Text("💎 Premium").FontSize(11).Bold().FontColor(Colors.Blue.Darken2);
                                 col.Item().PaddingTop(5).AlignCenter().Text(premium.ToString())
-                            .FontSize(18).Bold().FontColor(Colors.Blue.Darken1);
+                            .FontSize(14).Bold().FontColor(Colors.Blue.Darken1);
                                 col.Item().PaddingTop(3).AlignCenter().Text("Acima da média")
                             .FontSize(8).FontColor(Colors.Grey.Darken1);
                             });
@@ -1207,7 +1207,7 @@ namespace VendaFlex.Infrastructure.Services
                             {
                                 col.Item().AlignCenter().Text("👤 Regular").FontSize(11).Bold().FontColor(Colors.Grey.Darken2);
                                 col.Item().PaddingTop(5).AlignCenter().Text(regular.ToString())
-                            .FontSize(18).Bold().FontColor(Colors.Grey.Darken1);
+                            .FontSize(14).Bold().FontColor(Colors.Grey.Darken1);
                                 col.Item().PaddingTop(3).AlignCenter().Text("Até a média")
                             .FontSize(8).FontColor(Colors.Grey.Darken1);
                             });
@@ -1239,13 +1239,13 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Purple.Darken1).Padding(12).Text("Cliente")
+                        header.Cell().Background(Colors.Purple.Darken1).Padding(6).Text("Cliente")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Purple.Darken1).Padding(12).AlignRight().Text("Compras")
+                        header.Cell().Background(Colors.Purple.Darken1).Padding(6).AlignRight().Text("Compras")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Purple.Darken1).Padding(12).AlignRight().Text("Total (Kz)")
+                        header.Cell().Background(Colors.Purple.Darken1).Padding(6).AlignRight().Text("Total (Kz)")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Purple.Darken1).Padding(12).AlignRight().Text("Ticket Médio")
+                        header.Cell().Background(Colors.Purple.Darken1).Padding(6).AlignRight().Text("Ticket Médio")
                             .FontSize(10).Bold().FontColor(Colors.White);
                     });
 
@@ -1259,22 +1259,22 @@ namespace VendaFlex.Infrastructure.Services
                                      customer.TotalValue > avgPerCustomer ? "💎" : "👤";
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).Row(row =>
+                            .Padding(5).Row(row =>
                             {
                                 row.AutoItem().Text($"{segment} ").FontSize(11);
                                 row.AutoItem().Text(customer.CustomerName).FontSize(9).FontColor(Colors.Grey.Darken2);
                             });
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Text(customer.InvoiceCount.ToString())
+                            .Padding(5).AlignRight().Text(customer.InvoiceCount.ToString())
                             .FontSize(9).Bold().FontColor(Colors.Blue.Medium);
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Text($"{customer.TotalValue:N2}")
+                            .Padding(5).AlignRight().Text($"{customer.TotalValue:N2}")
                             .FontSize(9).Bold().FontColor(Colors.Green.Darken1);
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Text($"{avgTicketCust:N2}")
+                            .Padding(5).AlignRight().Text($"{avgTicketCust:N2}")
                             .FontSize(9).FontColor(Colors.Grey.Darken2);
 
                         rowIndex++;
@@ -1295,7 +1295,7 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(40);
-                        page.DefaultTextStyle(x => x.FontSize(10));
+                        page.DefaultTextStyle(x => x.FontSize(8));
 
                         page.Header().Element(c => ComposeReportHeader(c, companyConfig, "Análise de Margem de Lucro", startDate, endDate));
                         page.Content().Element(c => ComposeProfitMarginContent(c, profitMargins));
@@ -1317,7 +1317,7 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(40);
-                        page.DefaultTextStyle(x => x.FontSize(10));
+                        page.DefaultTextStyle(x => x.FontSize(8));
 
                         page.Header().Element(c => ComposeReportHeader(c, companyConfig, "Faturas por Status", startDate, endDate));
                         page.Content().Element(c => ComposeInvoicesByStatusContent(c, invoicesByStatus));
@@ -1349,7 +1349,7 @@ namespace VendaFlex.Infrastructure.Services
                     row.RelativeItem().Column(col =>
                     {
                         col.Item().Text(company.CompanyName ?? "VendaFlex")
-                            .FontSize(18).Bold().FontColor(Colors.Blue.Darken2);
+                            .FontSize(14).Bold().FontColor(Colors.Blue.Darken2);
                         col.Item().Text(title)
                             .FontSize(14).SemiBold().FontColor(Colors.Grey.Darken2);
                         col.Item().Text($"Período: {startDate:dd/MM/yyyy} - {endDate:dd/MM/yyyy}")
@@ -1393,23 +1393,23 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Data").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Faturas").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Valor Total (Kz)").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Ticket Médio (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Data").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Faturas").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Valor Total (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Ticket Médio (Kz)").FontSize(10).SemiBold();
                     });
 
                     foreach (var sale in data)
                     {
                         var avgTicket = sale.InvoiceCount > 0 ? sale.TotalValue / sale.InvoiceCount : 0;
                         
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(sale.DateFormatted).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text(sale.InvoiceCount.ToString()).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{sale.TotalValue:N2}").FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{avgTicket:N2}").FontSize(9);
                     }
                 });
@@ -1444,11 +1444,11 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("#").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Produto").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Qtd Vendida").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Receita (Kz)").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("%").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("#").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Produto").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Qtd Vendida").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Receita (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("%").FontSize(10).SemiBold();
                     });
 
                     int rank = 1;
@@ -1456,15 +1456,15 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         var percentage = totalRevenue > 0 ? (product.Revenue / totalRevenue) * 100 : 0;
                         
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignCenter().Text(rank.ToString()).FontSize(9).Bold();
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(product.ProductName).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text(product.QuantitySold.ToString()).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{product.Revenue:N2}").FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{percentage:N1}%").FontSize(9);
                         
                         rank++;
@@ -1500,23 +1500,23 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Cliente").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Compras").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Total (Kz)").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Ticket Médio").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Cliente").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Compras").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Total (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Ticket Médio").FontSize(10).SemiBold();
                     });
 
                     foreach (var customer in customers)
                     {
                         var avgTicket = customer.InvoiceCount > 0 ? customer.TotalValue / customer.InvoiceCount : 0;
                         
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(customer.CustomerName).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text(customer.InvoiceCount.ToString()).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{customer.TotalValue:N2}").FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{avgTicket:N2}").FontSize(9);
                     }
                 });
@@ -1554,24 +1554,24 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Produto").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Custo (Kz)").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Receita (Kz)").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Lucro (Kz)").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Margem %").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Produto").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Custo (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Receita (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Lucro (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Margem %").FontSize(10).SemiBold();
                     });
 
                     foreach (var margin in margins)
                     {
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(margin.InvoiceNumber).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{margin.TotalCost:N2}").FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{margin.TotalRevenue:N2}").FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{margin.GrossProfit:N2}").FontSize(9).FontColor(margin.GrossProfit >= 0 ? Colors.Green.Medium : Colors.Red.Medium);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{margin.MarginPercentage:N2}%").FontSize(9).Bold();
                     }
                 });
@@ -1605,21 +1605,21 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Status").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Quantidade").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Valor Total (Kz)").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Percentual").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Status").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Quantidade").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Valor Total (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Percentual").FontSize(10).SemiBold();
                     });
 
                     foreach (var status in statuses)
                     {
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(status.Status).FontSize(9).Bold();
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text(status.Count.ToString()).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{status.TotalValue:N2}").FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{status.Percentage:N1}%").FontSize(9);
                     }
                 });
@@ -1653,7 +1653,7 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(40);
-                        page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Arial"));
+                        page.DefaultTextStyle(x => x.FontSize(8).FontFamily("Arial"));
 
                         page.Header().Element(c => ComposeModernReportHeader(c, companyConfig, "Fluxo de Caixa",
                             "Análise detalhada de entradas e saídas financeiras", startDate, endDate));
@@ -1723,15 +1723,15 @@ namespace VendaFlex.Infrastructure.Services
                     // Header moderno
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Blue.Darken1).Padding(12).Text("Data")
+                        header.Cell().Background(Colors.Blue.Darken1).Padding(6).Text("Data")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Green.Darken1).Padding(12).AlignRight().Text("Entradas (Kz)")
+                        header.Cell().Background(Colors.Green.Darken1).Padding(6).AlignRight().Text("Entradas (Kz)")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Red.Darken1).Padding(12).AlignRight().Text("Saídas (Kz)")
+                        header.Cell().Background(Colors.Red.Darken1).Padding(6).AlignRight().Text("Saídas (Kz)")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Blue.Darken1).Padding(12).AlignRight().Text("Saldo (Kz)")
+                        header.Cell().Background(Colors.Blue.Darken1).Padding(6).AlignRight().Text("Saldo (Kz)")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Grey.Darken2).Padding(12).AlignRight().Text("Acumulado (Kz)")
+                        header.Cell().Background(Colors.Grey.Darken2).Padding(6).AlignRight().Text("Acumulado (Kz)")
                             .FontSize(10).Bold().FontColor(Colors.White);
                     });
 
@@ -1743,18 +1743,18 @@ namespace VendaFlex.Infrastructure.Services
                         var bgColor = rowIndex % 2 == 0 ? Colors.White : Colors.Grey.Lighten4;
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).Text(flow.DateFormatted).FontSize(9).FontColor(Colors.Grey.Darken2);
+                            .Padding(5).Text(flow.DateFormatted).FontSize(9).FontColor(Colors.Grey.Darken2);
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Text($"{flow.Inflow:N2}").FontSize(9).Bold()
+                            .Padding(5).AlignRight().Text($"{flow.Inflow:N2}").FontSize(9).Bold()
                             .FontColor(flow.Inflow > 0 ? Colors.Green.Darken1 : Colors.Grey.Medium);
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Text($"{flow.Outflow:N2}").FontSize(9).Bold()
+                            .Padding(5).AlignRight().Text($"{flow.Outflow:N2}").FontSize(9).Bold()
                             .FontColor(flow.Outflow > 0 ? Colors.Red.Darken1 : Colors.Grey.Medium);
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Text($"{balance:N2}").FontSize(9).Bold()
+                            .Padding(5).AlignRight().Text($"{balance:N2}").FontSize(9).Bold()
                             .FontColor(balance >= 0 ? Colors.Blue.Medium : Colors.Orange.Medium);
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Text($"{flow.Balance:N2}").FontSize(9).Bold()
+                            .Padding(5).AlignRight().Text($"{flow.Balance:N2}").FontSize(9).Bold()
                             .FontColor(flow.Balance >= 0 ? Colors.Green.Darken1 : Colors.Red.Darken1);
 
                         rowIndex++;
@@ -1820,7 +1820,7 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(40);
-                        page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Arial"));
+                        page.DefaultTextStyle(x => x.FontSize(8).FontFamily("Arial"));
 
                         page.Header().Element(c => ComposeModernReportHeader(c, companyConfig, "Formas de Pagamento",
                             "Distribuição e análise dos métodos de pagamento", startDate, endDate));
@@ -1879,13 +1879,13 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Blue.Darken1).Padding(12).Text("Forma de Pagamento")
+                        header.Cell().Background(Colors.Blue.Darken1).Padding(6).Text("Forma de Pagamento")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Blue.Darken1).Padding(12).AlignRight().Text("Transações")
+                        header.Cell().Background(Colors.Blue.Darken1).Padding(6).AlignRight().Text("Transações")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Blue.Darken1).Padding(12).AlignRight().Text("Valor Total (Kz)")
+                        header.Cell().Background(Colors.Blue.Darken1).Padding(6).AlignRight().Text("Valor Total (Kz)")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Blue.Darken1).Padding(12).AlignRight().Text("% do Total")
+                        header.Cell().Background(Colors.Blue.Darken1).Padding(6).AlignRight().Text("% do Total")
                             .FontSize(10).Bold().FontColor(Colors.White);
                     });
 
@@ -1895,17 +1895,17 @@ namespace VendaFlex.Infrastructure.Services
                         var bgColor = rowIndex % 2 == 0 ? Colors.White : Colors.Grey.Lighten4;
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).Row(row =>
+                            .Padding(5).Row(row =>
                             {
                                 row.AutoItem().Text("💳 ").FontSize(12);
                                 row.AutoItem().Text(method.MethodName).FontSize(9).SemiBold().FontColor(Colors.Grey.Darken2);
                             });
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Text(method.TransactionCount.ToString()).FontSize(9).FontColor(Colors.Grey.Darken2);
+                            .Padding(5).AlignRight().Text(method.TransactionCount.ToString()).FontSize(9).FontColor(Colors.Grey.Darken2);
                 table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                    .Padding(10).AlignRight().Text($"{method.TotalValue:N2}").FontSize(9).Bold().FontColor(Colors.Green.Darken1);
+                    .Padding(5).AlignRight().Text($"{method.TotalValue:N2}").FontSize(9).Bold().FontColor(Colors.Green.Darken1);
                 table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                    .Padding(10).AlignRight().Row(badgeRow =>
+                    .Padding(5).AlignRight().Row(badgeRow =>
                     {
                         badgeRow.AutoItem().Background(Colors.Blue.Medium).PaddingVertical(4).PaddingHorizontal(10)
                     .Text($"{method.Percentage:N1}%").FontSize(8).Bold().FontColor(Colors.White);
@@ -1986,7 +1986,7 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(40);
-                        page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Arial"));
+                        page.DefaultTextStyle(x => x.FontSize(8).FontFamily("Arial"));
 
                         page.Header().Element(c => ComposeModernReportHeader(c, companyConfig, "Contas a Receber",
                             "Gestão e controle de recebíveis", DateTime.Now.AddMonths(-1), DateTime.Now));
@@ -2071,17 +2071,17 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Grey.Darken2).Padding(12).Text("Fatura")
+                        header.Cell().Background(Colors.Grey.Darken2).Padding(6).Text("Fatura")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Grey.Darken2).Padding(12).Text("Cliente")
+                        header.Cell().Background(Colors.Grey.Darken2).Padding(6).Text("Cliente")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Grey.Darken2).Padding(12).AlignRight().Text("Vencimento")
+                        header.Cell().Background(Colors.Grey.Darken2).Padding(6).AlignRight().Text("Vencimento")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Grey.Darken2).Padding(12).AlignRight().Text("Total (Kz)")
+                        header.Cell().Background(Colors.Grey.Darken2).Padding(6).AlignRight().Text("Total (Kz)")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Grey.Darken2).Padding(12).AlignRight().Text("Pendente (Kz)")
+                        header.Cell().Background(Colors.Grey.Darken2).Padding(6).AlignRight().Text("Pendente (Kz)")
                             .FontSize(10).Bold().FontColor(Colors.White);
-                        header.Cell().Background(Colors.Grey.Darken2).Padding(12).AlignCenter().Text("Status")
+                        header.Cell().Background(Colors.Grey.Darken2).Padding(6).AlignCenter().Text("Status")
                             .FontSize(10).Bold().FontColor(Colors.White);
                     });
 
@@ -2098,20 +2098,20 @@ namespace VendaFlex.Infrastructure.Services
                             bgColor = Colors.Orange.Lighten5;
 
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).Text(account.InvoiceNumber).FontSize(9).SemiBold().FontColor(Colors.Grey.Darken2);
+                            .Padding(5).Text(account.InvoiceNumber).FontSize(9).SemiBold().FontColor(Colors.Grey.Darken2);
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).Text(account.CustomerName).FontSize(9).FontColor(Colors.Grey.Darken2);
+                            .Padding(5).Text(account.CustomerName).FontSize(9).FontColor(Colors.Grey.Darken2);
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Text(account.DueDate.ToString()).FontSize(9).FontColor(Colors.Grey.Darken2);
+                            .Padding(5).AlignRight().Text(account.DueDate.ToString()).FontSize(9).FontColor(Colors.Grey.Darken2);
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Text($"{account.TotalValue:N2}").FontSize(9).FontColor(Colors.Grey.Darken2);
+                            .Padding(5).AlignRight().Text($"{account.TotalValue:N2}").FontSize(9).FontColor(Colors.Grey.Darken2);
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignRight().Text($"{account.PendingValue:N2}").FontSize(9).Bold()
+                            .Padding(5).AlignRight().Text($"{account.PendingValue:N2}").FontSize(9).Bold()
                             .FontColor(isOverdue ? Colors.Red.Darken1 : Colors.Orange.Darken1);
 
                         // Status Badge
                         table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                            .Padding(10).AlignCenter().Container().Width(60).Column(statusCol =>
+                            .Padding(5).AlignCenter().Container().Width(60).Column(statusCol =>
                             {
                                 if (isCritical)
                                 {
@@ -2188,57 +2188,57 @@ namespace VendaFlex.Infrastructure.Services
         {
             container.Column(column =>
             {
-                // Cabeçalho moderno com gradiente simulado
-                column.Item().Background(Colors.Blue.Lighten5).Padding(20).Row(row =>
+                // Cabeçalho moderno com gradiente simulado - OTIMIZADO
+                column.Item().Background(Colors.Blue.Lighten5).Padding(5).Row(row =>
                 {
-                    // Logo
+                    // Logo - reduzido
                     if (!string.IsNullOrWhiteSpace(company.LogoUrl) && File.Exists(company.LogoUrl))
                     {
-                        row.ConstantItem(90).Column(logoCol =>
+                        row.ConstantItem(55).Column(logoCol =>
                         {
-                            logoCol.Item().Border(2).BorderColor(Colors.White).MaxHeight(70).Image(company.LogoUrl);
+                            logoCol.Item().Border(1).BorderColor(Colors.White).MaxHeight(45).Image(company.LogoUrl);
                         });
-                        row.ConstantItem(20);
+                        row.ConstantItem(8);
                     }
 
-                    // Informações principais
+                    // Informações principais - fontes reduzidas
                     row.RelativeItem().Column(col =>
                     {
                         col.Item().Text(company.CompanyName ?? "VendaFlex")
-                            .FontSize(20).Bold().FontColor(Colors.Blue.Darken3);
+                            .FontSize(13).Bold().FontColor(Colors.Blue.Darken3);
 
-                        col.Item().PaddingTop(5).Row(titleRow =>
+                        col.Item().PaddingTop(3).Row(titleRow =>
                         {
-                            titleRow.AutoItem().Width(4).Height(20).Background(Colors.Blue.Medium).AlignMiddle();
-                            titleRow.AutoItem().PaddingLeft(10).Text(title)
-                                .FontSize(16).Bold().FontColor(Colors.Grey.Darken3);
+                            titleRow.AutoItem().Width(3).Height(12).Background(Colors.Blue.Medium).AlignMiddle();
+                            titleRow.AutoItem().PaddingLeft(6).Text(title)
+                                .FontSize(11).Bold().FontColor(Colors.Grey.Darken3);
                         });
 
-                        col.Item().PaddingTop(3).PaddingLeft(14).Text(subtitle)
-                            .FontSize(10).Italic().FontColor(Colors.Grey.Medium);
+                        col.Item().PaddingTop(2).PaddingLeft(9).Text(subtitle)
+                            .FontSize(8).Italic().FontColor(Colors.Grey.Medium);
 
-                        col.Item().PaddingTop(8).PaddingLeft(14).Row(dateRow =>
+                        col.Item().PaddingTop(4).PaddingLeft(9).Row(dateRow =>
                         {
-                            dateRow.AutoItem().Text("📅 ").FontSize(11);
+                            dateRow.AutoItem().Text("📅 ").FontSize(8);
                             dateRow.AutoItem().Text($"Período: {startDate:dd/MM/yyyy} - {endDate:dd/MM/yyyy}")
-                                .FontSize(10).FontColor(Colors.Grey.Darken1);
+                                .FontSize(8).FontColor(Colors.Grey.Darken1);
                         });
                     });
 
-                    // Data de geração
-                    row.ConstantItem(100).AlignRight().Column(col =>
+                    // Data de geração - compacta
+                    row.ConstantItem(65).AlignRight().Column(col =>
                     {
-                        col.Item().Background(Colors.Blue.Darken1).Padding(8)
-                            .Text("RELATÓRIO").FontSize(9).Bold().FontColor(Colors.White);
-                        col.Item().PaddingTop(5).Text(DateTime.Now.ToString("dd/MM/yyyy"))
-                            .FontSize(11).Bold().FontColor(Colors.Blue.Darken2);
+                        col.Item().Background(Colors.Blue.Darken1).Padding(4)
+                            .Text("RELATÓRIO").FontSize(7).Bold().FontColor(Colors.White);
+                        col.Item().PaddingTop(2).Text(DateTime.Now.ToString("dd/MM/yyyy"))
+                            .FontSize(8).Bold().FontColor(Colors.Blue.Darken2);
                         col.Item().Text(DateTime.Now.ToString("HH:mm"))
-                            .FontSize(9).FontColor(Colors.Grey.Medium);
+                            .FontSize(7).FontColor(Colors.Grey.Medium);
                     });
                 });
 
-                // Linha decorativa com gradiente
-                column.Item().PaddingTop(5).Height(3).Row(row =>
+                // Linha decorativa - reduzida
+                column.Item().PaddingTop(3).Height(2).Row(row =>
                 {
                     row.RelativeItem(3).Background(Colors.Blue.Darken1);
                     row.RelativeItem(2).Background(Colors.Blue.Medium);
@@ -2250,22 +2250,22 @@ namespace VendaFlex.Infrastructure.Services
         private void ComposeModernKpiCard(IContainer container, string icon, string label,
             string value, string valueColor, string backgroundColor)
         {
-            container.Border(2).BorderColor(valueColor).Background(backgroundColor)
-                .Padding(15).Column(column =>
+            container.Border(1).BorderColor(valueColor).Background(backgroundColor)
+                .Padding(4).Column(column =>
                 {
                     column.Item().Row(row =>
                     {
-                        row.AutoItem().Text(icon).FontSize(24);
+                        row.AutoItem().Text(icon).FontSize(14);
                         row.RelativeItem().AlignRight().Container().Background(valueColor)
-                    .Width(30).Height(30).AlignMiddle().AlignCenter()
-                    .Text("•").FontSize(20).FontColor(Colors.White);
+                    .Width(18).Height(18).AlignMiddle().AlignCenter()
+                    .Text("•").FontSize(12).FontColor(Colors.White);
                     });
 
-                    column.Item().PaddingTop(10).Text(label)
-                .FontSize(9).FontColor(Colors.Grey.Darken1);
+                    column.Item().PaddingTop(5).Text(label)
+                .FontSize(7).FontColor(Colors.Grey.Darken1);
 
-                    column.Item().PaddingTop(5).Text(value)
-                .FontSize(16).Bold().FontColor(valueColor);
+                    column.Item().PaddingTop(3).Text(value)
+                .FontSize(10).Bold().FontColor(valueColor);
                 });
         }
 
@@ -2273,53 +2273,53 @@ namespace VendaFlex.Infrastructure.Services
         {
             container.Column(column =>
             {
-                // Linha decorativa
-                column.Item().Height(2).Background(Colors.Blue.Lighten3);
+                // Linha decorativa - reduzida
+                column.Item().Height(1).Background(Colors.Blue.Lighten3);
 
-                column.Item().PaddingTop(15).Row(row =>
+                column.Item().PaddingTop(8).Row(row =>
                 {
-                    // Informações da empresa
+                    // Informações da empresa - compactas
                     row.RelativeItem().Column(col =>
                     {
                         col.Item().Text(company.CompanyName ?? "VendaFlex")
-                            .FontSize(9).Bold().FontColor(Colors.Grey.Darken2);
+                            .FontSize(7).Bold().FontColor(Colors.Grey.Darken2);
 
                         if (!string.IsNullOrWhiteSpace(company.Address))
                         {
-                            col.Item().PaddingTop(2).Text(company.Address)
-                                .FontSize(8).FontColor(Colors.Grey.Medium);
+                            col.Item().PaddingTop(1).Text(company.Address)
+                                .FontSize(6).FontColor(Colors.Grey.Medium);
                         }
 
                         if (!string.IsNullOrWhiteSpace(company.PhoneNumber))
                         {
-                            col.Item().PaddingTop(2).Row(phoneRow =>
+                            col.Item().PaddingTop(1).Row(phoneRow =>
                             {
-                                phoneRow.AutoItem().Text("📞 ").FontSize(8);
+                                phoneRow.AutoItem().Text("📞 ").FontSize(6);
                                 phoneRow.AutoItem().Text(company.PhoneNumber)
-                                    .FontSize(8).FontColor(Colors.Grey.Medium);
+                                    .FontSize(6).FontColor(Colors.Grey.Medium);
                             });
                         }
                     });
 
-                    // Data e hora de geração
-                    row.ConstantItem(200).AlignRight().Column(col =>
+                    // Data e hora de geração - compacta
+                    row.ConstantItem(140).AlignRight().Column(col =>
                     {
                         col.Item().Text("Documento gerado em:")
-                            .FontSize(8).FontColor(Colors.Grey.Medium);
-                        col.Item().PaddingTop(2).Text(DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"))
-                            .FontSize(9).Bold().FontColor(Colors.Grey.Darken2);
-                        col.Item().PaddingTop(5).Text("Sistema VendaFlex")
-                            .FontSize(7).Italic().FontColor(Colors.Grey.Medium);
+                            .FontSize(6).FontColor(Colors.Grey.Medium);
+                        col.Item().PaddingTop(1).Text(DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"))
+                            .FontSize(7).Bold().FontColor(Colors.Grey.Darken2);
+                        col.Item().PaddingTop(3).Text("Sistema VendaFlex")
+                            .FontSize(6).Italic().FontColor(Colors.Grey.Medium);
                     });
                 });
 
-                // Numeração de página
-                column.Item().PaddingTop(10).AlignCenter().Text(text =>
+                // Numeração de página - compacta
+                column.Item().PaddingTop(5).AlignCenter().Text(text =>
                 {
-                    text.Span("Página ").FontSize(8).FontColor(Colors.Grey.Medium);
-                    text.CurrentPageNumber().FontSize(8).Bold().FontColor(Colors.Blue.Medium);
-                    text.Span(" de ").FontSize(8).FontColor(Colors.Grey.Medium);
-                    text.TotalPages().FontSize(8).Bold().FontColor(Colors.Blue.Medium);
+                    text.Span("Página ").FontSize(6).FontColor(Colors.Grey.Medium);
+                    text.CurrentPageNumber().FontSize(6).Bold().FontColor(Colors.Blue.Medium);
+                    text.Span(" de ").FontSize(6).FontColor(Colors.Grey.Medium);
+                    text.TotalPages().FontSize(6).Bold().FontColor(Colors.Blue.Medium);
                 });
             });
         }
@@ -2340,7 +2340,7 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(40);
-                        page.DefaultTextStyle(x => x.FontSize(10));
+                        page.DefaultTextStyle(x => x.FontSize(8));
 
                         page.Header().Element(c => ComposeReportHeader(c, companyConfig, "Demonstrativo Financeiro", startDate, endDate));
                         page.Content().Element(c => ComposeFinancialStatementContent(c, totalRevenue, totalCost, totalProfit, profitMargin, paymentMethods, accountsReceivable));
@@ -2372,7 +2372,7 @@ namespace VendaFlex.Infrastructure.Services
                     row.RelativeItem().Column(col =>
                     {
                         col.Item().Text(company.CompanyName ?? "VendaFlex")
-                            .FontSize(18).Bold().FontColor(Colors.Blue.Darken2);
+                            .FontSize(14).Bold().FontColor(Colors.Blue.Darken2);
                         col.Item().Text(title)
                             .FontSize(14).SemiBold().FontColor(Colors.Grey.Darken2);
                     });
@@ -2416,26 +2416,26 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Data").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Green.Lighten3).Padding(8).AlignRight().Text("Entradas (Kz)").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Red.Lighten3).Padding(8).AlignRight().Text("Saídas (Kz)").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Saldo (Kz)").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Grey.Lighten3).Padding(8).AlignRight().Text("Acumulado (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Data").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Green.Lighten3).Padding(4).AlignRight().Text("Entradas (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Red.Lighten3).Padding(4).AlignRight().Text("Saídas (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Saldo (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Grey.Lighten3).Padding(4).AlignRight().Text("Acumulado (Kz)").FontSize(10).SemiBold();
                     });
 
                     foreach (var flow in data)
                     {
                         var balance = flow.Inflow - flow.Outflow;
                         
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(flow.DateFormatted).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{flow.Inflow:N2}").FontSize(9).FontColor(Colors.Green.Darken1);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{flow.Outflow:N2}").FontSize(9).FontColor(Colors.Red.Darken1);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{balance:N2}").FontSize(9).Bold();
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{flow.Balance:N2}").FontSize(9).Bold().FontColor(flow.Balance >= 0 ? Colors.Blue.Medium : Colors.Red.Medium);
                     }
                 });
@@ -2469,21 +2469,21 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Forma de Pagamento").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Transações").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Valor Total (Kz)").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("% do Total").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Forma de Pagamento").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Transações").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Valor Total (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("% do Total").FontSize(10).SemiBold();
                     });
 
                     foreach (var method in methods)
                     {
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(method.MethodName).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text(method.TransactionCount.ToString()).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{method.TotalValue:N2}").FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{method.Percentage:N1}%").FontSize(9).Bold();
                     }
                 });
@@ -2529,7 +2529,7 @@ namespace VendaFlex.Infrastructure.Services
 
                 if (overdueAccounts.Any())
                 {
-                    column.Item().PaddingTop(20).Background(Colors.Red.Lighten4).Padding(10)
+                    column.Item().PaddingTop(20).Background(Colors.Red.Lighten4).Padding(5)
                         .Text($"⚠️ ATENÇÃO: {overdueAccounts.Count} faturas em atraso!")
                         .FontSize(11).Bold().FontColor(Colors.Red.Darken2);
                 }
@@ -2548,30 +2548,30 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Fatura").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Cliente").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Vencimento").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Total (Kz)").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Pendente (Kz)").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Dias").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Fatura").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Cliente").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Vencimento").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Total (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Pendente (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Dias").FontSize(10).SemiBold();
                     });
 
                     foreach (var account in accounts.OrderByDescending(a => a.DaysOverdue))
                     {
                         var isOverdue = account.DaysOverdue > 0;
                         
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(account.InvoiceNumber).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(account.CustomerName).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text(account.DueDate.ToString()).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{account.TotalValue:N2}").FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{account.PaidValue:N2}").FontSize(9).Bold()
                             .FontColor(isOverdue ? Colors.Red.Medium : Colors.Orange.Medium);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text(account.DaysOverdue > 0 ? $"+{account.DaysOverdue}" : "OK")
                             .FontSize(9).Bold().FontColor(isOverdue ? Colors.Red.Medium : Colors.Green.Medium);
                     }
@@ -2599,23 +2599,23 @@ namespace VendaFlex.Infrastructure.Services
                     });
 
                     // Receita
-                    table.Cell().Padding(8).Text("(+) Receita Total").FontSize(11).SemiBold();
-                    table.Cell().Padding(8).AlignRight().Text($"{totalRevenue:N2} Kz").FontSize(11).Bold().FontColor(Colors.Green.Medium);
+                    table.Cell().Padding(4).Text("(+) Receita Total").FontSize(11).SemiBold();
+                    table.Cell().Padding(4).AlignRight().Text($"{totalRevenue:N2} Kz").FontSize(11).Bold().FontColor(Colors.Green.Medium);
 
                     // Custo
-                    table.Cell().Padding(8).Text("(-) Custo Total").FontSize(11).SemiBold();
-                    table.Cell().Padding(8).AlignRight().Text($"{totalCost:N2} Kz").FontSize(11).Bold().FontColor(Colors.Red.Medium);
+                    table.Cell().Padding(4).Text("(-) Custo Total").FontSize(11).SemiBold();
+                    table.Cell().Padding(4).AlignRight().Text($"{totalCost:N2} Kz").FontSize(11).Bold().FontColor(Colors.Red.Medium);
 
                     // Linha divisória
                     table.Cell().ColumnSpan(2).BorderTop(2).BorderColor(Colors.Grey.Darken1).PaddingTop(5);
 
                     // Lucro
-                    table.Cell().Padding(8).Text("(=) Lucro Bruto").FontSize(12).Bold();
-                    table.Cell().Padding(8).AlignRight().Text($"{totalProfit:N2} Kz").FontSize(12).Bold().FontColor(Colors.Blue.Medium);
+                    table.Cell().Padding(4).Text("(=) Lucro Bruto").FontSize(12).Bold();
+                    table.Cell().Padding(4).AlignRight().Text($"{totalProfit:N2} Kz").FontSize(12).Bold().FontColor(Colors.Blue.Medium);
 
                     // Margem
-                    table.Cell().Padding(8).Text("Margem de Lucro").FontSize(11).SemiBold();
-                    table.Cell().Padding(8).AlignRight().Text($"{profitMargin:N2}%").FontSize(11).Bold().FontColor(Colors.Orange.Medium);
+                    table.Cell().Padding(4).Text("Margem de Lucro").FontSize(11).SemiBold();
+                    table.Cell().Padding(4).AlignRight().Text($"{profitMargin:N2}%").FontSize(11).Bold().FontColor(Colors.Orange.Medium);
                 });
 
                 // Formas de Pagamento Resumo
@@ -2654,7 +2654,7 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         page.Size(PageSizes.A4.Landscape()); // Paisagem para mais colunas
                         page.Margin(40);
-                        page.DefaultTextStyle(x => x.FontSize(10));
+                        page.DefaultTextStyle(x => x.FontSize(8));
 
                         page.Header().Element(c => ComposeReportHeader(c, companyConfig, "Movimentação de Estoque", startDate, endDate));
                         page.Content().Element(c => ComposeStockMovementsContent(c, stockMovements));
@@ -2675,7 +2675,7 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(40);
-                        page.DefaultTextStyle(x => x.FontSize(10));
+                        page.DefaultTextStyle(x => x.FontSize(8));
 
                         page.Header().Element(c => ComposeSimpleReportHeader(c, companyConfig, "Produtos com Estoque Baixo"));
                         page.Content().Element(c => ComposeLowStockContent(c, lowStockProducts));
@@ -2697,7 +2697,7 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(40);
-                        page.DefaultTextStyle(x => x.FontSize(10));
+                        page.DefaultTextStyle(x => x.FontSize(8));
 
                         page.Header().Element(c => ComposeSimpleReportHeader(c, companyConfig, $"Produtos Vencendo (Próximos {daysThreshold} dias)"));
                         page.Content().Element(c => ComposeExpiringProductsContent(c, expiringProducts, daysThreshold));
@@ -2741,30 +2741,30 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Data").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Produto").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignCenter().Text("Tipo").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Qtd").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Saldo").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Motivo").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Data").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Produto").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignCenter().Text("Tipo").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Qtd").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Saldo").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Motivo").FontSize(10).SemiBold();
                     });
 
                     foreach (var movement in movements)
                     {
                         var isEntry = movement.MovementType == "Entrada";
                         
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(movement.Date.ToShortDateString()).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(movement.ProductName).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignCenter().Text(movement.MovementType).FontSize(9).Bold()
                             .FontColor(isEntry ? Colors.Green.Medium : Colors.Red.Medium);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text(movement.Quantity.ToString()).FontSize(9).Bold();
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text("-").FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(movement.Reason ?? "-").FontSize(8).FontColor(Colors.Grey.Darken1);
                     }
                 });
@@ -2804,30 +2804,30 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Orange.Lighten3).Padding(8).Text("Produto").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Orange.Lighten3).Padding(8).AlignRight().Text("Atual").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Orange.Lighten3).Padding(8).AlignRight().Text("Mínimo").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Orange.Lighten3).Padding(8).AlignRight().Text("Reposição").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Orange.Lighten3).Padding(8).AlignRight().Text("Diferença").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Orange.Lighten3).Padding(8).AlignCenter().Text("Status").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Orange.Lighten3).Padding(4).Text("Produto").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Orange.Lighten3).Padding(4).AlignRight().Text("Atual").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Orange.Lighten3).Padding(4).AlignRight().Text("Mínimo").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Orange.Lighten3).Padding(4).AlignRight().Text("Reposição").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Orange.Lighten3).Padding(4).AlignRight().Text("Diferença").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Orange.Lighten3).Padding(4).AlignCenter().Text("Status").FontSize(10).SemiBold();
                     });
 
                     foreach (var product in products.OrderBy(p => p.CurrentQuantity))
                     {
                         var isCritical = product.CurrentQuantity <= product.MinimumQuantity / 2;
                         
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(product.ProductName).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text(product.CurrentQuantity.ToString()).FontSize(9).Bold()
                             .FontColor(isCritical ? Colors.Red.Medium : Colors.Orange.Medium);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text(product.MinimumQuantity.ToString()).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text(product.ReorderPoint.ToString()).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text(product.Difference.ToString()).FontSize(9).FontColor(Colors.Red.Darken1);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignCenter().Text(isCritical ? "CRÍTICO" : "BAIXO").FontSize(8).Bold()
                             .FontColor(isCritical ? Colors.Red.Darken2 : Colors.Orange.Darken1);
                     }
@@ -2885,11 +2885,11 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Red.Lighten3).Padding(8).Text("Produto").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Red.Lighten3).Padding(8).Text("Lote").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Red.Lighten3).Padding(8).AlignRight().Text("Validade").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Red.Lighten3).Padding(8).AlignRight().Text("Dias").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Red.Lighten3).Padding(8).AlignCenter().Text("Status").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Red.Lighten3).Padding(4).Text("Produto").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Red.Lighten3).Padding(4).Text("Lote").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Red.Lighten3).Padding(4).AlignRight().Text("Validade").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Red.Lighten3).Padding(4).AlignRight().Text("Dias").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Red.Lighten3).Padding(4).AlignCenter().Text("Status").FontSize(10).SemiBold();
                     });
 
                     foreach (var product in products.OrderBy(p => p.DaysToExpire))
@@ -2899,16 +2899,16 @@ namespace VendaFlex.Infrastructure.Services
                         var statusColor = product.DaysToExpire < 0 ? Colors.Red.Darken2 :
                                          product.DaysToExpire <= 7 ? Colors.Orange.Darken1 : Colors.Yellow.Darken2;
                         
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(product.ProductName).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(product.Batch ?? "-").FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text(product.ExpirationDateFormatted).FontSize(9);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text(product.DaysToExpire.ToString()).FontSize(9).Bold()
                             .FontColor(statusColor);
-                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignCenter().Text(statusText).FontSize(8).Bold()
                             .FontColor(statusColor);
                     }
@@ -2940,7 +2940,7 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(40);
-                        page.DefaultTextStyle(x => x.FontSize(10));
+                        page.DefaultTextStyle(x => x.FontSize(8));
 
                         page.Header().Element(c => ComposeReportHeader(c, companyConfig, "Dashboard Executivo", startDate, endDate));
                         page.Content().Element(c => ComposeExecutiveDashboardContent(c, totalSales, totalRevenue, profitMargin, 
@@ -2963,7 +2963,7 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(40);
-                        page.DefaultTextStyle(x => x.FontSize(10));
+                        page.DefaultTextStyle(x => x.FontSize(8));
 
                         page.Header().Element(c => ComposeReportHeader(c, companyConfig, "Desempenho por Vendedor", startDate, endDate));
                         page.Content().Element(c => ComposeUserPerformanceContent(c, salesByUser));
@@ -3022,10 +3022,10 @@ namespace VendaFlex.Infrastructure.Services
 
                         table.Header(header =>
                         {
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("#").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Produto").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Qtd").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Receita (Kz)").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("#").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Produto").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Qtd").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Receita (Kz)").FontSize(10).SemiBold();
                         });
 
                         int rank = 1;
@@ -3035,13 +3035,13 @@ namespace VendaFlex.Infrastructure.Services
                                          rank == 2 ? Colors.Grey.Lighten3 : 
                                          rank == 3 ? Colors.Orange.Lighten3 : Colors.White;
 
-                            table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignCenter().Text(rank.ToString()).FontSize(10).Bold();
-                            table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .Text(product.ProductName).FontSize(10);
-                            table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text(product.QuantitySold.ToString()).FontSize(10);
-                            table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text($"{product.Revenue:N2}").FontSize(10).Bold();
                             
                             rank++;
@@ -3060,7 +3060,7 @@ namespace VendaFlex.Infrastructure.Services
                         foreach (var method in methods.Take(5))
                         {
                             col.Item().PaddingVertical(8).Border(1).BorderColor(Colors.Grey.Lighten2)
-                                .Padding(12).Row(row =>
+                                .Padding(6).Row(row =>
                                 {
                                     row.RelativeItem().Column(c =>
                                     {
@@ -3129,12 +3129,12 @@ namespace VendaFlex.Infrastructure.Services
 
                     table.Header(header =>
                     {
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignCenter().Text("Pos.").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Vendedor").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Vendas").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Total (Kz)").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Ticket Médio").FontSize(10).SemiBold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("% Total").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignCenter().Text("Pos.").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Vendedor").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Vendas").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Total (Kz)").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Ticket Médio").FontSize(10).SemiBold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("% Total").FontSize(10).SemiBold();
                     });
 
                     int position = 1;
@@ -3149,17 +3149,17 @@ namespace VendaFlex.Infrastructure.Services
                         
                         var trophy = position == 1 ? "🥇" : position == 2 ? "🥈" : position == 3 ? "🥉" : "";
 
-                        table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignCenter().Text($"{trophy} {position}").FontSize(10).Bold();
-                        table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .Text(user.UserName).FontSize(9).SemiBold();
-                        table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text(user.InvoiceCount.ToString()).FontSize(9);
-                        table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{user.TotalValue:N2}").FontSize(9).Bold().FontColor(Colors.Green.Medium);
-                        table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{avgTicket:N2}").FontSize(9);
-                        table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                        table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text($"{percentage:N1}%").FontSize(9).Bold().FontColor(Colors.Blue.Medium);
                         
                         position++;
@@ -3230,7 +3230,7 @@ namespace VendaFlex.Infrastructure.Services
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(40);
-                        page.DefaultTextStyle(x => x.FontSize(10));
+                        page.DefaultTextStyle(x => x.FontSize(8));
 
                         page.Header().Element(c => ComposeComprehensiveHeader(c, companyConfig, reportData));
                         page.Content().Element(c => ComposeComprehensiveContent(c, reportData));
@@ -3390,19 +3390,19 @@ namespace VendaFlex.Infrastructure.Services
                         // Header
                         table.Header(header =>
                         {
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Produto").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Quantidade").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Receita (Kz)").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Produto").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Quantidade").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Receita (Kz)").FontSize(10).SemiBold();
                         });
 
                         // Rows
                         foreach (var product in data.TopProducts.Take(10))
                         {
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .Text(product.ProductName).FontSize(9);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text(product.QuantitySold.ToString()).FontSize(9);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text($"{product.Revenue:N2}").FontSize(9);
                         }
                     });
@@ -3444,21 +3444,21 @@ namespace VendaFlex.Infrastructure.Services
 
                         table.Header(header =>
                         {
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Método").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Transações").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Valor (Kz)").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("%").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Método").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Transações").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Valor (Kz)").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("%").FontSize(10).SemiBold();
                         });
 
                         foreach (var method in data.PaymentMethods)
                         {
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .Text(method.MethodName).FontSize(9);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text(method.TransactionCount.ToString()).FontSize(9);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text($"{method.TotalValue:N2}").FontSize(9);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text($"{method.Percentage:N1}%").FontSize(9);
                         }
                     });
@@ -3511,18 +3511,18 @@ namespace VendaFlex.Infrastructure.Services
 
                         table.Header(header =>
                         {
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Cliente").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Compras").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Total (Kz)").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Cliente").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Compras").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Total (Kz)").FontSize(10).SemiBold();
                         });
 
                         foreach (var customer in data.TopCustomers.Take(10))
                         {
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .Text(customer.CustomerName).FontSize(9);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text(customer.InvoiceCount.ToString()).FontSize(9);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text($"{customer.TotalValue:N2}").FontSize(9);
                         }
                     });
@@ -3557,18 +3557,18 @@ namespace VendaFlex.Infrastructure.Services
 
                         table.Header(header =>
                         {
-                            header.Cell().Background(Colors.Orange.Lighten3).Padding(8).Text("Produto").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Orange.Lighten3).Padding(8).AlignRight().Text("Atual").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Orange.Lighten3).Padding(8).AlignRight().Text("Mínimo").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Orange.Lighten3).Padding(4).Text("Produto").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Orange.Lighten3).Padding(4).AlignRight().Text("Atual").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Orange.Lighten3).Padding(4).AlignRight().Text("Mínimo").FontSize(10).SemiBold();
                         });
 
                         foreach (var product in data.LowStockProducts.Take(15))
                         {
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .Text(product.ProductName).FontSize(9);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text(product.CurrentQuantity.ToString()).FontSize(9);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text(product.MinimumQuantity.ToString()).FontSize(9);
                         }
                     });
@@ -3612,21 +3612,21 @@ namespace VendaFlex.Infrastructure.Services
 
                         table.Header(header =>
                         {
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Status").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Quantidade").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Valor (Kz)").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("%").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Status").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Quantidade").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Valor (Kz)").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("%").FontSize(10).SemiBold();
                         });
 
                         foreach (var status in data.InvoicesByStatus)
                         {
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .Text(status.Status).FontSize(9);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text(status.Count.ToString()).FontSize(9);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text($"{status.TotalValue:N2}").FontSize(9);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text($"{status.Percentage:N1}%").FontSize(9);
                         }
                     });
@@ -3657,18 +3657,18 @@ namespace VendaFlex.Infrastructure.Services
 
                         table.Header(header =>
                         {
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).Text("Vendedor").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Vendas").FontSize(10).SemiBold();
-                            header.Cell().Background(Colors.Blue.Lighten3).Padding(8).AlignRight().Text("Total (Kz)").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).Text("Vendedor").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Vendas").FontSize(10).SemiBold();
+                            header.Cell().Background(Colors.Blue.Lighten3).Padding(4).AlignRight().Text("Total (Kz)").FontSize(10).SemiBold();
                         });
 
                         foreach (var user in data.UserPerformance)
                         {
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .Text(user.UserName).FontSize(9);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text(user.InvoiceCount.ToString()).FontSize(9);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                                 .AlignRight().Text($"{user.TotalValue:N2}").FontSize(9);
                         }
                     });
