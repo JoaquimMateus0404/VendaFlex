@@ -996,7 +996,7 @@
                                               Foreground="{DynamicResource MaterialDesignBodyLight}"
                                               Margin="0,0,0,16"/>
 
-                                    <UniformGrid Columns="2" Rows="2">
+                                    <UniformGrid Columns="3" Rows="4">
                                         <!-- Financial Statement -->
                                         <Button Command="{Binding GenerateFinancialStatementCommand}" 
                                                Style="{StaticResource ReportButtonStyle}"
@@ -1063,6 +1063,132 @@
                                                           FontSize="14" FontWeight="SemiBold" 
                                                           Margin="0,8,0,2" TextAlignment="Center"/>
                                                 <TextBlock Text="Relatório completo multi-página" 
+                                                          FontSize="10" 
+                                                          Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                                                          TextAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Sales by Period -->
+                                        <Button Command="{Binding GenerateSalesByPeriodCommand}" 
+                                               Style="{StaticResource ReportButtonStyle}"
+                                               Height="130">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <materialDesign:PackIcon Kind="CalendarRange" Width="42" Height="42" 
+                                                                        HorizontalAlignment="Center"
+                                                                        Foreground="#FF6F00"/>
+                                                <TextBlock Text="Vendas por Período" 
+                                                          FontSize="14" FontWeight="SemiBold" 
+                                                          Margin="0,8,0,2" TextAlignment="Center"/>
+                                                <TextBlock Text="Análise temporal de vendas" 
+                                                          FontSize="10" 
+                                                          Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                                                          TextAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Top Products -->
+                                        <Button Command="{Binding GenerateTopProductsCommand}" 
+                                               Style="{StaticResource ReportButtonStyle}"
+                                               Height="130">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <materialDesign:PackIcon Kind="TrophyVariant" Width="42" Height="42" 
+                                                                        HorizontalAlignment="Center"
+                                                                        Foreground="#FFB300"/>
+                                                <TextBlock Text="Top Produtos" 
+                                                          FontSize="14" FontWeight="SemiBold" 
+                                                          Margin="0,8,0,2" TextAlignment="Center"/>
+                                                <TextBlock Text="Produtos mais vendidos" 
+                                                          FontSize="10" 
+                                                          Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                                                          TextAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Sales by Customer -->
+                                        <Button Command="{Binding GenerateSalesByCustomerCommand}" 
+                                               Style="{StaticResource ReportButtonStyle}"
+                                               Height="130">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <materialDesign:PackIcon Kind="AccountGroup" Width="42" Height="42" 
+                                                                        HorizontalAlignment="Center"
+                                                                        Foreground="#00897B"/>
+                                                <TextBlock Text="Vendas por Cliente" 
+                                                          FontSize="14" FontWeight="SemiBold" 
+                                                          Margin="0,8,0,2" TextAlignment="Center"/>
+                                                <TextBlock Text="Análise por cliente" 
+                                                          FontSize="10" 
+                                                          Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                                                          TextAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Profit Margin -->
+                                        <Button Command="{Binding GenerateProfitMarginCommand}" 
+                                               Style="{StaticResource ReportButtonStyle}"
+                                               Height="130">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <materialDesign:PackIcon Kind="ChartLineVariant" Width="42" Height="42" 
+                                                                        HorizontalAlignment="Center"
+                                                                        Foreground="#5E35B1"/>
+                                                <TextBlock Text="Margem de Lucro" 
+                                                          FontSize="14" FontWeight="SemiBold" 
+                                                          Margin="0,8,0,2" TextAlignment="Center"/>
+                                                <TextBlock Text="Análise de rentabilidade" 
+                                                          FontSize="10" 
+                                                          Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                                                          TextAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Invoices by Status -->
+                                        <Button Command="{Binding GenerateInvoicesByStatusCommand}" 
+                                               Style="{StaticResource ReportButtonStyle}"
+                                               Height="130">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <materialDesign:PackIcon Kind="FileDocumentMultiple" Width="42" Height="42" 
+                                                                        HorizontalAlignment="Center"
+                                                                        Foreground="#0277BD"/>
+                                                <TextBlock Text="Faturas por Status" 
+                                                          FontSize="14" FontWeight="SemiBold" 
+                                                          Margin="0,8,0,2" TextAlignment="Center"/>
+                                                <TextBlock Text="Status das faturas" 
+                                                          FontSize="10" 
+                                                          Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                                                          TextAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Cash Flow -->
+                                        <Button Command="{Binding GenerateCashFlowCommand}" 
+                                               Style="{StaticResource ReportButtonStyle}"
+                                               Height="130">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <materialDesign:PackIcon Kind="ChartAreaspline" Width="42" Height="42" 
+                                                                        HorizontalAlignment="Center"
+                                                                        Foreground="#C62828"/>
+                                                <TextBlock Text="Fluxo de Caixa" 
+                                                          FontSize="14" FontWeight="SemiBold" 
+                                                          Margin="0,8,0,2" TextAlignment="Center"/>
+                                                <TextBlock Text="Entradas e saídas" 
+                                                          FontSize="10" 
+                                                          Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                                                          TextAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Payment Methods -->
+                                        <Button Command="{Binding GeneratePaymentMethodsCommand}" 
+                                               Style="{StaticResource ReportButtonStyle}"
+                                               Height="130">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <materialDesign:PackIcon Kind="CreditCard" Width="42" Height="42" 
+                                                                        HorizontalAlignment="Center"
+                                                                        Foreground="#6A1B9A"/>
+                                                <TextBlock Text="Formas de Pagamento" 
+                                                          FontSize="14" FontWeight="SemiBold" 
+                                                          Margin="0,8,0,2" TextAlignment="Center"/>
+                                                <TextBlock Text="Métodos de pagamento" 
                                                           FontSize="10" 
                                                           Foreground="{DynamicResource MaterialDesignBodyLight}" 
                                                           TextAlignment="Center"/>

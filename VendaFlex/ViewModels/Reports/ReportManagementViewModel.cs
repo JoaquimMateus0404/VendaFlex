@@ -370,6 +370,8 @@ namespace VendaFlex.ViewModels.Reports
         public ICommand GenerateExecutiveDashboardCommand { get; private set; }
         public ICommand GenerateUserPerformanceCommand { get; private set; }
         public ICommand GenerateComprehensiveReportCommand { get; private set; }
+        public ICommand GenerateSalesTrendCommand { get; private set; }
+
 
         // Export Commands
         public ICommand ExportSalesByPeriodCommand { get; private set; }
@@ -433,16 +435,16 @@ namespace VendaFlex.ViewModels.Reports
             ClearFiltersCommand = new RelayCommand(_ => ClearFilters());
             RefreshDashboardCommand = new RelayCommand(async _ => await RefreshDashboardAsync());
 
-            // Sales Reports
-            GenerateSalesByPeriodCommand = new RelayCommand(async _ => await GenerateSalesByPeriodAsync());
-            GenerateTopProductsCommand = new RelayCommand(async _ => await GenerateTopProductsAsync());
-            GenerateSalesByCustomerCommand = new RelayCommand(async _ => await GenerateSalesByCustomerAsync());
-            GenerateProfitMarginCommand = new RelayCommand(async _ => await GenerateProfitMarginAsync());
-            GenerateInvoicesByStatusCommand = new RelayCommand(async _ => await GenerateInvoicesByStatusAsync());
+            // Sales Reports - Geram PDFs quando chamados da aba Gerencial
+            GenerateSalesByPeriodCommand = new RelayCommand(async _ => await GenerateSalesByPeriodPdfAsync());
+            GenerateTopProductsCommand = new RelayCommand(async _ => await GenerateTopProductsPdfAsync());
+            GenerateSalesByCustomerCommand = new RelayCommand(async _ => await GenerateSalesByCustomerPdfAsync());
+            GenerateProfitMarginCommand = new RelayCommand(async _ => await GenerateProfitMarginPdfAsync());
+            GenerateInvoicesByStatusCommand = new RelayCommand(async _ => await GenerateInvoicesByStatusPdfAsync());
 
-            // Financial Reports
-            GenerateCashFlowCommand = new RelayCommand(async _ => await GenerateCashFlowAsync());
-            GeneratePaymentMethodsCommand = new RelayCommand(async _ => await GeneratePaymentMethodsAsync());
+            // Financial Reports - Geram PDFs quando chamados da aba Gerencial
+            GenerateCashFlowCommand = new RelayCommand(async _ => await GenerateCashFlowPdfAsync());
+            GeneratePaymentMethodsCommand = new RelayCommand(async _ => await GeneratePaymentMethodsPdfAsync());
             GenerateAccountsReceivableCommand = new RelayCommand(async _ => await GenerateAccountsReceivableAsync());
 
             // Stock Reports
@@ -1767,6 +1769,8 @@ namespace VendaFlex.ViewModels.Reports
             }
         }
 
+        #region Gerar relatorios PDF
+
         private async Task GenerateExpiringProductsAsync()
         {
             try
@@ -1809,6 +1813,607 @@ namespace VendaFlex.ViewModels.Reports
                     expiringProducts.OrderBy(e => e.ExpirationDate));
 
                 ShowMessage($"{expiringProducts.Count} produtos vencendo nos próximos 30 dias.");
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao gerar relatório: {ex.Message}", true);
+                Debug.WriteLine($"Erro ao gerar relatório: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task GenerateSalesByPeriodPdfAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ShowMessage("Gerando relatório PDF de vendas por período...");
+
+                var companyConfig = await GetCompanyConfigAsync();
+                
+                var result = await _invoiceService.GetByDateRangeAsync(StartDate, EndDate);
+                if (!result.Success || result.Data == null)
+                {
+                    ShowMessage($"Erro ao buscar dados: {result.Message}", true);
+                    return;
+                }
+
+                var invoices = result.Data
+                    .Where(i => i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Confirmed);
+
+                if (SelectedUserId.HasValue)
+                {
+                    invoices = invoices.Where(i => i.UserId == SelectedUserId.Value);
+                }
+
+                var grouped = SelectedPeriodGrouping switch
+                {
+                    "Dia" => invoices.GroupBy(i => i.Date.Date),
+                    "Semana" => invoices.GroupBy(i => GetWeekStart(i.Date)),
+                    "Mês" => invoices.GroupBy(i => new DateTime(i.Date.Year, i.Date.Month, 1)),
+                    "Trimestre" => invoices.GroupBy(i => GetQuarterStart(i.Date)),
+                    "Ano" => invoices.GroupBy(i => new DateTime(i.Date.Year, 1, 1)),
+                    _ => invoices.GroupBy(i => i.Date.Date)
+                };
+
+                var salesData = grouped
+                    .Select(g => new SalesByPeriodDto
+                    {
+                        Date = g.Key,
+                        InvoiceCount = g.Count(),
+                        TotalValue = g.Sum(i => i.Total),
+                        PaidValue = g.Sum(i => i.PaidAmount),
+                        PendingValue = g.Sum(i => i.Total - i.PaidAmount)
+                    })
+                    .OrderBy(s => s.Date)
+                    .ToList();
+
+                if (!salesData.Any())
+                {
+                    ShowMessage("Nenhum dado encontrado para o período selecionado.", true);
+                    return;
+                }
+
+                var fileName = $"Vendas_Por_Periodo_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var filePath = Path.Combine(myDocuments, fileName);
+
+                await _pdfGeneratorService.GenerateSalesByPeriodReportAsync(
+                    companyConfig,
+                    salesData,
+                    StartDate,
+                    EndDate,
+                    filePath);
+
+                ShowMessage($"Relatório PDF gerado: {fileName}");
+                
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao gerar relatório: {ex.Message}", true);
+                Debug.WriteLine($"Erro ao gerar relatório: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task GenerateTopProductsPdfAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ShowMessage("Gerando relatório PDF de top produtos...");
+
+                var companyConfig = await GetCompanyConfigAsync();
+
+                var invoicesResult = await _invoiceService.GetByDateRangeAsync(StartDate, EndDate);
+                if (!invoicesResult.Success || invoicesResult.Data == null)
+                {
+                    ShowMessage("Erro ao buscar faturas.", true);
+                    return;
+                }
+
+                var invoiceIds = invoicesResult.Data
+                    .Where(i => i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Confirmed)
+                    .Select(i => i.InvoiceId)
+                    .ToList();
+
+                var productSales = new Dictionary<int, (string Name, int Quantity, decimal TotalValue)>();
+
+                foreach (var invoiceId in invoiceIds)
+                {
+                    var itemsResult = await _invoiceProductService.GetByInvoiceIdAsync(invoiceId);
+                    if (itemsResult.Success && itemsResult.Data != null)
+                    {
+                        foreach (var item in itemsResult.Data)
+                        {
+                            if (productSales.ContainsKey(item.ProductId))
+                            {
+                                var current = productSales[item.ProductId];
+                                productSales[item.ProductId] = (
+                                    current.Name,
+                                    current.Quantity + item.Quantity,
+                                    current.TotalValue + (item.UnitPrice * item.Quantity)
+                                );
+                            }
+                            else
+                            {
+                                productSales[item.ProductId] = (
+                                    item.ProductName ?? "Desconhecido",
+                                    item.Quantity,
+                                    item.UnitPrice * item.Quantity
+                                );
+                            }
+                        }
+                    }
+                }
+
+                var topProducts = productSales
+                    .Select(kvp => new TopProductDto
+                    {
+                        ProductName = kvp.Value.Name,
+                        QuantitySold = kvp.Value.Quantity,
+                        Revenue = kvp.Value.TotalValue
+                    })
+                    .OrderByDescending(p => p.Revenue)
+                    .Take(20)
+                    .ToList();
+
+                if (!topProducts.Any())
+                {
+                    ShowMessage("Nenhum produto vendido no período selecionado.", true);
+                    return;
+                }
+
+                var fileName = $"Top_Produtos_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var filePath = Path.Combine(myDocuments, fileName);
+
+                await _pdfGeneratorService.GenerateTopProductsReportAsync(
+                    companyConfig,
+                    topProducts,
+                    StartDate,
+                    EndDate,
+                    filePath);
+
+                ShowMessage($"Relatório PDF gerado: {fileName}");
+                
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao gerar relatório: {ex.Message}", true);
+                Debug.WriteLine($"Erro ao gerar relatório: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task GenerateSalesByCustomerPdfAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ShowMessage("Gerando relatório PDF de vendas por cliente...");
+
+                var companyConfig = await GetCompanyConfigAsync();
+
+                var invoicesResult = await _invoiceService.GetByDateRangeAsync(StartDate, EndDate);
+                if (!invoicesResult.Success || invoicesResult.Data == null)
+                {
+                    ShowMessage("Erro ao buscar faturas.", true);
+                    return;
+                }
+
+                var customerSales = invoicesResult.Data
+                    .Where(i => i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Confirmed)
+                    .GroupBy(i => i.PersonId)
+                    .Select(g => new { PersonId = g.Key, Invoices = g.ToList() })
+                    .ToList();
+
+                var salesByCustomer = new List<SalesByCustomerDto>();
+
+                foreach (var group in customerSales)
+                {
+                    var personResult = await _personService.GetByIdAsync(group.PersonId);
+                    var customerName = personResult.Success && personResult.Data != null
+                        ? personResult.Data.Name
+                        : "Cliente Desconhecido";
+
+                    salesByCustomer.Add(new SalesByCustomerDto
+                    {
+                        CustomerName = customerName,
+                        InvoiceCount = group.Invoices.Count,
+                        TotalValue = group.Invoices.Sum(i => i.Total),
+                        PaidValue = group.Invoices.Sum(i => i.PaidAmount),
+                        PendingValue = group.Invoices.Sum(i => i.Total - i.PaidAmount),
+                        LastPurchaseDate = group.Invoices.Max(i => i.Date)
+                    });
+                }
+
+                if (!salesByCustomer.Any())
+                {
+                    ShowMessage("Nenhum cliente encontrado no período selecionado.", true);
+                    return;
+                }
+
+                var fileName = $"Vendas_Por_Cliente_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var filePath = Path.Combine(myDocuments, fileName);
+
+                await _pdfGeneratorService.GenerateSalesByCustomerReportAsync(
+                    companyConfig,
+                    salesByCustomer.OrderByDescending(s => s.TotalValue),
+                    StartDate,
+                    EndDate,
+                    filePath);
+
+                ShowMessage($"Relatório PDF gerado: {fileName}");
+                
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao gerar relatório: {ex.Message}", true);
+                Debug.WriteLine($"Erro ao gerar relatório: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task GenerateProfitMarginPdfAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ShowMessage("Gerando relatório PDF de margem de lucro...");
+
+                var companyConfig = await GetCompanyConfigAsync();
+
+                var invoicesResult = await _invoiceService.GetByDateRangeAsync(StartDate, EndDate);
+                if (!invoicesResult.Success || invoicesResult.Data == null)
+                {
+                    ShowMessage("Erro ao buscar faturas.", true);
+                    return;
+                }
+
+                var profitData = new List<ProfitMarginDto>();
+
+                foreach (var invoice in invoicesResult.Data.Where(i => i.Status == InvoiceStatus.Paid))
+                {
+                    var itemsResult = await _invoiceProductService.GetByInvoiceIdAsync(invoice.InvoiceId);
+                    if (itemsResult.Success && itemsResult.Data != null)
+                    {
+                        decimal totalCost = 0;
+                        foreach (var item in itemsResult.Data)
+                        {
+                            var productResult = await _productService.GetByIdAsync(item.ProductId);
+                            if (productResult.Success && productResult.Data != null)
+                            {
+                                totalCost += productResult.Data.CostPrice * item.Quantity;
+                            }
+                        }
+
+                        var grossProfit = invoice.Total - totalCost;
+                        var marginPercentage = invoice.Total > 0 ? (grossProfit / invoice.Total) * 100 : 0;
+
+                        profitData.Add(new ProfitMarginDto
+                        {
+                            InvoiceNumber = invoice.InvoiceNumber,
+                            InvoiceDate = invoice.Date,
+                            TotalRevenue = invoice.Total,
+                            TotalCost = totalCost,
+                            GrossProfit = grossProfit,
+                            MarginPercentage = marginPercentage
+                        });
+                    }
+                }
+
+                if (!profitData.Any())
+                {
+                    ShowMessage("Nenhum dado de margem encontrado no período selecionado.", true);
+                    return;
+                }
+
+                var fileName = $"Margem_Lucro_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var filePath = Path.Combine(myDocuments, fileName);
+
+                await _pdfGeneratorService.GenerateProfitMarginReportAsync(
+                    companyConfig,
+                    profitData.OrderByDescending(p => p.GrossProfit),
+                    StartDate,
+                    EndDate,
+                    filePath);
+
+                ShowMessage($"Relatório PDF gerado: {fileName}");
+                
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao gerar relatório: {ex.Message}", true);
+                Debug.WriteLine($"Erro ao gerar relatório: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task GenerateInvoicesByStatusPdfAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ShowMessage("Gerando relatório PDF de faturas por status...");
+
+                var companyConfig = await GetCompanyConfigAsync();
+
+                var result = await _invoiceService.GetByDateRangeAsync(StartDate, EndDate);
+                if (!result.Success || result.Data == null)
+                {
+                    ShowMessage("Erro ao buscar faturas.", true);
+                    return;
+                }
+
+                var statusGroups = result.Data
+                    .GroupBy(i => i.Status)
+                    .Select(g => new InvoicesByStatusDto
+                    {
+                        Status = g.Key.ToString(),
+                        Count = g.Count(),
+                        TotalValue = g.Sum(i => i.Total),
+                        Percentage = 0
+                    })
+                    .ToList();
+
+                var totalCount = statusGroups.Sum(s => s.Count);
+                foreach (var status in statusGroups)
+                {
+                    status.Percentage = totalCount > 0 ? (decimal)status.Count / totalCount * 100 : 0;
+                }
+
+                if (!statusGroups.Any())
+                {
+                    ShowMessage("Nenhum dado encontrado no período selecionado.", true);
+                    return;
+                }
+
+                var fileName = $"Faturas_Por_Status_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var filePath = Path.Combine(myDocuments, fileName);
+
+                await _pdfGeneratorService.GenerateInvoicesByStatusReportAsync(
+                    companyConfig,
+                    statusGroups,
+                    StartDate,
+                    EndDate,
+                    filePath);
+
+                ShowMessage($"Relatório PDF gerado: {fileName}");
+                
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao gerar relatório: {ex.Message}", true);
+                Debug.WriteLine($"Erro ao gerar relatório: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task GenerateCashFlowPdfAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ShowMessage("Gerando relatório PDF de fluxo de caixa...");
+
+                var companyConfig = await GetCompanyConfigAsync();
+
+                var invoicesResult = await _invoiceService.GetByDateRangeAsync(StartDate, EndDate);
+                if (!invoicesResult.Success || invoicesResult.Data == null)
+                {
+                    ShowMessage("Erro ao buscar faturas.", true);
+                    return;
+                }
+
+                var cashFlow = invoicesResult.Data
+                    .GroupBy(i => i.Date.Date)
+                    .Select(g => new CashFlowDto
+                    {
+                        Date = g.Key,
+                        Inflow = g.Where(i => i.Status == InvoiceStatus.Paid).Sum(i => i.PaidAmount),
+                        Outflow = 0,
+                        Balance = g.Where(i => i.Status == InvoiceStatus.Paid).Sum(i => i.PaidAmount)
+                    })
+                    .OrderBy(cf => cf.Date)
+                    .ToList();
+
+                decimal accumulated = 0;
+                foreach (var day in cashFlow)
+                {
+                    accumulated += (day.Inflow - day.Outflow);
+                    day.Balance = accumulated;
+                }
+
+                if (!cashFlow.Any())
+                {
+                    ShowMessage("Nenhum dado de fluxo encontrado no período selecionado.", true);
+                    return;
+                }
+
+                var fileName = $"Fluxo_Caixa_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var filePath = Path.Combine(myDocuments, fileName);
+
+                await _pdfGeneratorService.GenerateCashFlowReportAsync(
+                    companyConfig,
+                    cashFlow,
+                    StartDate,
+                    EndDate,
+                    filePath);
+
+                ShowMessage($"Relatório PDF gerado: {fileName}");
+                
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao gerar relatório: {ex.Message}", true);
+                Debug.WriteLine($"Erro ao gerar relatório: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task GeneratePaymentMethodsPdfAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ShowMessage("Gerando relatório PDF de formas de pagamento...");
+
+                var companyConfig = await GetCompanyConfigAsync();
+
+                var invoicesResult = await _invoiceService.GetByDateRangeAsync(StartDate, EndDate);
+                if (!invoicesResult.Success || invoicesResult.Data == null)
+                {
+                    ShowMessage("Erro ao buscar faturas.", true);
+                    return;
+                }
+
+                var invoiceIds = invoicesResult.Data
+                    .Where(i => i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Confirmed)
+                    .Select(i => i.InvoiceId)
+                    .ToList();
+
+                var paymentMethods = new Dictionary<string, (int Count, decimal Total)>();
+
+                foreach (var invoiceId in invoiceIds)
+                {
+                    var paymentsResult = await _paymentService.GetByInvoiceIdAsync(invoiceId);
+                    if (paymentsResult.Success && paymentsResult.Data != null)
+                    {
+                        foreach (var payment in paymentsResult.Data)
+                        {
+                            var key = $"Tipo {payment.PaymentTypeId}";
+
+                            if (paymentMethods.ContainsKey(key))
+                            {
+                                var current = paymentMethods[key];
+                                paymentMethods[key] = (current.Count + 1, current.Total + payment.Amount);
+                            }
+                            else
+                            {
+                                paymentMethods[key] = (1, payment.Amount);
+                            }
+                        }
+                    }
+                }
+
+                var paymentTypesResult = await _paymentTypeService.GetAllAsync();
+                var paymentTypesDict = new Dictionary<int, string>();
+                if (paymentTypesResult.Success && paymentTypesResult.Data != null)
+                {
+                    foreach (var pt in paymentTypesResult.Data)
+                    {
+                        paymentTypesDict[pt.PaymentTypeId] = pt.Name;
+                    }
+                }
+
+                var methodsList = paymentMethods
+                    .Select(kvp => 
+                    {
+                        var typeIdStr = kvp.Key.Replace("Tipo ", "");
+                        var methodName = kvp.Key;
+                        
+                        if (int.TryParse(typeIdStr, out int typeId) && paymentTypesDict.ContainsKey(typeId))
+                        {
+                            methodName = paymentTypesDict[typeId];
+                        }
+                        
+                        return new PaymentMethodDto
+                        {
+                            MethodName = methodName,
+                            TransactionCount = kvp.Value.Count,
+                            TotalValue = kvp.Value.Total,
+                            Percentage = 0
+                        };
+                    })
+                    .OrderByDescending(p => p.TotalValue)
+                    .ToList();
+
+                var totalValue = methodsList.Sum(p => p.TotalValue);
+                foreach (var method in methodsList)
+                {
+                    method.Percentage = totalValue > 0 ? (method.TotalValue / totalValue) * 100 : 0;
+                }
+
+                if (!methodsList.Any())
+                {
+                    ShowMessage("Nenhuma forma de pagamento encontrada no período selecionado.", true);
+                    return;
+                }
+
+                var fileName = $"Formas_Pagamento_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var filePath = Path.Combine(myDocuments, fileName);
+
+                await _pdfGeneratorService.GeneratePaymentMethodsReportAsync(
+                    companyConfig,
+                    methodsList,
+                    StartDate,
+                    EndDate,
+                    filePath);
+
+                ShowMessage($"Relatório PDF gerado: {fileName}");
+                
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                });
             }
             catch (Exception ex)
             {
@@ -2423,6 +3028,8 @@ namespace VendaFlex.ViewModels.Reports
                 IsLoading = false;
             }
         }
+
+        #endregion
 
         private async Task<CompanyConfigDto> GetCompanyConfigAsync()
         {
