@@ -605,6 +605,7 @@ namespace VendaFlex.ViewModels.Reports
                     await GenerateLowStockAsync();
                     break;
                 case 3: // Management - Load all data needed for charts
+                    await GenerateChartsAsync(); // Carrega os gráficos de Tendências e Status
                     await GenerateTopProductsAsync();
                     await GeneratePaymentMethodsAsync();
                     break;
