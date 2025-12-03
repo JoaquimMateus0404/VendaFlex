@@ -1969,6 +1969,15 @@ namespace VendaFlex.ViewModels.Reports
         public string DateFormatted => Date.ToString("dd/MM/yyyy");
     }
 
+    public class SalesByUserDto
+    {
+        public string UserName { get; set; } = string.Empty;
+        public int InvoiceCount { get; set; }
+        public decimal TotalValue { get; set; }
+        public decimal PaidValue { get; set; }
+        public decimal PendingValue { get; set; }
+    }
+
     public class SalesByCustomerDto
     {
         public string CustomerName { get; set; } = string.Empty;
@@ -2057,6 +2066,55 @@ namespace VendaFlex.ViewModels.Reports
         public int Count { get; set; }
         public decimal TotalValue { get; set; }
         public decimal Percentage { get; set; }
+    }
+
+    public class ComprehensiveReportDto
+    {
+        // Período do relatório
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public string ReportType { get; set; } = string.Empty; // "Mensal" ou "Anual"
+        
+        // Resumo Executivo
+        public int TotalInvoices { get; set; }
+        public decimal TotalSales { get; set; }
+        public decimal TotalRevenue { get; set; }
+        public decimal GrossProfit { get; set; }
+        public decimal ProfitMargin { get; set; }
+        public decimal GrowthPercentage { get; set; }
+        
+        // Análise de Vendas
+        public IEnumerable<SalesByPeriodDto> SalesTrend { get; set; } = new List<SalesByPeriodDto>();
+        public IEnumerable<TopProductDto> TopProducts { get; set; } = new List<TopProductDto>();
+        public decimal AverageTicket { get; set; }
+        
+        // Análise Financeira
+        public IEnumerable<PaymentMethodDto> PaymentMethods { get; set; } = new List<PaymentMethodDto>();
+        public IEnumerable<AccountsReceivableDto> AccountsReceivable { get; set; } = new List<AccountsReceivableDto>();
+        public decimal TotalPendingAmount { get; set; }
+        public decimal DefaultRate { get; set; }
+        public IEnumerable<CashFlowDto> CashFlow { get; set; } = new List<CashFlowDto>();
+        
+        // Análise de Clientes
+        public IEnumerable<SalesByCustomerDto> TopCustomers { get; set; } = new List<SalesByCustomerDto>();
+        public int NewCustomers { get; set; }
+        public decimal RetentionRate { get; set; }
+        public decimal AverageTicketPerCustomer { get; set; }
+        
+        // Análise de Estoque
+        public decimal TotalStockValue { get; set; }
+        public IEnumerable<TopProductDto> TopSellingProducts { get; set; } = new List<TopProductDto>();
+        public IEnumerable<LowStockDto> LowStockProducts { get; set; } = new List<LowStockDto>();
+        public IEnumerable<ExpirationReportDto> ExpiringProducts { get; set; } = new List<ExpirationReportDto>();
+        
+        // Análise Operacional
+        public IEnumerable<InvoicesByStatusDto> InvoicesByStatus { get; set; } = new List<InvoicesByStatusDto>();
+        public decimal CancellationRate { get; set; }
+        public IEnumerable<SalesByUserDto> UserPerformance { get; set; } = new List<SalesByUserDto>();
+        
+        // Formatação
+        public string StartDateFormatted => StartDate.ToString("dd/MM/yyyy");
+        public string EndDateFormatted => EndDate.ToString("dd/MM/yyyy");
     }
 
     #endregion
