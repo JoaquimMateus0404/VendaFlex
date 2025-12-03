@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -363,6 +364,12 @@ namespace VendaFlex.ViewModels.Reports
         public ICommand GenerateStockMovementsCommand { get; private set; }
         public ICommand GenerateLowStockCommand { get; private set; }
         public ICommand GenerateExpiringProductsCommand { get; private set; }
+        
+        // Management Reports
+        public ICommand GenerateFinancialStatementCommand { get; private set; }
+        public ICommand GenerateExecutiveDashboardCommand { get; private set; }
+        public ICommand GenerateUserPerformanceCommand { get; private set; }
+        public ICommand GenerateComprehensiveReportCommand { get; private set; }
 
         // Export Commands
         public ICommand ExportSalesByPeriodCommand { get; private set; }
@@ -386,6 +393,7 @@ namespace VendaFlex.ViewModels.Reports
         #region Constructor
 
         public ReportManagementViewModel(
+            ICompanyConfigService companyConfigService,
             IInvoiceService invoiceService,
             IProductService productService,
             IStockService stockService,
@@ -394,8 +402,10 @@ namespace VendaFlex.ViewModels.Reports
             IPersonService personService,
             IExpirationService expirationService,
             IInvoiceProductService invoiceProductService,
-            IUserService userService)
+            IUserService userService,
+            IPdfGeneratorService pdfGeneratorService)
         {
+            _companyConfigService = companyConfigService ?? throw new ArgumentNullException(nameof(companyConfigService));
             _invoiceService = invoiceService ?? throw new ArgumentNullException(nameof(invoiceService));
             _productService = productService ?? throw new ArgumentNullException(nameof(productService));
             _stockService = stockService ?? throw new ArgumentNullException(nameof(stockService));
@@ -405,6 +415,7 @@ namespace VendaFlex.ViewModels.Reports
             _invoiceProductService = invoiceProductService ?? throw new ArgumentNullException(nameof(invoiceProductService));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _paymentTypeService = paymentTypeService ?? throw new ArgumentNullException(nameof(paymentTypeService));
+            _pdfGeneratorService = pdfGeneratorService ?? throw new ArgumentNullException(nameof(pdfGeneratorService));
 
             InitializeCommands();
             _ = LoadInitialDataAsync();
@@ -438,6 +449,12 @@ namespace VendaFlex.ViewModels.Reports
             GenerateStockMovementsCommand = new RelayCommand(async _ => await GenerateStockMovementsAsync());
             GenerateLowStockCommand = new RelayCommand(async _ => await GenerateLowStockAsync());
             GenerateExpiringProductsCommand = new RelayCommand(async _ => await GenerateExpiringProductsAsync());
+            
+            // Management Reports
+            GenerateFinancialStatementCommand = new RelayCommand(async _ => await GenerateFinancialStatementAsync());
+            GenerateExecutiveDashboardCommand = new RelayCommand(async _ => await GenerateExecutiveDashboardAsync());
+            GenerateUserPerformanceCommand = new RelayCommand(async _ => await GenerateUserPerformanceAsync());
+            GenerateComprehensiveReportCommand = new RelayCommand(async _ => await GenerateComprehensiveReportAsync());
 
             // Export Commands
             ExportSalesByPeriodCommand = new RelayCommand(async _ => await ExportDataAsync(SalesByPeriod, "Vendas_Por_Periodo"));
@@ -1796,11 +1813,756 @@ namespace VendaFlex.ViewModels.Reports
             catch (Exception ex)
             {
                 ShowMessage($"Erro ao gerar relatório: {ex.Message}", true);
+                Debug.WriteLine($"Erro ao gerar relatório: {ex.Message}");
             }
             finally
             {
                 IsLoading = false;
             }
+        }
+
+        private async Task GenerateFinancialStatementAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ShowMessage("Gerando demonstrativo financeiro...");
+
+                var companyConfig = await GetCompanyConfigAsync();
+
+                // Coletar dados de vendas
+                var invoicesResult = await _invoiceService.GetByDateRangeAsync(StartDate, EndDate);
+                if (!invoicesResult.Success || invoicesResult.Data == null)
+                {
+                    ShowMessage("Erro ao buscar dados de vendas.", true);
+                    return;
+                }
+
+                var invoices = invoicesResult.Data
+                    .Where(i => i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Confirmed)
+                    .ToList();
+
+                // Carregar itens de todas as faturas para calcular custo
+                decimal totalCost = 0;
+                foreach (var invoice in invoices)
+                {
+                    var items = await GetInvoiceItemsAsync(invoice.InvoiceId);
+                    foreach (var item in items)
+                    {
+                        var productResult = await _productService.GetByIdAsync(item.ProductId);
+                        if (productResult.Success && productResult.Data != null)
+                        {
+                            totalCost += item.Quantity * productResult.Data.CostPrice;
+                        }
+                    }
+                }
+
+                var totalRevenue = invoices.Sum(i => i.Total);
+                var totalProfit = totalRevenue - totalCost;
+                var profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+
+                // Formas de pagamento
+                var allPayments = new List<PaymentDto>();
+                foreach (var invoice in invoices)
+                {
+                    var payments = await GetInvoicePaymentsAsync(invoice.InvoiceId);
+                    allPayments.AddRange(payments);
+                }
+
+                // Agrupar por tipo de pagamento
+                var paymentGroups = allPayments.GroupBy(p => p.PaymentTypeId);
+                var paymentMethods = new List<PaymentMethodDto>();
+                
+                foreach (var group in paymentGroups)
+                {
+                    var paymentTypeResult = await _paymentTypeService.GetByIdAsync(group.Key);
+                    var methodName = paymentTypeResult.Success && paymentTypeResult.Data != null 
+                        ? paymentTypeResult.Data.Name 
+                        : "Desconhecido";
+                    
+                    var totalAmount = group.Sum(p => p.Amount);
+                    paymentMethods.Add(new PaymentMethodDto
+                    {
+                        MethodName = methodName,
+                        TransactionCount = group.Count(),
+                        TotalValue = totalAmount,
+                        Percentage = totalRevenue > 0 ? (totalAmount / totalRevenue) * 100 : 0
+                    });
+                }
+                paymentMethods = paymentMethods.OrderByDescending(p => p.TotalValue).ToList();
+
+                // Contas a receber
+                var accountsReceivable = new List<AccountsReceivableDto>();
+                foreach (var invoice in invoices.Where(i => i.Total > i.PaidAmount))
+                {
+                    var customer = await GetInvoiceCustomerAsync(invoice.PersonId);
+                    accountsReceivable.Add(new AccountsReceivableDto
+                    {
+                        InvoiceNumber = invoice.InvoiceNumber,
+                        CustomerName = customer?.Name ?? "N/A",
+                        DueDate = invoice.DueDate ?? DateTime.Now.AddDays(30),
+                        TotalValue = invoice.Total,
+                        PaidValue = invoice.PaidAmount,
+                        PendingValue = invoice.Total - invoice.PaidAmount,
+                        DaysOverdue = invoice.DueDate.HasValue && invoice.DueDate < DateTime.Today 
+                            ? (DateTime.Today - invoice.DueDate.Value).Days : 0,
+                        Status = invoice.Status.ToString()
+                    });
+                }
+
+                // Gerar PDF
+                var fileName = $"Demonstrativo_Financeiro_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                var filePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), fileName);
+
+                // Validar serviço
+                if (_pdfGeneratorService == null)
+                {
+                    ShowMessage("Erro: Serviço de geração de PDF não está disponível.", true);
+                    return;
+                }
+
+                // Validar parâmetros
+                if (companyConfig == null)
+                {
+                    ShowMessage("Erro: Configuração da empresa não encontrada.", true);
+                    return;
+                }
+
+                await _pdfGeneratorService.GenerateFinancialStatementReportAsync(
+                    companyConfig,
+                    totalRevenue,
+                    totalCost,
+                    totalProfit,
+                    profitMargin,
+                    paymentMethods ?? new List<PaymentMethodDto>(),
+                    accountsReceivable ?? new List<AccountsReceivableDto>(),
+                    StartDate,
+                    EndDate,
+                    filePath);
+
+                ShowMessage($"Demonstrativo financeiro gerado: {fileName}");
+                
+                // Abrir o PDF
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao gerar demonstrativo: {ex.Message}", true);
+                Debug.WriteLine($"Erro ao gerar demonstrativo: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task GenerateExecutiveDashboardAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ShowMessage("Gerando dashboard executivo...");
+
+                var companyConfig = await GetCompanyConfigAsync();
+
+                // Coletar dados
+                var invoicesResult = await _invoiceService.GetByDateRangeAsync(StartDate, EndDate);
+                if (!invoicesResult.Success || invoicesResult.Data == null)
+                {
+                    ShowMessage("Erro ao buscar dados.", true);
+                    return;
+                }
+
+                var invoices = invoicesResult.Data
+                    .Where(i => i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Confirmed)
+                    .ToList();
+
+                // Top produtos - Carregar todos os itens primeiro
+                var allItems = new List<InvoiceProductDto>();
+                foreach (var invoice in invoices)
+                {
+                    var items = await GetInvoiceItemsAsync(invoice.InvoiceId);
+                    allItems.AddRange(items);
+                }
+
+                var topProducts = allItems
+                    .GroupBy(item => item.ProductId)
+                    .Select(g => new TopProductDto
+                    {
+                        ProductName = g.First().ProductName ?? "Produto Desconhecido",
+                        QuantitySold = g.Sum(item => item.Quantity),
+                        Revenue = g.Sum(item => item.SubTotal)
+                    })
+                    .OrderByDescending(p => p.Revenue)
+                    .Take(5)
+                    .ToList();
+
+                // Vendas por status
+                var invoicesByStatus = invoicesResult.Data
+                    .GroupBy(i => i.Status)
+                    .Select(g => new InvoicesByStatusDto
+                    {
+                        Status = g.Key.ToString(),
+                        Count = g.Count(),
+                        TotalValue = g.Sum(i => i.Total)
+                    })
+                    .ToList();
+
+                // Formas de pagamento
+                var allPayments = new List<PaymentDto>();
+                foreach (var invoice in invoices)
+                {
+                    var payments = await GetInvoicePaymentsAsync(invoice.InvoiceId);
+                    allPayments.AddRange(payments);
+                }
+
+                var totalRevenue = invoices.Sum(i => i.Total);
+                
+                // Agrupar por tipo de pagamento
+                var paymentGroups = allPayments.GroupBy(p => p.PaymentTypeId);
+                var paymentMethods = new List<PaymentMethodDto>();
+                
+                foreach (var group in paymentGroups)
+                {
+                    var paymentTypeResult = await _paymentTypeService.GetByIdAsync(group.Key);
+                    var methodName = paymentTypeResult.Success && paymentTypeResult.Data != null 
+                        ? paymentTypeResult.Data.Name 
+                        : "Desconhecido";
+                    
+                    var totalAmount = group.Sum(p => p.Amount);
+                    paymentMethods.Add(new PaymentMethodDto
+                    {
+                        MethodName = methodName,
+                        TransactionCount = group.Count(),
+                        TotalValue = totalAmount,
+                        Percentage = totalRevenue > 0 ? (totalAmount / totalRevenue) * 100 : 0
+                    });
+                }
+                paymentMethods = paymentMethods.OrderByDescending(p => p.TotalValue).Take(5).ToList();
+
+                // Calcular valores para o dashboard
+                decimal totalCost = 0;
+                foreach (var item in allItems)
+                {
+                    var productResult = await _productService.GetByIdAsync(item.ProductId);
+                    if (productResult.Success && productResult.Data != null)
+                    {
+                        totalCost += item.Quantity * productResult.Data.CostPrice;
+                    }
+                }
+
+                var totalProfit = totalRevenue - totalCost;
+                var profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+                var pendingAmount = invoices.Sum(i => i.Total - i.PaidAmount);
+
+                // Obter valor do estoque
+                decimal stockValue = 0;
+                var stockResult = await _stockService.GetAllAsync();
+                if (stockResult.Success && stockResult.Data != null)
+                {
+                    foreach (var stock in stockResult.Data)
+                    {
+                        var productResult = await _productService.GetByIdAsync(stock.ProductId);
+                        if (productResult.Success && productResult.Data != null)
+                        {
+                            stockValue += stock.Quantity * productResult.Data.SalePrice;
+                        }
+                    }
+                }
+
+                // Gerar PDF
+                var fileName = $"Dashboard_Executivo_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                var filePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), fileName);
+
+                // Validar serviço
+                if (_pdfGeneratorService == null)
+                {
+                    ShowMessage("Erro: Serviço de geração de PDF não está disponível.", true);
+                    return;
+                }
+
+                // Validar parâmetros
+                if (companyConfig == null)
+                {
+                    ShowMessage("Erro: Configuração da empresa não encontrada.", true);
+                    return;
+                }
+
+                await _pdfGeneratorService.GenerateExecutiveDashboardReportAsync(
+                    companyConfig,
+                    totalRevenue,
+                    totalRevenue,
+                    profitMargin,
+                    invoices.Count,
+                    pendingAmount,
+                    stockValue,
+                    topProducts ?? new List<TopProductDto>(),
+                    paymentMethods ?? new List<PaymentMethodDto>(),
+                    StartDate,
+                    EndDate,
+                    filePath);
+
+                ShowMessage($"Dashboard executivo gerado: {fileName}");
+                
+                // Abrir o PDF
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao gerar dashboard: {ex.Message}", true);
+                Debug.WriteLine($"Erro ao gerar dashboard: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task GenerateUserPerformanceAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ShowMessage("Gerando relatório de desempenho de usuários...");
+
+                var companyConfig = await GetCompanyConfigAsync();
+
+                // Coletar dados de vendas
+                var invoicesResult = await _invoiceService.GetByDateRangeAsync(StartDate, EndDate);
+                if (!invoicesResult.Success || invoicesResult.Data == null)
+                {
+                    ShowMessage("Erro ao buscar dados de vendas.", true);
+                    return;
+                }
+
+                var invoices = invoicesResult.Data
+                    .Where(i => i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Confirmed)
+                    .ToList();
+
+                // Agrupar por usuário - carregar dados dos usuários
+                var userGroups = invoices.GroupBy(i => i.UserId);
+                var userPerformance = new List<SalesByUserDto>();
+
+                foreach (var group in userGroups)
+                {
+                    var user = await GetInvoiceUserAsync(group.Key);
+                    userPerformance.Add(new SalesByUserDto
+                    {
+                        UserName = user?.Username ?? "Desconhecido",
+                        InvoiceCount = group.Count(),
+                        TotalValue = group.Sum(i => i.Total),
+                        PaidValue = group.Sum(i => i.PaidAmount),
+                        PendingValue = group.Sum(i => i.Total - i.PaidAmount)
+                    });
+                }
+
+                userPerformance = userPerformance.OrderByDescending(u => u.TotalValue).ToList();
+
+                // Gerar PDF
+                var fileName = $"Desempenho_Usuarios_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                var filePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), fileName);
+
+                // Validar serviço
+                if (_pdfGeneratorService == null)
+                {
+                    ShowMessage("Erro: Serviço de geração de PDF não está disponível.", true);
+                    return;
+                }
+
+                // Validar parâmetros
+                if (companyConfig == null)
+                {
+                    ShowMessage("Erro: Configuração da empresa não encontrada.", true);
+                    return;
+                }
+
+                await _pdfGeneratorService.GenerateUserPerformanceReportAsync(
+                    companyConfig,
+                    userPerformance ?? new List<SalesByUserDto>(),
+                    StartDate,
+                    EndDate,
+                    filePath);
+
+                ShowMessage($"Relatório de desempenho gerado: {fileName}");
+                
+                // Abrir o PDF
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao gerar relatório: {ex.Message}", true);
+                Debug.WriteLine($"Erro ao gerar relatório: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task GenerateComprehensiveReportAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ShowMessage("Gerando relatório abrangente... Isso pode levar alguns minutos.");
+
+                var companyConfig = await GetCompanyConfigAsync();
+
+                // Coletar TODOS os dados necessários
+                var invoicesResult = await _invoiceService.GetByDateRangeAsync(StartDate, EndDate);
+                if (!invoicesResult.Success || invoicesResult.Data == null)
+                {
+                    ShowMessage("Erro ao buscar dados.", true);
+                    return;
+                }
+
+                var invoices = invoicesResult.Data.ToList();
+                var paidInvoices = invoices.Where(i => i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Confirmed).ToList();
+
+                // Carregar todos os itens das faturas pagas
+                var allItems = new List<InvoiceProductDto>();
+                var allPayments = new List<PaymentDto>();
+                
+                foreach (var invoice in paidInvoices)
+                {
+                    var items = await GetInvoiceItemsAsync(invoice.InvoiceId);
+                    allItems.AddRange(items);
+                    
+                    var payments = await GetInvoicePaymentsAsync(invoice.InvoiceId);
+                    allPayments.AddRange(payments);
+                }
+
+                // 1. Top Produtos
+                var topProducts = allItems
+                    .GroupBy(item => item.ProductId)
+                    .Select(g => new TopProductDto
+                    {
+                        ProductName = g.First().ProductName ?? "Produto Desconhecido",
+                        QuantitySold = g.Sum(item => item.Quantity),
+                        Revenue = g.Sum(item => item.SubTotal)
+                    })
+                    .OrderByDescending(p => p.Revenue)
+                    .Take(10)
+                    .ToList();
+
+                // 2. Vendas por Status
+                var invoicesByStatus = invoices
+                    .GroupBy(i => i.Status)
+                    .Select(g => new InvoicesByStatusDto
+                    {
+                        Status = g.Key.ToString(),
+                        Count = g.Count(),
+                        TotalValue = g.Sum(i => i.Total)
+                    })
+                    .ToList();
+
+                // 3. Margem de Lucro - calcular custos
+                var profitMargins = new List<ProfitMarginDto>();
+                foreach (var invoice in paidInvoices.Take(10))
+                {
+                    var items = await GetInvoiceItemsAsync(invoice.InvoiceId);
+                    decimal invoiceCost = 0;
+                    
+                    foreach (var item in items)
+                    {
+                        var productResult = await _productService.GetByIdAsync(item.ProductId);
+                        if (productResult.Success && productResult.Data != null)
+                        {
+                            invoiceCost += item.Quantity * productResult.Data.CostPrice;
+                        }
+                    }
+
+                    var invoiceGrossProfit = invoice.Total - invoiceCost;
+                    profitMargins.Add(new ProfitMarginDto
+                    {
+                        InvoiceNumber = invoice.InvoiceNumber,
+                        InvoiceDate = invoice.Date,
+                        TotalRevenue = invoice.Total,
+                        TotalCost = invoiceCost,
+                        GrossProfit = invoiceGrossProfit,
+                        MarginPercentage = invoice.Total > 0 ? (invoiceGrossProfit / invoice.Total) * 100 : 0
+                    });
+                }
+                profitMargins = profitMargins.OrderByDescending(p => p.GrossProfit).ToList();
+
+                // 4. Formas de Pagamento
+                var totalRevenue = paidInvoices.Sum(i => i.Total);
+                
+                // Agrupar por tipo de pagamento
+                var paymentGroupsComp = allPayments.GroupBy(p => p.PaymentTypeId);
+                var paymentMethods = new List<PaymentMethodDto>();
+                
+                foreach (var group in paymentGroupsComp)
+                {
+                    var paymentTypeResult = await _paymentTypeService.GetByIdAsync(group.Key);
+                    var methodName = paymentTypeResult.Success && paymentTypeResult.Data != null 
+                        ? paymentTypeResult.Data.Name 
+                        : "Desconhecido";
+                    
+                    var totalAmount = group.Sum(p => p.Amount);
+                    paymentMethods.Add(new PaymentMethodDto
+                    {
+                        MethodName = methodName,
+                        TransactionCount = group.Count(),
+                        TotalValue = totalAmount,
+                        Percentage = totalRevenue > 0 ? (totalAmount / totalRevenue) * 100 : 0
+                    });
+                }
+                paymentMethods = paymentMethods.OrderByDescending(p => p.TotalValue).ToList();
+
+                // 5. Contas a Receber
+                var accountsReceivable = new List<AccountsReceivableDto>();
+                foreach (var invoice in invoices.Where(i => i.Total > i.PaidAmount))
+                {
+                    var customer = await GetInvoiceCustomerAsync(invoice.PersonId);
+                    accountsReceivable.Add(new AccountsReceivableDto
+                    {
+                        InvoiceNumber = invoice.InvoiceNumber,
+                        CustomerName = customer?.Name ?? "N/A",
+                        DueDate = invoice.DueDate ?? DateTime.Now.AddDays(30),
+                        TotalValue = invoice.Total,
+                        PaidValue = invoice.PaidAmount,
+                        PendingValue = invoice.Total - invoice.PaidAmount,
+                        DaysOverdue = invoice.DueDate.HasValue && invoice.DueDate < DateTime.Today 
+                            ? (DateTime.Today - invoice.DueDate.Value).Days : 0,
+                        Status = invoice.Status.ToString()
+                    });
+                }
+                accountsReceivable = accountsReceivable.OrderByDescending(a => a.DaysOverdue).ToList();
+
+                // 6. Desempenho de Usuários
+                var userGroups = paidInvoices.GroupBy(i => i.UserId);
+                var userPerformance = new List<SalesByUserDto>();
+                
+                foreach (var group in userGroups)
+                {
+                    var user = await GetInvoiceUserAsync(group.Key);
+                    userPerformance.Add(new SalesByUserDto
+                    {
+                        UserName = user?.Username ?? "Desconhecido",
+                        InvoiceCount = group.Count(),
+                        TotalValue = group.Sum(i => i.Total),
+                        PaidValue = group.Sum(i => i.PaidAmount),
+                        PendingValue = group.Sum(i => i.Total - i.PaidAmount)
+                    });
+                }
+                userPerformance = userPerformance.OrderByDescending(u => u.TotalValue).ToList();
+
+                // Calcular totais
+                decimal totalCostAll = profitMargins.Sum(p => p.TotalCost);
+                decimal grossProfit = totalRevenue - totalCostAll;
+
+                // Criar o DTO abrangente
+                var comprehensiveData = new ComprehensiveReportDto
+                {
+                    StartDate = StartDate,
+                    EndDate = EndDate,
+                    TotalRevenue = totalRevenue,
+                    TotalSales = totalRevenue,
+                    GrossProfit = grossProfit,
+                    ProfitMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0,
+                    TotalInvoices = invoices.Count,
+                    TopProducts = topProducts,
+                    InvoicesByStatus = invoicesByStatus,
+                    PaymentMethods = paymentMethods,
+                    AccountsReceivable = accountsReceivable,
+                    UserPerformance = userPerformance
+                };
+
+                // Gerar PDF
+                var fileName = $"Relatorio_Abrangente_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                var filePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), fileName);
+
+                // Validar serviço
+                if (_pdfGeneratorService == null)
+                {
+                    ShowMessage("Erro: Serviço de geração de PDF não está disponível.", true);
+                    return;
+                }
+
+                // Validar parâmetros
+                if (companyConfig == null || comprehensiveData == null)
+                {
+                    ShowMessage("Erro: Dados do relatório incompletos.", true);
+                    return;
+                }
+
+                await _pdfGeneratorService.GenerateComprehensiveReportAsync(
+                    companyConfig,
+                    comprehensiveData,
+                    filePath);
+
+                ShowMessage($"Relatório abrangente gerado: {fileName}");
+                
+                // Abrir o PDF
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                ShowMessage($"Erro ao gerar relatório abrangente: {ex.Message}", true);
+                Debug.WriteLine($"Erro ao gerar relatório abrangente: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task<CompanyConfigDto> GetCompanyConfigAsync()
+        {
+            try
+            {
+
+                var companyResult = await _companyConfigService.GetAsync();
+                if ( companyResult.Success && companyResult.Data != null)
+                {
+                    return companyResult.Data;
+                }
+
+                return CreateDefaultCompanyConfig();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao buscar configuração da empresa: {ex.Message}");
+                return CreateDefaultCompanyConfig();
+            }
+        }
+
+        private CompanyConfigDto CreateDefaultCompanyConfig()
+        {
+            return new CompanyConfigDto 
+            { 
+                CompanyName = "VendaFlex",
+                Email = "contato@vendaflex.com",
+                PhoneNumber = "",
+                Address = "",
+                City = "",
+                Country = "Angola",
+                Currency = "AOA",
+                CurrencySymbol = "Kz"
+            };
+        }
+
+        /// <summary>
+        /// Carrega os itens de uma fatura
+        /// </summary>
+        private async Task<List<InvoiceProductDto>> GetInvoiceItemsAsync(int invoiceId)
+        {
+            try
+            {
+                var result = await _invoiceProductService.GetByInvoiceIdAsync(invoiceId);
+                if (result.Success && result.Data != null)
+                {
+                    var items = result.Data.ToList();
+                    // Carregar nomes dos produtos
+                    foreach (var item in items)
+                    {
+                        var productResult = await _productService.GetByIdAsync(item.ProductId);
+                        if (productResult.Success && productResult.Data != null)
+                        {
+                            item.ProductName = productResult.Data.Name;
+                        }
+                    }
+                    return items;
+                }
+            }
+            catch
+            {
+                // Ignora erros e retorna lista vazia
+            }
+            return new List<InvoiceProductDto>();
+        }
+
+        /// <summary>
+        /// Carrega os pagamentos de uma fatura
+        /// </summary>
+        private async Task<List<PaymentDto>> GetInvoicePaymentsAsync(int invoiceId)
+        {
+            try
+            {
+                var result = await _paymentService.GetByInvoiceIdAsync(invoiceId);
+                if (result.Success && result.Data != null)
+                {
+                    return result.Data.ToList();
+                }
+            }
+            catch
+            {
+                // Ignora erros e retorna lista vazia
+            }
+            return new List<PaymentDto>();
+        }
+
+        /// <summary>
+        /// Carrega o cliente de uma fatura
+        /// </summary>
+        private async Task<PersonDto?> GetInvoiceCustomerAsync(int personId)
+        {
+            try
+            {
+                var result = await _personService.GetByIdAsync(personId);
+                if (result.Success && result.Data != null)
+                {
+                    return result.Data;
+                }
+            }
+            catch
+            {
+                // Ignora erros e retorna null
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Carrega o usuário de uma fatura
+        /// </summary>
+        private async Task<UserDto?> GetInvoiceUserAsync(int userId)
+        {
+            try
+            {
+                var result = await _userService.GetByIdAsync(userId);
+                if (result.Success && result.Data != null)
+                {
+                    return result.Data;
+                }
+            }
+            catch
+            {
+                // Ignora erros e retorna null
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Carrega dados completos de uma fatura incluindo itens, pagamentos, cliente e usuário
+        /// </summary>
+        private async Task<(InvoiceDto invoice, List<InvoiceProductDto> items, List<PaymentDto> payments, PersonDto? customer, UserDto? user)> 
+            LoadCompleteInvoiceDataAsync(InvoiceDto invoice)
+        {
+            var itemsTask = GetInvoiceItemsAsync(invoice.InvoiceId);
+            var paymentsTask = GetInvoicePaymentsAsync(invoice.InvoiceId);
+            var customerTask = GetInvoiceCustomerAsync(invoice.PersonId);
+            var userTask = GetInvoiceUserAsync(invoice.UserId);
+
+            await Task.WhenAll(itemsTask, paymentsTask, customerTask, userTask);
+
+            return (invoice, await itemsTask, await paymentsTask, await customerTask, await userTask);
         }
 
         #endregion

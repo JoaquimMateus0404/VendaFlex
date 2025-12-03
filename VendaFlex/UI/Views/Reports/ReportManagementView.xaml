@@ -979,6 +979,114 @@
                                 </Grid>
                             </Border>
 
+                            <!-- PDF Reports Section -->
+                            <Border Style="{StaticResource ReportCardStyle}">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                        <materialDesign:PackIcon Kind="FilePdfBox" Width="28" Height="28" 
+                                                                Foreground="#DC143C"
+                                                                VerticalAlignment="Center"
+                                                                Margin="0,0,12,0"/>
+                                        <TextBlock Text="Relatórios em PDF" 
+                                                  FontSize="20" FontWeight="Bold"
+                                                  VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Gere relatórios profissionais em PDF com análises detalhadas e gráficos"
+                                              FontSize="13" 
+                                              Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                              Margin="0,0,0,16"/>
+
+                                    <UniformGrid Columns="2" Rows="2">
+                                        <!-- Financial Statement -->
+                                        <Button Command="{Binding GenerateFinancialStatementCommand}" 
+                                               Style="{StaticResource ReportButtonStyle}"
+                                               Height="130">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <materialDesign:PackIcon Kind="FileChartOutline" Width="42" Height="42" 
+                                                                        HorizontalAlignment="Center"
+                                                                        Foreground="#1976D2"/>
+                                                <TextBlock Text="Demonstrativo Financeiro" 
+                                                          FontSize="14" FontWeight="SemiBold" 
+                                                          Margin="0,8,0,2" TextAlignment="Center"/>
+                                                <TextBlock Text="DRE completo com análises" 
+                                                          FontSize="10" 
+                                                          Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                                                          TextAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Executive Dashboard -->
+                                        <Button Command="{Binding GenerateExecutiveDashboardCommand}" 
+                                               Style="{StaticResource ReportButtonStyle}"
+                                               Height="130">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <materialDesign:PackIcon Kind="ViewDashboardOutline" Width="42" Height="42" 
+                                                                        HorizontalAlignment="Center"
+                                                                        Foreground="#7B1FA2"/>
+                                                <TextBlock Text="Dashboard Executivo" 
+                                                          FontSize="14" FontWeight="SemiBold" 
+                                                          Margin="0,8,0,2" TextAlignment="Center"/>
+                                                <TextBlock Text="Visão geral com KPIs principais" 
+                                                          FontSize="10" 
+                                                          Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                                                          TextAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- User Performance -->
+                                        <Button Command="{Binding GenerateUserPerformanceCommand}" 
+                                               Style="{StaticResource ReportButtonStyle}"
+                                               Height="130">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <materialDesign:PackIcon Kind="AccountMultipleOutline" Width="42" Height="42" 
+                                                                        HorizontalAlignment="Center"
+                                                                        Foreground="#388E3C"/>
+                                                <TextBlock Text="Desempenho de Usuários" 
+                                                          FontSize="14" FontWeight="SemiBold" 
+                                                          Margin="0,8,0,2" TextAlignment="Center"/>
+                                                <TextBlock Text="Ranking e análise por vendedor" 
+                                                          FontSize="10" 
+                                                          Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                                                          TextAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Comprehensive Report -->
+                                        <Button Command="{Binding GenerateComprehensiveReportCommand}" 
+                                               Style="{StaticResource ReportButtonStyle}"
+                                               Height="130">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <materialDesign:PackIcon Kind="FileDocumentMultipleOutline" Width="42" Height="42" 
+                                                                        HorizontalAlignment="Center"
+                                                                        Foreground="#D32F2F"/>
+                                                <TextBlock Text="Relatório Abrangente" 
+                                                          FontSize="14" FontWeight="SemiBold" 
+                                                          Margin="0,8,0,2" TextAlignment="Center"/>
+                                                <TextBlock Text="Relatório completo multi-página" 
+                                                          FontSize="10" 
+                                                          Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                                                          TextAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </UniformGrid>
+
+                                    <!-- Info Card -->
+                                    <Border Background="#E8F5E9" CornerRadius="8" Padding="16" Margin="0,16,0,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="InformationOutline" 
+                                                                    Foreground="#2E7D32" 
+                                                                    Width="24" Height="24" 
+                                                                    Margin="0,0,12,0"
+                                                                    VerticalAlignment="Top"/>
+                                            <TextBlock TextWrapping="Wrap" Foreground="#1B5E20">
+                                                <Run Text="💡 Dica: " FontWeight="Bold"/>
+                                                <Run Text="Os relatórios PDF são salvos automaticamente em 'Meus Documentos' e abertos ao serem gerados. Use os filtros de data acima para personalizar o período dos relatórios."/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
                             <!-- Sales Analytics Section -->
                             <TextBlock Text="📈 Análise de Vendas" FontSize="20" FontWeight="Bold" Margin="0,24,0,16"/>
                             
