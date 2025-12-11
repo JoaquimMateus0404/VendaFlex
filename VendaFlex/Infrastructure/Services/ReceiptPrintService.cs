@@ -938,5 +938,470 @@ private List<string> SplitTextToFit(string text, int maxLength)
         }
 
         #endregion
+
+        #region Daily Sales Report (PDF)
+
+        /// <summary>
+        /// Gera um relatório PDF completo das vendas diárias do usuário
+        /// Ideal para fechamento de caixa e prestação de contas ao supervisor
+        /// </summary>
+        public async Task<string> GenerateDailySalesReportPdfAsync(
+            CompanyConfigDto companyConfig,
+            string userName,
+            int userId,
+            DateTime reportDate,
+            List<InvoiceDto> invoices,
+            Dictionary<int, List<InvoiceProductDto>> invoiceProducts,
+            List<(string PaymentTypeName, decimal Amount, int Count)> paymentsByType)
+        {
+            return await Task.Run(() =>
+            {
+                // Criar diretório para relatórios se não existir
+                var reportsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Reports", "DailySales");
+                if (!Directory.Exists(reportsPath))
+                {
+                    Directory.CreateDirectory(reportsPath);
+                }
+
+                // Nome do arquivo
+                var fileName = $"RelatorioVendas_{userName}_{reportDate:yyyyMMdd}_{DateTime.Now:HHmmss}.pdf";
+                var filePath = Path.Combine(reportsPath, fileName);
+
+                // Calcular totais
+                var totalSales = invoices.Count;
+                var totalAmount = invoices.Sum(inv => inv.Total);
+                var totalPaid = invoices.Sum(inv => inv.PaidAmount);
+                var totalPending = invoices.Where(inv => inv.Status == InvoiceStatus.Pending || inv.Status == InvoiceStatus.Confirmed)
+                                          .Sum(inv => inv.Total - inv.PaidAmount);
+
+                var paidInvoices = invoices.Count(inv => inv.Status == InvoiceStatus.Paid);
+                var partialInvoices = invoices.Count(inv => inv.Status == InvoiceStatus.Confirmed);
+                var pendingInvoices = invoices.Count(inv => inv.Status == InvoiceStatus.Pending);
+                var cancelledInvoices = invoices.Count(inv => inv.Status == InvoiceStatus.Cancelled);
+
+                // Gerar PDF
+                Document.Create(container =>
+                {
+                    container.Page(page =>
+                    {
+                        page.Size(PageSizes.A4);
+                        page.Margin(40);
+                        page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Segoe UI"));
+
+                        page.Header().Element(c => ComposeDailyReportHeader(c, companyConfig, userName, reportDate));
+                        page.Content().Element(c => ComposeDailyReportContent(c, invoices, invoiceProducts, 
+                            totalSales, totalAmount, totalPaid, totalPending,
+                            paidInvoices, partialInvoices, pendingInvoices, cancelledInvoices, paymentsByType));
+                        page.Footer().Element(c => ComposeDailyReportFooter(c, userName, reportDate));
+                    });
+                }).GeneratePdf(filePath);
+
+                return filePath;
+            });
+        }
+
+        private void ComposeDailyReportHeader(IContainer container, CompanyConfigDto cfg, string userName, DateTime reportDate)
+        {
+            container.Column(column =>
+            {
+                // Barra superior verde (tema de relatório)
+                column.Item().Height(10).Background(Colors.Green.Darken2);
+
+                column.Item().PaddingVertical(15).Row(row =>
+                {
+                    // Logo e nome da empresa
+                    row.RelativeItem().Column(leftColumn =>
+                    {
+                        if (!string.IsNullOrWhiteSpace(cfg.LogoUrl) && File.Exists(cfg.LogoUrl))
+                        {
+                            leftColumn.Item().MaxHeight(60).MaxWidth(180).Image(cfg.LogoUrl);
+                        }
+
+                        leftColumn.Item().PaddingTop(8).Text(cfg.CompanyName)
+                            .FontSize(16)
+                            .Bold()
+                            .FontColor(Colors.Green.Darken3);
+                    });
+
+                    // Informações do relatório
+                    row.RelativeItem().Column(rightColumn =>
+                    {
+                        rightColumn.Item().AlignRight().Text("RELATÓRIO DIÁRIO DE VENDAS")
+                            .FontSize(16)
+                            .Bold()
+                            .FontColor(Colors.Green.Darken3);
+
+                        rightColumn.Item().AlignRight().PaddingTop(5).Text(text =>
+                        {
+                            text.Span("Data do Relatório: ").SemiBold().FontSize(9);
+                            text.Span(reportDate.ToString("dd/MM/yyyy")).FontSize(9);
+                            text.EmptyLine();
+                            
+                            text.Span("Operador: ").SemiBold().FontSize(9);
+                            text.Span(userName).FontSize(9);
+                            text.EmptyLine();
+                            
+                            text.Span("Gerado em: ").SemiBold().FontSize(9);
+                            text.Span(DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")).FontSize(9);
+                        });
+                    });
+                });
+
+                // Linha separadora
+                column.Item().PaddingTop(10).BorderBottom(2).BorderColor(Colors.Green.Darken2);
+            });
+        }
+
+        private void ComposeDailyReportContent(
+            IContainer container,
+            List<InvoiceDto> invoices,
+            Dictionary<int, List<InvoiceProductDto>> invoiceProducts,
+            int totalSales,
+            decimal totalAmount,
+            decimal totalPaid,
+            decimal totalPending,
+            int paidInvoices,
+            int partialInvoices,
+            int pendingInvoices,
+            int cancelledInvoices,
+            List<(string PaymentTypeName, decimal Amount, int Count)> paymentsByType)
+        {
+            container.PaddingVertical(15).Column(column =>
+            {
+                // ===== RESUMO GERAL =====
+                column.Item().PaddingBottom(20).Element(c => ComposeReportSummary(c, 
+                    totalSales, totalAmount, totalPaid, totalPending,
+                    paidInvoices, partialInvoices, pendingInvoices, cancelledInvoices));
+
+                // ===== BREAKDOWN POR TIPO DE PAGAMENTO =====
+                if (paymentsByType != null && paymentsByType.Any())
+                {
+                    column.Item().PaddingBottom(20).Element(c => ComposePaymentBreakdown(c, paymentsByType));
+                }
+
+                // ===== GRÁFICO DE VENDAS POR HORA =====
+                column.Item().PaddingBottom(20).Element(c => ComposeSalesByHour(c, invoices));
+
+                // ===== DETALHES DAS VENDAS =====
+                column.Item().Element(c => ComposeSalesDetails(c, invoices, invoiceProducts));
+            });
+        }
+
+        private void ComposeReportSummary(
+            IContainer container,
+            int totalSales,
+            decimal totalAmount,
+            decimal totalPaid,
+            decimal totalPending,
+            int paidInvoices,
+            int partialInvoices,
+            int pendingInvoices,
+            int cancelledInvoices)
+        {
+            container.Column(column =>
+            {
+                // Título da seção
+                column.Item().PaddingBottom(10).Text("RESUMO GERAL")
+                    .FontSize(12)
+                    .Bold()
+                    .FontColor(Colors.Green.Darken3);
+
+                // Grid de estatísticas
+                column.Item().Background(Colors.Grey.Lighten4).Padding(15).Row(row =>
+                {
+                    // Coluna 1 - Vendas
+                    row.RelativeItem().Column(col =>
+                    {
+                        col.Item().PaddingBottom(10).Element(e => ComposeStatCard(e, "Total de Vendas", totalSales.ToString(), Colors.Blue.Medium));
+                        col.Item().Element(e => ComposeStatCard(e, "Vendas Pagas", paidInvoices.ToString(), Colors.Green.Medium));
+                    });
+
+                    // Coluna 2 - Status
+                    row.RelativeItem().Column(col =>
+                    {
+                        col.Item().PaddingBottom(10).Element(e => ComposeStatCard(e, "Pagamento Parcial", partialInvoices.ToString(), Colors.Orange.Medium));
+                        col.Item().Element(e => ComposeStatCard(e, "Vendas Pendentes", pendingInvoices.ToString(), Colors.Red.Medium));
+                    });
+
+                    // Coluna 3 - Valores
+                    row.RelativeItem().Column(col =>
+                    {
+                        col.Item().PaddingBottom(10).Element(e => ComposeStatCard(e, "Valor Total", $"Kz {totalAmount:N2}", Colors.Green.Darken2));
+                        col.Item().Element(e => ComposeStatCard(e, "Total Recebido", $"Kz {totalPaid:N2}", Colors.Green.Medium));
+                    });
+
+                    // Coluna 4 - Pendências
+                    row.RelativeItem().Column(col =>
+                    {
+                        col.Item().PaddingBottom(10).Element(e => ComposeStatCard(e, "Total Pendente", $"Kz {totalPending:N2}", Colors.Orange.Darken1));
+                        col.Item().Element(e => ComposeStatCard(e, "Canceladas", cancelledInvoices.ToString(), Colors.Grey.Medium));
+                    });
+                });
+            });
+        }
+
+        private void ComposeStatCard(IContainer container, string label, string value, string color)
+        {
+            container.Background(Colors.White).Padding(10).Column(col =>
+            {
+                col.Item().Text(label).FontSize(8).FontColor(Colors.Grey.Darken1);
+                col.Item().PaddingTop(3).Text(value).FontSize(14).Bold().FontColor(color);
+            });
+        }
+
+        private void ComposePaymentBreakdown(
+            IContainer container,
+            List<(string PaymentTypeName, decimal Amount, int Count)> paymentsByType)
+        {
+            container.Column(column =>
+            {
+                // Título da seção
+                column.Item().PaddingBottom(10).Text("FORMAS DE PAGAMENTO")
+                    .FontSize(12)
+                    .Bold()
+                    .FontColor(Colors.Blue.Darken3);
+
+                // Grid de cards para cada tipo de pagamento
+                column.Item().Row(row =>
+                {
+                    foreach (var payment in paymentsByType)
+                    {
+                        row.RelativeItem().Padding(5).Element(c => ComposePaymentCard(c, payment.PaymentTypeName, payment.Amount, payment.Count));
+                    }
+                });
+
+                // Total geral de todos os pagamentos
+                var totalPayments = paymentsByType.Sum(p => p.Amount);
+                column.Item().PaddingTop(10).BorderTop(2).BorderColor(Colors.Blue.Darken2).PaddingTop(8)
+                    .Row(row =>
+                    {
+                        row.RelativeItem().Text("TOTAL RECEBIDO").FontSize(11).Bold().FontColor(Colors.Blue.Darken3);
+                        row.ConstantItem(150).AlignRight().Text($"Kz {totalPayments:N2}").FontSize(11).Bold().FontColor(Colors.Blue.Darken3);
+                    });
+            });
+        }
+
+        private void ComposePaymentCard(IContainer container, string paymentType, decimal amount, int count)
+        {
+            container.Border(1).BorderColor(Colors.Blue.Lighten2)
+                .Background(Colors.Blue.Lighten4)
+                .Padding(12)
+                .Column(column =>
+                {
+                    // Tipo de pagamento com ícone
+                    column.Item().PaddingBottom(8).Row(row =>
+                    {
+                        row.AutoItem().PaddingRight(5).Text("💳").FontSize(14);
+                        row.RelativeItem().Text(paymentType).FontSize(10).Bold().FontColor(Colors.Blue.Darken3);
+                    });
+
+                    // Valor
+                    column.Item().PaddingBottom(4).Text($"Kz {amount:N2}")
+                        .FontSize(14)
+                        .Bold()
+                        .FontColor(Colors.Green.Darken2);
+
+                    // Quantidade de transações
+                    column.Item().Text($"{count} {(count == 1 ? "transação" : "transações")}")
+                        .FontSize(9)
+                        .FontColor(Colors.Grey.Darken1);
+                });
+        }
+
+        private void ComposeSalesByHour(IContainer container, List<InvoiceDto> invoices)
+        {
+            container.Column(column =>
+            {
+                column.Item().PaddingBottom(10).Text("VENDAS POR PERÍODO DO DIA")
+                    .FontSize(12)
+                    .Bold()
+                    .FontColor(Colors.Green.Darken3);
+
+                var salesByHour = invoices.GroupBy(inv => inv.Date.Hour)
+                                         .Select(g => new { Hour = g.Key, Count = g.Count(), Total = g.Sum(inv => inv.Total) })
+                                         .OrderBy(x => x.Hour)
+                                         .ToList();
+
+                if (salesByHour.Any())
+                {
+                    column.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(cols =>
+                        {
+                            cols.ConstantColumn(120);
+                            cols.RelativeColumn(2);
+                            cols.ConstantColumn(100);
+                            cols.ConstantColumn(150);
+                        });
+
+                        // Header
+                        table.Header(header =>
+                        {
+                            header.Cell().Background(Colors.Green.Darken2).Padding(8).Text("Período").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Green.Darken2).Padding(8).Text("Vendas").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Green.Darken2).Padding(8).AlignRight().Text("Quantidade").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Green.Darken2).Padding(8).AlignRight().Text("Valor Total").FontColor(Colors.White).Bold();
+                        });
+
+                        // Rows
+                        foreach (var item in salesByHour)
+                        {
+                            var period = item.Hour < 12 ? "Manhã" : item.Hour < 18 ? "Tarde" : "Noite";
+                            var maxCount = salesByHour.Max(x => x.Count);
+                            var barWidth = (float)item.Count / maxCount;
+
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                                .Text($"{item.Hour:00}:00 - {item.Hour:00}:59");
+
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                                .Row(row =>
+                                {
+                                    row.RelativeItem(barWidth).Height(20).Background(Colors.Green.Lighten2);
+                                    row.RelativeItem(1 - barWidth);
+                                });
+
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                                .AlignRight().Text(item.Count.ToString()).SemiBold();
+
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                                .AlignRight().Text($"Kz {item.Total:N2}").SemiBold();
+                        }
+                    });
+                }
+                else
+                {
+                    column.Item().Padding(10).Text("Nenhuma venda registrada neste período.")
+                        .FontSize(9)
+                        .Italic()
+                        .FontColor(Colors.Grey.Medium);
+                }
+            });
+        }
+
+        private void ComposeSalesDetails(IContainer container, List<InvoiceDto> invoices, Dictionary<int, List<InvoiceProductDto>> invoiceProducts)
+        {
+            container.Column(column =>
+            {
+                column.Item().PaddingBottom(10).Text("DETALHES DAS VENDAS")
+                    .FontSize(12)
+                    .Bold()
+                    .FontColor(Colors.Green.Darken3);
+
+                if (invoices.Any())
+                {
+                    column.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(cols =>
+                        {
+                            cols.ConstantColumn(120); // Número
+                            cols.ConstantColumn(80);  // Hora
+                            cols.ConstantColumn(100); // Status
+                            cols.ConstantColumn(80);  // Itens
+                            cols.RelativeColumn();    // Total
+                            cols.RelativeColumn();    // Pago
+                            cols.RelativeColumn();    // Pendente
+                        });
+
+                        // Header
+                        table.Header(header =>
+                        {
+                            header.Cell().Background(Colors.Green.Darken3).Padding(8).Text("Fatura").FontColor(Colors.White).Bold().FontSize(9);
+                            header.Cell().Background(Colors.Green.Darken3).Padding(8).Text("Hora").FontColor(Colors.White).Bold().FontSize(9);
+                            header.Cell().Background(Colors.Green.Darken3).Padding(8).Text("Status").FontColor(Colors.White).Bold().FontSize(9);
+                            header.Cell().Background(Colors.Green.Darken3).Padding(8).AlignCenter().Text("Itens").FontColor(Colors.White).Bold().FontSize(9);
+                            header.Cell().Background(Colors.Green.Darken3).Padding(8).AlignRight().Text("Total").FontColor(Colors.White).Bold().FontSize(9);
+                            header.Cell().Background(Colors.Green.Darken3).Padding(8).AlignRight().Text("Pago").FontColor(Colors.White).Bold().FontSize(9);
+                            header.Cell().Background(Colors.Green.Darken3).Padding(8).AlignRight().Text("Pendente").FontColor(Colors.White).Bold().FontSize(9);
+                        });
+
+                        // Rows
+                        foreach (var inv in invoices.OrderBy(i => i.Date))
+                        {
+                            var statusBg = GetStatusBackgroundColor(inv.Status);
+                            var statusText = GetStatusText(inv.Status);
+                            var itemCount = invoiceProducts.ContainsKey(inv.InvoiceId) ? invoiceProducts[inv.InvoiceId].Count : 0;
+                            var pending = inv.Total - inv.PaidAmount;
+
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(6)
+                                .Text(inv.InvoiceNumber).FontSize(8);
+
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(6)
+                                .Text(inv.Date.ToString("HH:mm")).FontSize(8);
+
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(6)
+                                .Background(statusBg).AlignCenter()
+                                .Text(statusText).FontSize(7).Bold();
+
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(6)
+                                .AlignCenter().Text(itemCount.ToString()).FontSize(8);
+
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(6)
+                                .AlignRight().Text($"Kz {inv.Total:N2}").FontSize(8).SemiBold();
+
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(6)
+                                .AlignRight().Text($"Kz {inv.PaidAmount:N2}").FontSize(8)
+                                .FontColor(inv.Status == InvoiceStatus.Paid ? Colors.Green.Darken2 : Colors.Black);
+
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(6)
+                                .AlignRight().Text(pending > 0 ? $"Kz {pending:N2}" : "-").FontSize(8)
+                                .FontColor(pending > 0 ? Colors.Orange.Darken2 : Colors.Grey.Medium);
+                        }
+                    });
+                }
+                else
+                {
+                    column.Item().Padding(10).Text("Nenhuma venda registrada.")
+                        .FontSize(9)
+                        .Italic()
+                        .FontColor(Colors.Grey.Medium);
+                }
+            });
+        }
+
+        private void ComposeDailyReportFooter(IContainer container, string userName, DateTime reportDate)
+        {
+            container.Column(column =>
+            {
+                column.Item().PaddingTop(15).BorderTop(1).BorderColor(Colors.Grey.Lighten1);
+
+                column.Item().PaddingTop(10).Row(row =>
+                {
+                    row.RelativeItem().Text(text =>
+                    {
+                        text.Span("Relatório gerado automaticamente pelo sistema VendaFlex").FontSize(8).Italic().FontColor(Colors.Grey.Medium);
+                        text.EmptyLine();
+                        text.Span($"Operador: {userName} | Data: {reportDate:dd/MM/yyyy}").FontSize(8).FontColor(Colors.Grey.Medium);
+                    });
+
+                    row.ConstantItem(150).AlignRight().Text(text =>
+                    {
+                        text.Span("Página ").FontSize(8).FontColor(Colors.Grey.Medium);
+                        text.CurrentPageNumber().FontSize(8).FontColor(Colors.Grey.Medium);
+                        text.Span(" de ").FontSize(8).FontColor(Colors.Grey.Medium);
+                        text.TotalPages().FontSize(8).FontColor(Colors.Grey.Medium);
+                    });
+                });
+
+                // Assinatura
+                column.Item().PaddingTop(30).Row(row =>
+                {
+                    row.RelativeItem().Column(col =>
+                    {
+                        col.Item().BorderTop(1).BorderColor(Colors.Grey.Darken1);
+                        col.Item().PaddingTop(5).Text("Assinatura do Operador").FontSize(8).FontColor(Colors.Grey.Darken1);
+                    });
+
+                    row.ConstantItem(50);
+
+                    row.RelativeItem().Column(col =>
+                    {
+                        col.Item().BorderTop(1).BorderColor(Colors.Grey.Darken1);
+                        col.Item().PaddingTop(5).Text("Assinatura do Supervisor").FontSize(8).FontColor(Colors.Grey.Darken1);
+                    });
+                });
+            });
+        }
+
+        #endregion
     }
 }

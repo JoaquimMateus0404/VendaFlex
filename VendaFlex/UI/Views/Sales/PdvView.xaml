@@ -68,15 +68,29 @@
                                 </materialDesign:Chip.Icon>
                                 <StackPanel>
                                     <TextBlock x:Name="UserNameText" Text="{Binding UserName}" FontWeight="SemiBold"/>
-                                    <TextBlock Text="Operador" Style="{DynamicResource MaterialDesignCaptionTextBlock}"/>
+                                    
                                 </StackPanel>
                             </materialDesign:Chip>
+
+                            <Button Style="{DynamicResource MaterialDesignIconButton}" 
+                                    ToolTip="Venda Pendente (Pagamento Parcial)" 
+                                    Command="{Binding CreatePendingSaleCommand}"
+                                    Margin="0,0,8,0">
+                                <materialDesign:PackIcon Kind="ClockAlert" Width="24" Height="24" Foreground="Orange"/>
+                            </Button>
+
+                            <Button Style="{DynamicResource MaterialDesignIconButton}" 
+                                    ToolTip="Gerar Relatório Diário de Vendas" 
+                                    Command="{Binding GenerateDailySalesReportCommand}"
+                                    Margin="0,0,8,0">
+                                <materialDesign:PackIcon Kind="ReceiptText" Width="24" Height="24" Foreground="White"/>
+                            </Button>
 
                             <Button x:Name="ProductCatalogButton" 
                                     Style="{DynamicResource MaterialDesignIconButton}" 
                                     ToolTip="Catálogo de Produtos" 
                                     Command="{Binding OpenCatalogCommand}">
-                                <materialDesign:PackIcon Kind="ViewGrid" Width="24" Height="24"/>
+                                <materialDesign:PackIcon Kind="ViewGrid" Width="24" Height="24" Foreground="White"/>
                             </Button>
                         </StackPanel>
                     </Grid>
@@ -624,7 +638,7 @@
                             <Button Style="{DynamicResource MaterialDesignIconButton}" 
                                     HorizontalAlignment="Right" 
                                     Command="{Binding CloseCatalogCommand}">
-                                <materialDesign:PackIcon Kind="Close" Width="20" Height="20"/>
+                                <materialDesign:PackIcon Kind="Close" Width="20" Height="20" Foreground="White"/>
                             </Button>
                         </Grid>
                     </materialDesign:ColorZone>

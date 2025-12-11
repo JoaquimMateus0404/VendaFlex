@@ -236,6 +236,10 @@ namespace VendaFlex.ViewModels.Sales
 
             SelectAnonymousCustomerCommand = new RelayCommand(async _ => await SelectAnonymousCustomerAsync());
 
+            // Novos comandos
+            CreatePendingSaleCommand = new AsyncCommand(CreatePendingSaleAsync, CanCreatePendingSale);
+            GenerateDailySalesReportCommand = new AsyncCommand(GenerateDailySalesReportAsync, () => !IsBusy);
+
             // Inicialização imediata
             _ = InitializeAsync();
 
@@ -255,6 +259,8 @@ namespace VendaFlex.ViewModels.Sales
                     ((AsyncCommand)AddProductByCodeCommand).RaiseCanExecuteChanged();
                     ((AsyncCommand)FinalizeSaleCommand).RaiseCanExecuteChanged();
                     ((AsyncCommand)OpenCatalogCommand).RaiseCanExecuteChanged();
+                    ((AsyncCommand)CreatePendingSaleCommand).RaiseCanExecuteChanged();
+                    ((AsyncCommand)GenerateDailySalesReportCommand).RaiseCanExecuteChanged();
                 }
             }
         }
@@ -320,6 +326,7 @@ namespace VendaFlex.ViewModels.Sales
                 if (Set(ref _selectedCustomer, value))
                 {
                     ((AsyncCommand)FinalizeSaleCommand).RaiseCanExecuteChanged();
+                    ((AsyncCommand)CreatePendingSaleCommand).RaiseCanExecuteChanged();
                 }
             }
         }
@@ -505,6 +512,8 @@ namespace VendaFlex.ViewModels.Sales
 
         public ICommand FinalizeSaleCommand { get; }
         public ICommand SelectAnonymousCustomerCommand { get; }
+        public ICommand CreatePendingSaleCommand { get; }
+        public ICommand GenerateDailySalesReportCommand { get; }
         #endregion
 
         #region Inicialização
@@ -924,6 +933,7 @@ namespace VendaFlex.ViewModels.Sales
             OnPropertyChanged(nameof(RemainingAmount));
             OnPropertyChanged(nameof(ChangeDue));
             ((AsyncCommand)FinalizeSaleCommand).RaiseCanExecuteChanged();
+            ((AsyncCommand)CreatePendingSaleCommand).RaiseCanExecuteChanged();
         }
         #endregion
 
@@ -1198,6 +1208,341 @@ namespace VendaFlex.ViewModels.Sales
             }
         }
 
+
+        #endregion
+
+        #region Venda Pendente
+        
+        /// <summary>
+        /// Verifica se pode criar uma venda pendente (tem itens no carrinho e cliente selecionado)
+        /// </summary>
+        private bool CanCreatePendingSale()
+        {
+            return !IsBusy && CartItems.Any() && (SelectedCustomer != null || _allowAnonymousInvoice);
+        }
+
+        /// <summary>
+        /// Cria uma venda pendente (pagamento parcial ou sem pagamento)
+        /// </summary>
+        private async Task CreatePendingSaleAsync()
+        {
+            try
+            {
+                IsBusy = true;
+                StatusMessage = "Criando venda pendente...";
+                Debug.WriteLine("[CreatePendingSaleAsync] Início da criação de venda pendente");
+
+                // Garantir usuário logado
+                var userId = _sessionService.CurrentUser?.UserId ?? 0;
+                if (userId <= 0)
+                {
+                    StatusMessage = "Usuário não autenticado. Faça login.";
+                    return;
+                }
+
+                // Revalidação de estoque/validade
+                foreach (var ci in CartItems)
+                {
+                    var prodResult = await _productService.GetByIdAsync(ci.ProductId);
+                    if (!prodResult.Success || prodResult.Data == null)
+                    {
+                        StatusMessage = $"Produto ID {ci.ProductId} não encontrado.";
+                        return;
+                    }
+
+                    if (prodResult.Data.HasExpirationDate)
+                    {
+                        var expiredQty = await _expirationService.GetExpiredQuantityByProductAsync(ci.ProductId);
+                        var available = await _stockService.GetAvailableQuantityAsync(ci.ProductId);
+                        var sellable = Math.Max(available - Math.Max(expiredQty, 0), 0);
+
+                        if (sellable < ci.Quantity)
+                        {
+                            StatusMessage = $"Quantidade não vendável para o produto {prodResult.Data.Name}.";
+                            return;
+                        }
+                    }
+                }
+
+                // Gerar número da fatura
+                var numberResult = await _companyConfigService.GenerateInvoiceNumberAsync();
+                var invoiceNumber = numberResult.Success && !string.IsNullOrWhiteSpace(numberResult.Data)
+                    ? numberResult.Data
+                    : $"INV-PEND-{DateTime.Now:yyyyMMddHHmmss}";
+
+                // Determinar status baseado no pagamento
+                var status = AmountPaid >= GrandTotal ? InvoiceStatus.Paid : 
+                            AmountPaid > 0 ? InvoiceStatus.Confirmed : // Pagamento parcial como Confirmado
+                            InvoiceStatus.Pending;
+
+                // Montar DTO da fatura pendente
+                var invoice = new InvoiceDto
+                {
+                    InvoiceNumber = invoiceNumber,
+                    Date = DateTime.Now,
+                    DueDate = DateTime.Now.AddDays(30), // Vencimento em 30 dias
+                    PersonId = SelectedCustomer?.PersonId ?? 1,
+                    UserId = userId,
+                    Status = status,
+                    SubTotal = SubTotal,
+                    DiscountAmount = DiscountTotal,
+                    TaxAmount = TaxTotal,
+                    Total = GrandTotal,
+                    PaidAmount = AmountPaid,
+                    ShippingCost = TaxTotal,
+                    Notes = $"Venda PENDENTE criada no PDV em {DateTime.Now:dd/MM/yyyy HH:mm}\nValor pago: Kz {AmountPaid:N2}\nRestante: Kz {RemainingAmount:N2}",
+                    InternalNotes = "Fatura pendente gerada pelo sistema PDV VendaFlex",
+                };
+
+                // Persistir fatura
+                var savedInvoice = await _invoiceService.AddAsync(invoice);
+                if (!savedInvoice.Success || savedInvoice.Data == null)
+                {
+                    StatusMessage = savedInvoice.Message ?? "Falha ao salvar fatura pendente.";
+                    if (savedInvoice.Errors?.Any() == true)
+                        StatusMessage += "\n• " + string.Join("\n• ", savedInvoice.Errors);
+                    return;
+                }
+
+                var invoiceId = savedInvoice.Data.InvoiceId;
+                Debug.WriteLine($"[Venda Pendente] Fatura salva com ID: {invoiceId}");
+
+                // Persistir itens
+                foreach (var item in CartItems)
+                {
+                    var lineBase = (item.UnitPrice * item.Quantity);
+                    var discountPercent = lineBase > 0 ? Math.Round((item.Discount / lineBase) * 100m, 4, MidpointRounding.AwayFromZero) : 0m;
+
+                    var invItem = new InvoiceProductDto
+                    {
+                        InvoiceId = invoiceId,
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity,
+                        UnitPrice = item.UnitPrice,
+                        DiscountPercentage = discountPercent,
+                        TaxRate = TaxRatePercent
+                    };
+
+                    var addItemResult = await _invoiceProductService.AddAsync(invItem);
+                    if (!addItemResult.Success)
+                    {
+                        StatusMessage = addItemResult.Message ?? "Falha ao salvar item de fatura.";
+                        return;
+                    }
+                }
+
+                // Persistir pagamentos (se houver)
+                if (Payments.Any())
+                {
+                    foreach (var p in Payments)
+                    {
+                        var payment = new PaymentDto
+                        {
+                            InvoiceId = invoiceId,
+                            PaymentTypeId = p.PaymentTypeId,
+                            Amount = p.Amount,
+                            PaymentDate = DateTime.Now,
+                            Notes = "Pagamento parcial",
+                            Reference = invoiceNumber,
+                            IsConfirmed = true
+                        };
+
+                        var addPayResult = await _paymentService.AddAsync(payment);
+                        if (!addPayResult.Success)
+                        {
+                            StatusMessage = addPayResult.Message ?? "Falha ao registrar pagamento.";
+                            return;
+                        }
+                    }
+                }
+
+                // Baixar estoque
+                foreach (var item in CartItems)
+                {
+                    var prodResult = await _productService.GetByIdAsync(item.ProductId);
+                    if (prodResult.Success && prodResult.Data != null)
+                    {
+                        // Baixar estoque manualmente
+                        prodResult.Data.CurrentStock = Math.Max(0, prodResult.Data.CurrentStock - item.Quantity);
+                        await _productService.UpdateAsync(prodResult.Data);
+                        await SafeReleaseReservationAsync(item.ProductId, item.Quantity);
+                    }
+                }
+
+                StatusMessage = $"Venda pendente #{invoiceNumber} criada com sucesso!";
+                
+                // Imprimir recibo (opcional - comentado por enquanto)
+                // TODO: Implementar PrintReceiptAsync no IReceiptPrintService
+
+                // Limpar carrinho
+                CartItems.Clear();
+                Payments.Clear();
+                SelectedCustomer = null;
+                CustomerSearchTerm = string.Empty;
+                PaymentAmount = 0;
+                SelectedPaymentType = null;
+                RecalculateTotals();
+
+                await Task.Delay(2000);
+                StatusMessage = "Pronto para nova venda";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erro ao criar venda pendente: {ex.Message}";
+                Debug.WriteLine($"[CreatePendingSaleAsync] Erro: {ex}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        #endregion
+
+        #region Relatório Diário de Vendas
+
+        /// <summary>
+        /// Gera um relatório PDF profissional com as vendas diárias do usuário atual
+        /// Ideal para fechamento de caixa e prestação de contas ao supervisor
+        /// </summary>
+        private async Task GenerateDailySalesReportAsync()
+        {
+            try
+            {
+                IsBusy = true;
+                StatusMessage = "Gerando relatório PDF de vendas...";
+                Debug.WriteLine("[GenerateDailySalesReportAsync] Início da geração de relatório");
+
+                var userId = _sessionService.CurrentUser?.UserId ?? 0;
+                if (userId <= 0)
+                {
+                    StatusMessage = "Usuário não autenticado.";
+                    return;
+                }
+
+                var userName = _sessionService.CurrentUser?.Username ?? "Operador";
+                var today = DateTime.Today;
+
+                // Buscar todas as faturas do usuário de hoje
+                var invoicesResult = await _invoiceService.GetAllAsync();
+                if (!invoicesResult.Success || invoicesResult.Data == null)
+                {
+                    StatusMessage = "Erro ao buscar faturas.";
+                    return;
+                }
+
+                var dailySales = invoicesResult.Data
+                    .Where(inv => inv.UserId == userId && inv.Date.Date == today)
+                    .OrderBy(inv => inv.Date)
+                    .ToList();
+
+                if (!dailySales.Any())
+                {
+                    StatusMessage = "Nenhuma venda encontrada para hoje.";
+                    await Task.Delay(2000);
+                    StatusMessage = "Pronto";
+                    return;
+                }
+
+                // Buscar produtos de cada fatura
+                StatusMessage = "Carregando detalhes das vendas...";
+                var invoiceProducts = new Dictionary<int, List<InvoiceProductDto>>();
+                foreach (var inv in dailySales)
+                {
+                    var productsResult = await _invoiceProductService.GetByInvoiceIdAsync(inv.InvoiceId);
+                    if (productsResult.Success && productsResult.Data != null)
+                    {
+                        invoiceProducts[inv.InvoiceId] = productsResult.Data.ToList();
+                    }
+                }
+
+                // Buscar pagamentos de cada fatura (para totais por tipo de pagamento)
+                StatusMessage = "Carregando informações de pagamentos...";
+                var allPayments = new List<PaymentDto>();
+                foreach (var inv in dailySales)
+                {
+                    var paymentsResult = await _paymentService.GetByInvoiceIdAsync(inv.InvoiceId);
+                    if (paymentsResult.Success && paymentsResult.Data != null)
+                    {
+                        allPayments.AddRange(paymentsResult.Data);
+                    }
+                }
+
+                // Buscar tipos de pagamento para obter nomes
+                var paymentTypesResult = await _paymentTypeService.GetAllAsync();
+                var paymentTypesMap = new Dictionary<int, string>();
+                if (paymentTypesResult.Success && paymentTypesResult.Data != null)
+                {
+                    foreach (var pt in paymentTypesResult.Data)
+                    {
+                        paymentTypesMap[pt.PaymentTypeId] = pt.Name;
+                    }
+                }
+
+                // Agrupar pagamentos por tipo
+                var paymentsByType = allPayments
+                    .GroupBy(p => p.PaymentTypeId)
+                    .Select(g => new
+                    {
+                        PaymentTypeId = g.Key,
+                        PaymentTypeName = paymentTypesMap.ContainsKey(g.Key) ? paymentTypesMap[g.Key] : "Desconhecido",
+                        TotalAmount = g.Sum(p => p.Amount),
+                        Count = g.Count()
+                    })
+                    .OrderByDescending(x => x.TotalAmount)
+                    .ToList();
+
+                // Buscar configuração da empresa
+                StatusMessage = "Preparando relatório PDF...";
+                var companyResult = await _companyConfigService.GetAsync();
+                if (!companyResult.Success || companyResult.Data == null)
+                {
+                    StatusMessage = "Erro ao buscar configuração da empresa.";
+                    return;
+                }
+
+                // Gerar PDF profissional usando o serviço
+                var filePath = await _printService.GenerateDailySalesReportPdfAsync(
+                    companyResult.Data,
+                    userName,
+                    userId,
+                    today,
+                    dailySales,
+                    invoiceProducts,
+                    paymentsByType.Select(p => (p.PaymentTypeName, p.TotalAmount, p.Count)).ToList()
+                );
+
+                StatusMessage = $"Relatório PDF gerado com sucesso!";
+                Debug.WriteLine($"[Relatório] PDF salvo em: {filePath}");
+
+                // Abrir o PDF automaticamente
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = filePath,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[Relatório] Erro ao abrir PDF: {ex.Message}");
+                    StatusMessage = $"Relatório salvo em: {System.IO.Path.GetFileName(filePath)}";
+                }
+
+                await Task.Delay(3000);
+                StatusMessage = "Pronto";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erro ao gerar relatório: {ex.Message}";
+                Debug.WriteLine($"[GenerateDailySalesReportAsync] Erro: {ex}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
 
         #endregion
 
