@@ -28,7 +28,9 @@ namespace VendaFlex.ViewModels.Stock
         private readonly IStockService _stockService;
         private readonly IProductService _productService;
         private readonly IStockMovementService _stockMovementService;
+        private readonly ICategoryService _categoryService;
         private readonly ICurrentUserContext _currentUserContext;
+        private readonly IInventoryService _inventoryService;
 
         #endregion
 
@@ -81,6 +83,20 @@ namespace VendaFlex.ViewModels.Stock
         {
             get => _products;
             set => Set(ref _products, value);
+        }
+
+        private ObservableCollection<InventoryItemDto> _inventoryItems = new();
+        public ObservableCollection<InventoryItemDto> InventoryItems
+        {
+            get => _inventoryItems;
+            set => Set(ref _inventoryItems, value);
+        }
+
+        private ObservableCollection<Category> _categories = new();
+        public ObservableCollection<Category> Categories
+        {
+            get => _categories;
+            set => Set(ref _categories, value);
         }
 
         #endregion
@@ -138,6 +154,27 @@ namespace VendaFlex.ViewModels.Stock
         {
             get => _totalMovementsToday;
             set => Set(ref _totalMovementsToday, value);
+        }
+
+        private decimal _totalInventoryEntries;
+        public decimal TotalInventoryEntries
+        {
+            get => _totalInventoryEntries;
+            set => Set(ref _totalInventoryEntries, value);
+        }
+
+        private decimal _totalInventoryExits;
+        public decimal TotalInventoryExits
+        {
+            get => _totalInventoryExits;
+            set => Set(ref _totalInventoryExits, value);
+        }
+
+        private decimal _totalInventoryValue;
+        public decimal TotalInventoryValue
+        {
+            get => _totalInventoryValue;
+            set => Set(ref _totalInventoryValue, value);
         }
 
         #endregion
@@ -219,6 +256,35 @@ namespace VendaFlex.ViewModels.Stock
                 if (Set(ref _selectedMovementType, value))
                     ApplyMovementFilters();
             }
+        }
+
+        private string _inventorySearchTerm = string.Empty;
+        public string InventorySearchTerm
+        {
+            get => _inventorySearchTerm;
+            set
+            {
+                if (Set(ref _inventorySearchTerm, value))
+                    ApplyInventoryFilters();
+            }
+        }
+
+        private Category? _selectedInventoryCategory;
+        public Category? SelectedInventoryCategory
+        {
+            get => _selectedInventoryCategory;
+            set
+            {
+                if (Set(ref _selectedInventoryCategory, value))
+                    ApplyInventoryFilters();
+            }
+        }
+
+        private InventoryItemDto? _selectedInventoryItem;
+        public InventoryItemDto? SelectedInventoryItem
+        {
+            get => _selectedInventoryItem;
+            set => Set(ref _selectedInventoryItem, value);
         }
 
         #endregion
@@ -465,6 +531,11 @@ namespace VendaFlex.ViewModels.Stock
         public ICommand MovementNextPageCommand { get; private set; } = null!;
         public ICommand MovementLastPageCommand { get; private set; } = null!;
 
+        // Inventory Commands
+        public ICommand LoadInventoryCommand { get; private set; } = null!;
+        public ICommand ClearInventoryFiltersCommand { get; private set; } = null!;
+        public ICommand ExportInventoryCommand { get; private set; } = null!;
+
         #endregion
 
         #region Constructor
@@ -473,12 +544,16 @@ namespace VendaFlex.ViewModels.Stock
             IStockService stockService,
             IProductService productService,
             IStockMovementService stockMovementService,
-            ICurrentUserContext currentUserContext)
+            ICategoryService categoryService,
+            ICurrentUserContext currentUserContext,
+            IInventoryService inventoryService)
         {
             _stockService = stockService ?? throw new ArgumentNullException(nameof(stockService));
             _productService = productService ?? throw new ArgumentNullException(nameof(productService));
             _stockMovementService = stockMovementService ?? throw new ArgumentNullException(nameof(stockMovementService));
+            _categoryService = categoryService ?? throw new ArgumentNullException(nameof(categoryService));
             _currentUserContext = currentUserContext ?? throw new ArgumentNullException(nameof(currentUserContext));
+            _inventoryService = inventoryService ?? throw new ArgumentNullException(nameof(inventoryService));
 
             System.Diagnostics.Debug.WriteLine($"[VIEWMODEL CONSTRUCTOR] StockManagementViewModel criado");
             System.Diagnostics.Debug.WriteLine($"[VIEWMODEL CONSTRUCTOR] CurrentUserContext injetado: {_currentUserContext != null}");
@@ -540,6 +615,11 @@ namespace VendaFlex.ViewModels.Stock
             MovementPreviousPageCommand = new RelayCommand(_ => MovementCurrentPage--, _ => MovementCurrentPage > 1);
             MovementNextPageCommand = new RelayCommand(_ => MovementCurrentPage++, _ => MovementCurrentPage < MovementTotalPages);
             MovementLastPageCommand = new RelayCommand(_ => MovementCurrentPage = MovementTotalPages, _ => MovementCurrentPage < MovementTotalPages);
+
+            // Inventory Commands
+            LoadInventoryCommand = new RelayCommand(async _ => await LoadInventoryAsync());
+            ClearInventoryFiltersCommand = new RelayCommand(_ => ClearInventoryFilters());
+            ExportInventoryCommand = new RelayCommand(async _ => await ExportInventoryAsync(), _ => InventoryItems.Any());
         }
 
         #endregion
@@ -556,6 +636,7 @@ namespace VendaFlex.ViewModels.Stock
                 await LoadMovementsAsync();
                 await LoadLowStockAsync();
                 await LoadOutOfStockAsync();
+                await LoadInventoryAsync();
                 UpdateStatistics();
             }
             catch (Exception ex)
@@ -1094,6 +1175,244 @@ namespace VendaFlex.ViewModels.Stock
 
                 File.WriteAllText(filePath, tsv.ToString(), Encoding.UTF8);
             });
+        }
+
+        #endregion
+
+        #region Inventory Management
+
+        private async Task LoadInventoryAsync()
+        {
+            try
+            {
+                IsLoading = true;
+
+                // Load categories if not loaded
+                if (!Categories.Any())
+                {
+                    var categoriesResult = await _categoryService.GetAllAsync();
+                    if (categoriesResult.Success && categoriesResult.Data != null)
+                    {
+                        // Convert CategoryDto to Category entity for binding
+                        var categories = categoriesResult.Data.Select(c => new Category
+                        {
+                            CategoryId = c.CategoryId,
+                            Name = c.Name,
+                            Code = c.Code
+                        }).ToList();
+                        
+                        Categories = new ObservableCollection<Category>(categories);
+                    }
+                }
+
+                // Load all stock movements to calculate entries and exits
+                var movementsResult = await _stockMovementService.GetAllAsync();
+                if (!movementsResult.Success || movementsResult.Data == null)
+                {
+                    ShowStatusMessage("Erro ao carregar movimentações de estoque.");
+                    return;
+                }
+
+                var movements = movementsResult.Data.ToList();
+
+                // Load all products with stock
+                var stocksResult = await _stockService.GetAllAsync();
+                if (!stocksResult.Success || stocksResult.Data == null)
+                {
+                    ShowStatusMessage("Erro ao carregar estoque.");
+                    return;
+                }
+
+                var stocks = stocksResult.Data.ToList();
+
+                // Group movements by product and calculate entries/exits
+                var inventoryItems = new List<InventoryItemDto>();
+
+                foreach (var stock in stocks)
+                {
+                    var productMovements = movements.Where(m => m.ProductId == stock.ProductId).ToList();
+                    
+                    var totalEntries = productMovements
+                        .Where(m => m.Type == StockMovementType.Entry ||
+                                   (m.Type == StockMovementType.Adjustment && m.Quantity > 0))
+                        .Sum(m => m.Quantity);
+
+                    var totalExits = productMovements
+                        .Where(m => m.Type == StockMovementType.Exit ||
+                                   (m.Type == StockMovementType.Adjustment && m.Quantity < 0))
+                        .Sum(m => Math.Abs(m.Quantity));
+
+                    // Get product details
+                    var productResult = await _productService.GetByIdAsync(stock.ProductId);
+                    if (productResult.Success && productResult.Data != null)
+                    {
+                        var product = productResult.Data;
+                        
+                        inventoryItems.Add(new InventoryItemDto
+                        {
+                            ProductId = stock.ProductId,
+                            InternalCode = product.InternalCode,
+                            ProductName = product.Name,
+                            CategoryName = product.CategoryName ?? "Sem categoria",
+                            TotalEntries = totalEntries,
+                            TotalExits = totalExits,
+                            CostPrice = product.CostPrice
+                        });
+                    }
+                }
+
+                InventoryItems = new ObservableCollection<InventoryItemDto>(inventoryItems);
+                ApplyInventoryFilters();
+                UpdateInventoryStatistics();
+
+                ShowStatusMessage($"Inventário carregado: {InventoryItems.Count} itens.");
+            }
+            catch (Exception ex)
+            {
+                ShowStatusMessage($"Erro ao carregar inventário: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private void ApplyInventoryFilters()
+        {
+            if (InventoryItems == null)
+                return;
+
+            var filtered = InventoryItems.AsEnumerable();
+
+            // Filter by search term (code or name)
+            if (!string.IsNullOrWhiteSpace(InventorySearchTerm))
+            {
+                var searchLower = InventorySearchTerm.ToLower();
+                filtered = filtered.Where(i => 
+                    i.InternalCode.ToLower().Contains(searchLower) ||
+                    i.ProductName.ToLower().Contains(searchLower));
+            }
+
+            // Filter by category
+            if (SelectedInventoryCategory != null)
+            {
+                filtered = filtered.Where(i => 
+                    i.CategoryName == SelectedInventoryCategory.Name);
+            }
+
+            var result = filtered.ToList();
+            
+            // Update collection without recreating (to maintain binding)
+            InventoryItems.Clear();
+            foreach (var item in result)
+            {
+                InventoryItems.Add(item);
+            }
+
+            UpdateInventoryStatistics();
+        }
+
+        private void UpdateInventoryStatistics()
+        {
+            if (InventoryItems == null || !InventoryItems.Any())
+            {
+                TotalInventoryEntries = 0;
+                TotalInventoryExits = 0;
+                TotalInventoryValue = 0;
+                return;
+            }
+
+            TotalInventoryEntries = InventoryItems.Sum(i => i.TotalEntries);
+            TotalInventoryExits = InventoryItems.Sum(i => i.TotalExits);
+            TotalInventoryValue = InventoryItems.Sum(i => i.TotalValue);
+        }
+
+        private void ClearInventoryFilters()
+        {
+            InventorySearchTerm = string.Empty;
+            SelectedInventoryCategory = null;
+            ApplyInventoryFilters();
+        }
+
+        private async Task ExportInventoryAsync()
+        {
+            try
+            {
+                var dialog = new SaveFileDialog
+                {
+                    Filter = "CSV files (*.csv)|*.csv|Excel files (*.xlsx)|*.xlsx",
+                    FileName = $"Inventario_{DateTime.Now:yyyyMMdd_HHmmss}"
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    var extension = Path.GetExtension(dialog.FileName).ToLowerInvariant();
+
+                    if (extension == ".csv")
+                        await ExportInventoryToCsvAsync(dialog.FileName);
+                    else if (extension == ".xlsx")
+                        await ExportInventoryToExcelAsync(dialog.FileName);
+
+                    ShowStatusMessage("Exportação do inventário concluída com sucesso!");
+
+                    // Open file
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = dialog.FileName,
+                        UseShellExecute = true
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowStatusMessage($"Erro ao exportar inventário: {ex.Message}");
+            }
+        }
+
+        private async Task ExportInventoryToCsvAsync(string filePath)
+        {
+            await Task.Run(() =>
+            {
+                var csv = new StringBuilder();
+                csv.AppendLine("Código,Descrição,Categoria,Qtd Entrada,Qtd Saída,Disponível,Custo Unit.,Valor");
+
+                foreach (var item in InventoryItems)
+                {
+                    csv.AppendLine($"\"{item.InternalCode}\",\"{item.ProductName}\"," +
+                                   $"\"{item.CategoryName}\",{item.TotalEntries},{item.TotalExits}," +
+                                   $"{item.AvailableQuantity},{item.CostPrice:F2},{item.TotalValue:F2}");
+                }
+
+                // Add totals
+                csv.AppendLine();
+                csv.AppendLine($"TOTAIS,,Total Entradas:,{TotalInventoryEntries},Total Saídas:,{TotalInventoryExits},Valor Total:,{TotalInventoryValue:F2}");
+
+                File.WriteAllText(filePath, csv.ToString(), Encoding.UTF8);
+            });
+        }
+
+        private async Task ExportInventoryToExcelAsync(string filePath)
+        {
+            try
+            {
+                await _inventoryService.ExportInventoryToExcelAsync(
+                    inventoryItems: InventoryItems,
+                    filePath: filePath,
+                    totalEntries: TotalInventoryEntries,
+                    totalExits: TotalInventoryExits,
+                    totalValue: TotalInventoryValue
+                );
+
+                // Opcional: Mostrar mensagem de sucesso
+                MessageBox.Show("Inventário exportado com sucesso!", "Sucesso", 
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                // Tratar erro
+                MessageBox.Show($"Erro ao exportar inventário: {ex.Message}", "Erro", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         #endregion
