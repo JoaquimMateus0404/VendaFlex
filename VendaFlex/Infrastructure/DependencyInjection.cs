@@ -77,6 +77,8 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<InvoiceProductRepository>();
             services.AddScoped<PaymentRepository>();
             services.AddScoped<PaymentTypeRepository>();
+            services.AddScoped<ExpenseRepository>();
+            services.AddScoped<ExpenseTypeRepository>();
 
             // Serviços principais
             services.AddScoped<IUserService, UserService>();
@@ -94,6 +96,7 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IPriceHistoryService, PriceHistoryService>();
             services.AddScoped<IStockMovementService, StockMovementService>();
+            services.AddScoped<IExpenseService, ExpenseService>();
             
             // Serviço de auditoria de estoque (usando Lazy para evitar dependência circular)
             services.AddScoped<StockAuditService>();
@@ -118,6 +121,8 @@ namespace VendaFlex.Infrastructure
             services.AddScoped<IValidator<InvoiceProductDto>, InvoiceProductDtoValidator>();
             services.AddScoped<IValidator<PaymentDto>, PaymentDtoValidator>();
             services.AddScoped<IValidator<PaymentTypeDto>, PaymentTypeDtoValidator>();
+            services.AddScoped<IValidator<ExpenseDto>, ExpenseDtoValidator>();
+            services.AddScoped<IValidator<ExpenseTypeDto>, ExpenseTypeDtoValidator>();
 
 
             // Registrar Views e ViewModels usados pela navegação
@@ -162,7 +167,13 @@ namespace VendaFlex.Infrastructure
             services.AddTransient<ReportManagementView>();
             services.AddTransient<ReportManagementViewModel>();
 
-            //
+            // ExpenseManagement precisa ser Scoped porque usa múltiplos serviços que compartilham o DbContext
+            services.AddTransient<ExpenseManagementView>();
+            services.AddScoped<ExpenseManagementViewModel>();
+    
+            // HelpView é Transient porque é simples e não mantém estado
+            services.AddTransient<HelpView>();
+            services.AddTransient<HelpViewModel>();
             return services;
         }
     }

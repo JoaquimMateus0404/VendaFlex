@@ -55,6 +55,7 @@ namespace VendaFlex.ViewModels.Users
         private bool _isLoadingPrivileges;
         private bool _isBulkMode;
         private int _selectedTabIndex;
+        private bool _isDetailsModalOpen; // controls overlay modal visibility
 
         #endregion
 
@@ -350,6 +351,11 @@ namespace VendaFlex.ViewModels.Users
             set => Set(ref _selectedTabIndex, value);
         }
 
+        public bool IsDetailsModalOpen
+        {
+            get => _isDetailsModalOpen;
+            set => Set(ref _isDetailsModalOpen, value);
+        }
         #endregion
 
         #region Properties - Search & Filter
@@ -923,6 +929,9 @@ namespace VendaFlex.ViewModels.Users
         public ICommand SendNotificationCommand { get; private set; } = null!;
         public ICommand ImpersonateUserCommand { get; private set; } = null!;
 
+        // Modal controls
+        public ICommand CloseDetailsCommand { get; private set; } = null!;
+
         #endregion
 
         #region Initialization
@@ -934,7 +943,7 @@ namespace VendaFlex.ViewModels.Users
             LoadPersonsCommand = new AsyncCommand(LoadPersonsAsync);
             SearchCommand = new AsyncCommand(SearchAsync);
             AddCommand = new RelayCommand(_ => ShowAddForm());
-            EditCommand = new RelayCommand(_ => ShowEditForm(), _ => SelectedUser != null);
+            EditCommand = new RelayCommand(param => ShowEditForm(param), param => param != null || SelectedUser != null);
             DeleteCommand = new AsyncCommand(DeleteUserAsync, () => SelectedUser != null && CanModifyCurrentUser);
             SaveCommand = new AsyncCommand(SaveUserAsync, CanSave);
             CancelCommand = new RelayCommand(_ => CancelForm());
@@ -995,13 +1004,20 @@ namespace VendaFlex.ViewModels.Users
             CloneUserCommand = new AsyncCommand(CloneUserAsync, () => SelectedUser != null);
             SendNotificationCommand = new AsyncCommand(SendNotificationAsync, () => SelectedUser != null);
             ImpersonateUserCommand = new AsyncCommand(ImpersonateUserAsync, () => SelectedUser != null && CanModifyCurrentUser);
+
+            // Modal controls
+            CloseDetailsCommand = new RelayCommand(_ => IsDetailsModalOpen = false);
         }
 
         private void InitializeData()
         {
-            _ = LoadDataAsync();
-            _ = LoadPersonsAsync();
-            _ = LoadPrivilegesAsync();
+            // Execute sequentially to avoid DbContext concurrency issues
+            _ = Task.Run(async () =>
+            {
+                await LoadDataAsync();
+                await LoadPersonsAsync();
+                await LoadPrivilegesAsync();
+            });
             ConfigureAutoRefresh();
         }
 
@@ -1230,16 +1246,25 @@ namespace VendaFlex.ViewModels.Users
             ShowForm = true;
             ShowPasswordFields = false;
             SelectedTabIndex = 1; // Switch to Details tab
+            IsDetailsModalOpen = true; // open overlay modal
         }
 
-        private void ShowEditForm()
+        private void ShowEditForm(object? parameter = null)
         {
+            // If a parameter is provided (UserDto from DataGrid), use it as SelectedUser
+            if (parameter is UserDto userDto)
+            {
+                SelectedUser = userDto;
+            }
+            
             if (SelectedUser == null) return;
+            
             LoadUserToForm(SelectedUser);
             IsEditMode = true;
             ShowForm = true;
             ShowPasswordFields = false;
-            SelectedTabIndex = 1;
+            SelectedTabIndex = 0; // Start on Info tab
+            IsDetailsModalOpen = true; // open overlay modal
         }
 
         private async Task DeleteUserAsync()
@@ -1369,10 +1394,10 @@ namespace VendaFlex.ViewModels.Users
 
         private void CancelForm()
         {
+            // Close modal when canceling
+            IsDetailsModalOpen = false;
             ShowForm = false;
-            ClearForm();
-            HideMessage();
-            SelectedTabIndex = 0;
+            ShowPasswordFields = false;
         }
 
         private async Task CloneUserAsync()
@@ -2198,3 +2223,4 @@ namespace VendaFlex.ViewModels.Users
 
     #endregion
 }
+

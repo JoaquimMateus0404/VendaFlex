@@ -8,6 +8,10 @@
       mc:Ignorable="d" 
       d:DesignHeight="800" d:DesignWidth="1200"
       Background="#F5F7FA"
+      TextOptions.TextFormattingMode="Display"
+      TextOptions.TextRenderingMode="ClearType"
+      UseLayoutRounding="True"
+      SnapsToDevicePixels="True"
       Loaded="Page_Loaded">
 
     <Page.Resources>
@@ -50,7 +54,7 @@
         </Style>
 
         <!-- TextBox Style -->
-        <Style x:Key="ModernTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignFilledTextBox}">
+        <Style x:Key="ModernTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
             <Setter Property="Margin" Value="0,0,0,16"/>
             <Setter Property="Padding" Value="12"/>
             <Setter Property="FontSize" Value="14"/> 

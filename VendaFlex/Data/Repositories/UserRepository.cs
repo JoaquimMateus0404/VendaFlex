@@ -262,6 +262,18 @@ namespace VendaFlex.Data.Repositories
                 .FirstOrDefaultAsync(u => u.Person != null && u.Person.Email == email);
         }
 
+        /// <summary>
+        /// Busca um usuário por PersonId.
+        /// </summary>
+        /// <param name="personId">ID da pessoa</param>
+        /// <returns>Usuário encontrado ou null</returns>
+        public async Task<User?> GetByPersonIdAsync(int personId)
+        {
+            return await _context.Users
+                .Include(u => u.Person)
+                .FirstOrDefaultAsync(u => u.PersonId == personId);
+        }
+
         #endregion
 
         #region Status Queries

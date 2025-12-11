@@ -292,5 +292,15 @@ namespace VendaFlex.UI.Views.Dashboard
         {
             _navigationService.NavigateToReportManagement();
         }
+
+        private void ExpenseManagementButton_Click(object sender, RoutedEventArgs e)
+        {
+            _navigationService.NavigateToExpenseManagement();
+        }
+
+        private void HelpButton_Click(object sender, RoutedEventArgs e)
+        {
+            _navigationService.NavigateToHelp();
+        }
     }
 }

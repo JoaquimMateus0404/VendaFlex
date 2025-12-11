@@ -15,6 +15,9 @@ namespace VendaFlex.ViewModels.Persons
     public class PersonManagementViewModel : BaseViewModel
     {
         private readonly IPersonService _personService;
+        private readonly IUserService _userService;
+        private readonly IPrivilegeService _privilegeService;
+        private readonly IUserPrivilegeService _userPrivilegeService;
         private readonly IFileStorageService _fileStorageService;
         private ObservableCollection<PersonDto> _persons;
         private ObservableCollection<PersonDto> _allPersons;
@@ -22,8 +25,6 @@ namespace VendaFlex.ViewModels.Persons
         private string _searchText = string.Empty;
         private PersonType? _selectedTypeFilter;
         private bool _isLoading;
-        private bool _isEditMode;
-        private bool _showForm;
         private string _message = string.Empty;
         private bool _isMessageError;
         private bool _showMessage;
@@ -34,32 +35,18 @@ namespace VendaFlex.ViewModels.Persons
         private int _totalPages = 1;
         private int _totalItems = 0;
 
-        // Propriedades do formulário
-        private int _personId;
-        private string _name = string.Empty;
-        private PersonType _type = PersonType.Customer;
-        private string _taxId = string.Empty;
-        private string _identificationNumber = string.Empty;
-        private string _email = string.Empty;
-        private string _phoneNumber = string.Empty;
-        private string _mobileNumber = string.Empty;
-        private string _website = string.Empty;
-        private string _address = string.Empty;
-        private string _city = string.Empty;
-        private string _state = string.Empty;
-        private string _postalCode = string.Empty;
-        private string _country = string.Empty;
-        private decimal _creditLimit;
-        private decimal _currentBalance;
-        private string _contactPerson = string.Empty;
-        private string _notes = string.Empty;
-        private string _profileImageUrl = string.Empty;
-        private bool _isActive = true;
-        private int? _rating;
 
-        public PersonManagementViewModel(IPersonService personService, IFileStorageService fileStorageService)
+        public PersonManagementViewModel(
+            IPersonService personService, 
+            IUserService userService,
+            IPrivilegeService privilegeService,
+            IUserPrivilegeService userPrivilegeService,
+            IFileStorageService fileStorageService)
         {
             _personService = personService;
+            _userService = userService;
+            _privilegeService = privilegeService;
+            _userPrivilegeService = userPrivilegeService;
             _fileStorageService = fileStorageService;
             _persons = new ObservableCollection<PersonDto>();
             _allPersons = new ObservableCollection<PersonDto>();
@@ -70,11 +57,8 @@ namespace VendaFlex.ViewModels.Persons
             AddCommand = new RelayCommand(_ => ShowAddForm());
             EditCommand = new RelayCommand(_ => ShowEditForm(), _ => SelectedPerson != null);
             DeleteCommand = new AsyncCommand(DeletePersonAsync, () => SelectedPerson != null);
-            SaveCommand = new AsyncCommand(SavePersonAsync, CanSave);
-            CancelCommand = new RelayCommand(_ => CancelForm());
             FilterByTypeCommand = new RelayCommand(param => FilterByType(param));
             ClearFilterCommand = new RelayCommand(_ => ClearFilter());
-            UploadPhotoCommand = new AsyncCommand(UploadPhotoAsync);
             
             // Comandos de paginação
             FirstPageCommand = new RelayCommand(_ => GoToFirstPage(), _ => CanGoToPreviousPage());
@@ -124,17 +108,6 @@ namespace VendaFlex.ViewModels.Persons
             set => Set(ref _isLoading, value);
         }
 
-        public bool IsEditMode
-        {
-            get => _isEditMode;
-            set => Set(ref _isEditMode, value);
-        }
-
-        public bool ShowForm
-        {
-            get => _showForm;
-            set => Set(ref _showForm, value);
-        }
 
         public string Message
         {
@@ -196,136 +169,6 @@ namespace VendaFlex.ViewModels.Persons
 
         public string PageInfo => $"Página {CurrentPage} de {TotalPages} ({TotalItems} itens)";
 
-        // Propriedades do formulário
-        public int PersonId
-        {
-            get => _personId;
-            set => Set(ref _personId, value);
-        }
-
-        public string Name
-        {
-            get => _name;
-            set
-            {
-                if (Set(ref _name, value))
-                    ((AsyncCommand)SaveCommand).RaiseCanExecuteChanged();
-            }
-        }
-
-        public PersonType Type
-        {
-            get => _type;
-            set => Set(ref _type, value);
-        }
-
-        public string TaxId
-        {
-            get => _taxId;
-            set => Set(ref _taxId, value);
-        }
-
-        public string IdentificationNumber
-        {
-            get => _identificationNumber;
-            set => Set(ref _identificationNumber, value);
-        }
-
-        public string Email
-        {
-            get => _email;
-            set => Set(ref _email, value);
-        }
-
-        public string PhoneNumber
-        {
-            get => _phoneNumber;
-            set => Set(ref _phoneNumber, value);
-        }
-
-        public string MobileNumber
-        {
-            get => _mobileNumber;
-            set => Set(ref _mobileNumber, value);
-        }
-
-        public string Website
-        {
-            get => _website;
-            set => Set(ref _website, value);
-        }
-
-        public string Address
-        {
-            get => _address;
-            set => Set(ref _address, value);
-        }
-
-        public string City
-        {
-            get => _city;
-            set => Set(ref _city, value);
-        }
-
-        public string State
-        {
-            get => _state;
-            set => Set(ref _state, value);
-        }
-
-        public string PostalCode
-        {
-            get => _postalCode;
-            set => Set(ref _postalCode, value);
-        }
-
-        public string Country
-        {
-            get => _country;
-            set => Set(ref _country, value);
-        }
-
-        public decimal CreditLimit
-        {
-            get => _creditLimit;
-            set => Set(ref _creditLimit, value);
-        }
-
-        public decimal CurrentBalance
-        {
-            get => _currentBalance;
-            set => Set(ref _currentBalance, value);
-        }
-
-        public string ContactPerson
-        {
-            get => _contactPerson;
-            set => Set(ref _contactPerson, value);
-        }
-
-        public string Notes
-        {
-            get => _notes;
-            set => Set(ref _notes, value);
-        }
-
-        public string ProfileImageUrl
-        {
-            get => _profileImageUrl;
-            set => Set(ref _profileImageUrl, value);
-        }
-
-        public bool IsActive
-        {
-            get => _isActive;
-            set => Set(ref _isActive, value);
-        }
-
-        public int? Rating
-        {
-            get => _rating;
-            set => Set(ref _rating, value);
-        }
 
         public int TotalPersons => _allPersons.Count;
         public int TotalCustomers => _allPersons.Count(p => p.Type == PersonType.Customer || p.Type == PersonType.Both);
@@ -341,11 +184,8 @@ namespace VendaFlex.ViewModels.Persons
         public ICommand AddCommand { get; }
         public ICommand EditCommand { get; }
         public ICommand DeleteCommand { get; }
-        public ICommand SaveCommand { get; }
-        public ICommand CancelCommand { get; }
         public ICommand FilterByTypeCommand { get; }
         public ICommand ClearFilterCommand { get; }
-        public ICommand UploadPhotoCommand { get; }
         
         // Comandos de paginação
         public ICommand FirstPageCommand { get; }
@@ -447,18 +287,45 @@ namespace VendaFlex.ViewModels.Persons
 
         private void ShowAddForm()
         {
-            ClearForm();
-            IsEditMode = false;
-            ShowForm = true;
+            var dialog = new UI.Views.Persons.PersonFormDialog();
+            var viewModel = new PersonFormDialogViewModel(
+                _personService,
+                _userService,
+                _privilegeService,
+                _userPrivilegeService,
+                _fileStorageService,
+                dialog);
+            
+            dialog.DataContext = viewModel;
+            
+            if (dialog.ShowDialog() == true)
+            {
+                // Recarregar dados após criação
+                _ = LoadDataAsync();
+            }
         }
 
         private void ShowEditForm()
         {
             if (SelectedPerson == null) return;
 
-            LoadPersonToForm(SelectedPerson);
-            IsEditMode = true;
-            ShowForm = true;
+            var dialog = new UI.Views.Persons.PersonFormDialog();
+            var viewModel = new PersonFormDialogViewModel(
+                _personService,
+                _userService,
+                _privilegeService,
+                _userPrivilegeService,
+                _fileStorageService,
+                dialog,
+                SelectedPerson);
+            
+            dialog.DataContext = viewModel;
+            
+            if (dialog.ShowDialog() == true)
+            {
+                // Recarregar dados após edição
+                _ = LoadDataAsync();
+            }
         }
 
         private async Task DeletePersonAsync()
@@ -496,101 +363,6 @@ namespace VendaFlex.ViewModels.Persons
             }
         }
 
-        private bool CanSave()
-        {
-            return !string.IsNullOrWhiteSpace(Name);
-        }
-
-        private async Task SavePersonAsync()
-        {
-            try
-            {
-                HideMessage();
-
-                if (string.IsNullOrWhiteSpace(Name))
-                {
-                    ShowErrorMessage("O nome é obrigatório.");
-                    return;
-                }
-
-                var personDto = new PersonDto
-                {
-                    PersonId = PersonId,
-                    Name = Name,
-                    Type = Type,
-                    TaxId = TaxId,
-                    IdentificationNumber = IdentificationNumber,
-                    Email = Email,
-                    PhoneNumber = PhoneNumber,
-                    MobileNumber = MobileNumber,
-                    Website = Website,
-                    Address = Address,
-                    City = City,
-                    State = State,
-                    PostalCode = PostalCode,
-                    Country = Country,
-                    CreditLimit = CreditLimit,
-                    CurrentBalance = CurrentBalance,
-                    ContactPerson = ContactPerson,
-                    Notes = Notes,
-                    ProfileImageUrl = ProfileImageUrl,
-                    IsActive = IsActive,
-                    Rating = Rating
-                };
-
-                if (IsEditMode)
-                {
-                    var result = await _personService.UpdateAsync(personDto);
-                    if (result.Success && result.Data != null)
-                    {
-                        var index = _allPersons.ToList().FindIndex(p => p.PersonId == result.Data.PersonId);
-                        if (index >= 0)
-                        {
-                            _allPersons[index] = result.Data;
-                        }
-                        ApplyPagination();
-                        ShowSuccessMessage("Pessoa atualizada com sucesso!");
-                    }
-                    else
-                    {
-                        ShowErrorMessage(result.Message ?? "Erro ao atualizar pessoa.");
-                        return;
-                    }
-                }
-                else
-                {
-                    var result = await _personService.CreateAsync(personDto);
-                    if (result.Success && result.Data != null)
-                    {
-                        _allPersons.Add(result.Data);
-                        TotalItems = _allPersons.Count;
-                        TotalPages = (int)Math.Ceiling((double)TotalItems / PageSize);
-                        ApplyPagination();
-                        ShowSuccessMessage("Pessoa cadastrada com sucesso!");
-                    }
-                    else
-                    {
-                        ShowErrorMessage(result.Message ?? "Erro ao criar pessoa.");
-                        return;
-                    }
-                }
-
-                UpdateCounters();
-                ShowForm = false;
-                ClearForm();
-            }
-            catch (Exception ex)
-            {
-                ShowErrorMessage($"Erro ao salvar: {ex.Message}");
-            }
-        }
-
-        private void CancelForm()
-        {
-            ShowForm = false;
-            ClearForm();
-            HideMessage();
-        }
 
         private void FilterByType(object? parameter)
         {
@@ -608,55 +380,6 @@ namespace VendaFlex.ViewModels.Persons
             _ = LoadDataAsync();
         }
 
-        private void LoadPersonToForm(PersonDto person)
-        {
-            PersonId = person.PersonId;
-            Name = person.Name;
-            Type = person.Type;
-            TaxId = person.TaxId ?? string.Empty;
-            IdentificationNumber = person.IdentificationNumber ?? string.Empty;
-            Email = person.Email ?? string.Empty;
-            PhoneNumber = person.PhoneNumber ?? string.Empty;
-            MobileNumber = person.MobileNumber ?? string.Empty;
-            Website = person.Website ?? string.Empty;
-            Address = person.Address ?? string.Empty;
-            City = person.City ?? string.Empty;
-            State = person.State ?? string.Empty;
-            PostalCode = person.PostalCode ?? string.Empty;
-            Country = person.Country ?? string.Empty;
-            CreditLimit = person.CreditLimit;
-            CurrentBalance = person.CurrentBalance;
-            ContactPerson = person.ContactPerson ?? string.Empty;
-            Notes = person.Notes ?? string.Empty;
-            ProfileImageUrl = person.ProfileImageUrl ?? string.Empty;
-            IsActive = person.IsActive;
-            Rating = person.Rating;
-        }
-
-        private void ClearForm()
-        {
-            PersonId = 0;
-            Name = string.Empty;
-            Type = PersonType.Customer;
-            TaxId = string.Empty;
-            IdentificationNumber = string.Empty;
-            Email = string.Empty;
-            PhoneNumber = string.Empty;
-            MobileNumber = string.Empty;
-            Website = string.Empty;
-            Address = string.Empty;
-            City = string.Empty;
-            State = string.Empty;
-            PostalCode = string.Empty;
-            Country = string.Empty;
-            CreditLimit = 0;
-            CurrentBalance = 0;
-            ContactPerson = string.Empty;
-            Notes = string.Empty;
-            ProfileImageUrl = string.Empty;
-            IsActive = true;
-            Rating = null;
-        }
 
         private void UpdateCounters()
         {
@@ -746,57 +469,6 @@ namespace VendaFlex.ViewModels.Persons
             Message = string.Empty;
         }
 
-        #endregion
-
-        #region Upload de Foto
-
-        private async Task UploadPhotoAsync()
-        {
-            try
-            {
-                var dialog = new Microsoft.Win32.OpenFileDialog
-                {
-                    Title = "Selecionar Foto da Pessoa",
-                    Filter = "Imagens|*.jpg;*.jpeg;*.png;*.bmp;*.gif|Todos os ficheiros|*.*",
-                    Multiselect = false
-                };
-
-                if (dialog.ShowDialog() == true)
-                {
-                    IsLoading = true;
-                    HideMessage();
-
-                    // Validar se é uma imagem válida
-                    if (!_fileStorageService.IsValidImage(dialog.FileName))
-                    {
-                        ShowErrorMessage("O ficheiro selecionado não é uma imagem válida.");
-                        IsLoading = false;
-                        return;
-                    }
-
-                    // Salvar a foto
-                    var savedPath = await _fileStorageService.SaveLogoAsync(dialog.FileName);
-                    
-                    // Remover foto antiga se existir
-                    if (!string.IsNullOrEmpty(ProfileImageUrl) && System.IO.File.Exists(ProfileImageUrl))
-                    {
-                        await _fileStorageService.DeleteFileAsync(ProfileImageUrl);
-                    }
-
-                    // Atualizar a URL da foto
-                    ProfileImageUrl = savedPath;
-                    ShowSuccessMessage("Foto carregada com sucesso!");
-                }
-            }
-            catch (Exception ex)
-            {
-                ShowErrorMessage($"Erro ao carregar foto: {ex.Message}");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
 
         #endregion
     }

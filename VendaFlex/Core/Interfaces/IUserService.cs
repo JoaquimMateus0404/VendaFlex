@@ -160,6 +160,13 @@ namespace VendaFlex.Core.Interfaces
         Task<OperationResult<UserDto>> GetByEmailAsync(string email);
 
         /// <summary>
+        /// Busca um usuário por PersonId.
+        /// </summary>
+        /// <param name="personId">ID da pessoa</param>
+        /// <returns>Resultado com UserDto se encontrado</returns>
+        Task<OperationResult<UserDto>> GetByPersonIdAsync(int personId);
+
+        /// <summary>
         /// Verifica se um username já está em uso.
         /// </summary>
         /// <param name="username">Nome de usuário a verificar</param>

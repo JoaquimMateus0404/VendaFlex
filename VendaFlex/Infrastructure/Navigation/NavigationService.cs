@@ -386,6 +386,63 @@ namespace VendaFlex.Infrastructure.Navigation
                 throw;
             }
         }
+
+        public void NavigateToExpenseManagement()
+        {
+            _logger.LogInformation("Navegando para tela de Gestão de Despesas");
+            try
+            {
+                NavigateToPage<ExpenseManagementView, ExpenseManagementViewModel>(
+                    "VendaFlex - Gestão de Despesas",
+                    new NavigationOptions
+                    {
+                        Mode = NavigationMode.Stack,
+                        Width = 1400,
+                        Height = 900,
+                        WindowStyle = WindowStyle.SingleBorderWindow,
+                        ResizeMode = ResizeMode.CanResize,
+                        WindowState = WindowState.Maximized,
+                        StartupLocation = WindowStartupLocation.CenterScreen,
+                        ShowInTaskbar = true,
+                        Topmost = false
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao navegar para Gestão de Despesas");
+                throw;
+            }
+        }
+
+        public void NavigateToHelp()
+        {
+            _logger.LogInformation("Navegando para tela de Ajuda e Suporte");
+            try
+            {
+                NavigateToPage<HelpView, HelpViewModel>(
+                    "VendaFlex - Central de Ajuda",
+                    new NavigationOptions
+                    {
+                        Mode = NavigationMode.Stack,
+                        Width = 1200,
+                        Height = 900,
+                        WindowStyle = WindowStyle.SingleBorderWindow,
+                        ResizeMode = ResizeMode.CanResize,
+                        WindowState = WindowState.Maximized,
+                        StartupLocation = WindowStartupLocation.CenterScreen,
+                        ShowInTaskbar = true,
+                        Topmost = false
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao navegar para Ajuda e Suporte");
+                throw;
+            }
+        }
+
         #endregion
         public void NavigateToPage<TView, TViewModel>(string title, double width = 1000, double height = 700, bool closeCurrent = false)
             where TView : System.Windows.Controls.Page

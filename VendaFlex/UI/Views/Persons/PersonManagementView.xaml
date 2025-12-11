@@ -9,328 +9,303 @@
       mc:Ignorable="d" 
       d:DesignHeight="900" 
       d:DesignWidth="1440"
-      Title="Gerenciamento de Pessoas"
       Background="{DynamicResource MaterialDesignPaper}">
 
     <Page.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
-        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:BooleanToBrushConverter x:Key="BooleanToBrushConverter"/>
         <converters:BooleanToStatusConverter x:Key="BooleanToStatusConverter"/>
-        <converters:BooleanToTextConverter x:Key="BooleanToTextConverter"/>
     </Page.Resources>
 
     <Grid>
         <!-- Loading Overlay -->
-        <Border Background="#CC000000" 
-                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}"
-                Panel.ZIndex="999">
+        <Grid Background="#AA000000" 
+              Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"
+              Panel.ZIndex="1000">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
-                             Value="0"
-                             IsIndeterminate="True"
-                             Width="60" Height="60"
-                             Foreground="#2196F3"/>
-                <TextBlock Text="Carregando..."
-                           Foreground="White"
-                           FontSize="16"
-                           Margin="0,20,0,0"
-                           HorizontalAlignment="Center"/>
+                             IsIndeterminate="True" Width="60" Height="60"/>
+                <TextBlock Text="Carregando pessoas..." Foreground="White" Margin="0,16,0,0"
+                           Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
             </StackPanel>
-        </Border>
+        </Grid>
 
         <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-            <!-- Área Principal - Lista -->
-            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="16" MaxWidth="1200">
-                    
-                    <!-- Header -->
-                    <materialDesign:Card Margin="0,0,0,16" Padding="20">
-                        <Grid>
-                            <StackPanel>
-                                <TextBlock Text="Gerenciamento de Pessoas"
-                                           Style="{StaticResource MaterialDesignHeadline5TextBlock}"
-                                           FontWeight="Bold"/>
-                                <TextBlock Text="Clientes, Fornecedores e Funcionários"
-                                           Style="{StaticResource MaterialDesignBody2TextBlock}"
-                                           Foreground="{DynamicResource MaterialDesignBodyLight}"
-                                           Margin="0,4,0,0"/>
+            <!-- Header -->
+            <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryMid" Padding="24,16"
+                                      materialDesign:ElevationAssist.Elevation="Dp4">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="AccountMultiple" Width="36" Height="36" 
+                                                 VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Gestão de Pessoas" 
+                                       Style="{StaticResource MaterialDesignHeadline5TextBlock}"/>
+                            <TextBlock Text="Gerencie clientes, fornecedores e funcionários" 
+                                       Style="{StaticResource MaterialDesignCaptionTextBlock}" Opacity="0.8"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Quick Stats -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <materialDesign:Chip Margin="0,0,8,0" IconBackground="#4CAF50">
+                            <materialDesign:Chip.Icon>
+                                <TextBlock Text="{Binding TotalCustomers}" FontWeight="Bold" 
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </materialDesign:Chip.Icon>
+                            <TextBlock Text="Clientes"/>
+                        </materialDesign:Chip>
+                        <materialDesign:Chip Margin="0,0,8,0" IconBackground="#FF9800">
+                            <materialDesign:Chip.Icon>
+                                <TextBlock Text="{Binding TotalSuppliers}" FontWeight="Bold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </materialDesign:Chip.Icon>
+                            <TextBlock Text="Fornecedores"/>
+                        </materialDesign:Chip>
+                        <materialDesign:Chip Margin="0,0,16,0" IconBackground="#9C27B0">
+                            <materialDesign:Chip.Icon>
+                                <TextBlock Text="{Binding TotalEmployees}" FontWeight="Bold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </materialDesign:Chip.Icon>
+                            <TextBlock Text="Funcionários"/>
+                        </materialDesign:Chip>
+
+                        <Button Style="{StaticResource MaterialDesignFloatingActionMiniButton}"
+                                Command="{Binding LoadDataCommand}" ToolTip="Atualizar" Margin="0,0,8,0">
+                            <materialDesign:PackIcon Kind="Refresh"/>
+                        </Button>
+                        <Button Style="{StaticResource MaterialDesignFloatingActionMiniButton}"
+                                Command="{Binding AddCommand}" ToolTip="Adicionar Pessoa">
+                            <materialDesign:PackIcon Kind="Plus"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </materialDesign:ColorZone>
+
+            <!-- Filters Panel -->
+            <materialDesign:Card Grid.Row="1" Margin="16,16,16,0" Padding="16"
+                                 materialDesign:ElevationAssist.Elevation="Dp2">
+                <Expander Header="Filtros de Busca" IsExpanded="True"
+                          materialDesign:ExpanderAssist.HorizontalHeaderPadding="0">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="FilterVariant" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="{Binding}" Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
                             </StackPanel>
-                            
-                            <Button Command="{Binding AddCommand}"
-                                    Style="{StaticResource MaterialDesignRaisedButton}"
-                                    Background="#2196F3"
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Center">
+                        </DataTemplate>
+                    </Expander.HeaderTemplate>
+                    <Grid Margin="0,16,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Row 1: Text Filters -->
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Grid.Column="0" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Buscar por nome, email, telefone ou documento..."
+                                     materialDesign:TextFieldAssist.HasLeadingIcon="True"
+                                     materialDesign:TextFieldAssist.LeadingIcon="Magnify"
+                                     materialDesign:TextFieldAssist.HasClearButton="True">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
+                                </TextBox.InputBindings>
+                            </TextBox>
+
+                            <ComboBox Grid.Column="2" SelectedValue="{Binding SelectedTypeFilter, Mode=TwoWay}"
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                      materialDesign:HintAssist.Hint="Tipo de Pessoa"
+                                      materialDesign:TextFieldAssist.HasClearButton="True">
+                                <ComboBoxItem Content="Todos" Tag="{x:Null}"/>
+                                <ComboBoxItem Content="Clientes" Tag="{x:Static entities:PersonType.Customer}"/>
+                                <ComboBoxItem Content="Fornecedores" Tag="{x:Static entities:PersonType.Supplier}"/>
+                                <ComboBoxItem Content="Funcionários" Tag="{x:Static entities:PersonType.Employee}"/>
+                                <ComboBoxItem Content="Cliente e Fornecedor" Tag="{x:Static entities:PersonType.Both}"/>
+                            </ComboBox>
+
+                            <ComboBox Grid.Column="4"
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                      materialDesign:HintAssist.Hint="Status"
+                                      materialDesign:TextFieldAssist.HasClearButton="True">
+                                <ComboBoxItem Content="Todos"/>
+                                <ComboBoxItem Content="Ativos"/>
+                                <ComboBoxItem Content="Inativos"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <!-- Row 2: Actions -->
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Command="{Binding ClearFilterCommand}"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                    Margin="0,0,12,0">
                                 <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="Plus"
-                                                             Width="18" Height="18"
-                                                             VerticalAlignment="Center"
-                                                             Margin="0,0,6,0"/>
-                                    <TextBlock Text="NOVA PESSOA" VerticalAlignment="Center"/>
+                                    <materialDesign:PackIcon Kind="FilterRemove" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Limpar Filtros"/>
                                 </StackPanel>
                             </Button>
-                        </Grid>
-                    </materialDesign:Card>
-
-                    <!-- Mensagem Dinâmica -->
-                    <materialDesign:Card Padding="16"
-                                        Margin="0,0,0,16"
-                                        Visibility="{Binding ShowMessage, Converter={StaticResource BoolToVis}}">
-                        <materialDesign:Card.Style>
-                            <Style TargetType="materialDesign:Card" BasedOn="{StaticResource {x:Type materialDesign:Card}}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsMessageError}" Value="True">
-                                        <Setter Property="Background" Value="#F44336"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsMessageError}" Value="False">
-                                        <Setter Property="Background" Value="#4CAF50"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </materialDesign:Card.Style>
-                        
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Width="24" Height="24"
-                                                     Foreground="White"
-                                                     VerticalAlignment="Center"
-                                                     Margin="0,0,10,0">
-                                <materialDesign:PackIcon.Style>
-                                    <Style TargetType="materialDesign:PackIcon">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsMessageError}" Value="True">
-                                                <Setter Property="Kind" Value="AlertCircle"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding IsMessageError}" Value="False">
-                                                <Setter Property="Kind" Value="CheckCircle"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </materialDesign:PackIcon.Style>
-                            </materialDesign:PackIcon>
-                            
-                            <TextBlock Text="{Binding Message}"
-                                       Foreground="White"
-                                       FontSize="14"
-                                       FontWeight="Medium"
-                                       VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </materialDesign:Card>
-
-                    <!-- Contadores -->
-                    <Grid Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <materialDesign:Card Grid.Column="0" Padding="16" Margin="0,0,8,0">
-                            <StackPanel>
-                                <TextBlock Text="Total"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource MaterialDesignBodyLight}"/>
-                                <TextBlock Text="{Binding TotalPersons}"
-                                           FontSize="32"
-                                           FontWeight="Bold"
-                                           Foreground="#2196F3"/>
-                                <TextBlock Text="Pessoas"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource MaterialDesignBodyLight}"/>
-                            </StackPanel>
-                        </materialDesign:Card>
-
-                        <materialDesign:Card Grid.Column="1" Padding="16" Margin="4,0">
-                            <StackPanel>
-                                <TextBlock Text="Clientes"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource MaterialDesignBodyLight}"/>
-                                <TextBlock Text="{Binding TotalCustomers}"
-                                           FontSize="32"
-                                           FontWeight="Bold"
-                                           Foreground="#4CAF50"/>
-                            </StackPanel>
-                        </materialDesign:Card>
-
-                        <materialDesign:Card Grid.Column="2" Padding="16" Margin="4,0">
-                            <StackPanel>
-                                <TextBlock Text="Fornecedores"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource MaterialDesignBodyLight}"/>
-                                <TextBlock Text="{Binding TotalSuppliers}"
-                                           FontSize="32"
-                                           FontWeight="Bold"
-                                           Foreground="#FF9800"/>
-                            </StackPanel>
-                        </materialDesign:Card>
-
-                        <materialDesign:Card Grid.Column="3" Padding="16" Margin="8,0,0,0">
-                            <StackPanel>
-                                <TextBlock Text="Funcionários"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource MaterialDesignBodyLight}"/>
-                                <TextBlock Text="{Binding TotalEmployees}"
-                                           FontSize="32"
-                                           FontWeight="Bold"
-                                           Foreground="#9C27B0"/>
-                            </StackPanel>
-                        </materialDesign:Card>
-                    </Grid>
-
-                    <!-- Filtros e Busca -->
-                    <materialDesign:Card Padding="16" Margin="0,0,0,16">
-                        <StackPanel>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-
-                                <!-- Busca -->
-                                <TextBox Grid.Column="0"
-                                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                         materialDesign:HintAssist.Hint="Buscar por nome, email, telefone ou documento..."
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Margin="0,0,16,0">
-                                    <TextBox.InputBindings>
-                                        <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
-                                    </TextBox.InputBindings>
-                                </TextBox>
-
-                                <!-- Botões de filtro -->
-                                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <Button Content="Buscar"
-                                            Command="{Binding SearchCommand}"
-                                            Style="{StaticResource MaterialDesignRaisedButton}"
-                                            Background="#2196F3"
-                                            Margin="0,0,8,0"/>
-                                    
-                                    <Button Content="Limpar"
-                                            Command="{Binding ClearFilterCommand}"
-                                            Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                            <Button Command="{Binding SearchCommand}"
+                                    Style="{StaticResource MaterialDesignRaisedButton}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Magnify" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Buscar"/>
                                 </StackPanel>
-                            </Grid>
-
-                            <!-- Filtros por tipo -->
-                            <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
-                                <TextBlock Text="Filtrar por tipo:"
-                                           VerticalAlignment="Center"
-                                           Margin="0,0,12,0"
-                                           FontWeight="Medium"/>
-                                
-                                <Button Content="Clientes"
-                                        Command="{Binding FilterByTypeCommand}"
-                                        CommandParameter="{x:Static entities:PersonType.Customer}"
-                                        Style="{StaticResource MaterialDesignOutlinedButton}"
-                                        Margin="0,0,8,0"/>
-                                
-                                <Button Content="Fornecedores"
-                                        Command="{Binding FilterByTypeCommand}"
-                                        CommandParameter="{x:Static entities:PersonType.Supplier}"
-                                        Style="{StaticResource MaterialDesignOutlinedButton}"
-                                        Margin="0,0,8,0"/>
-                                
-                                <Button Content="Funcionários"
-                                        Command="{Binding FilterByTypeCommand}"
-                                        CommandParameter="{x:Static entities:PersonType.Employee}"
-                                        Style="{StaticResource MaterialDesignOutlinedButton}"
-                                        Margin="0,0,8,0"/>
-                                
-                                <Button Content="Ambos (Cliente/Fornecedor)"
-                                        Command="{Binding FilterByTypeCommand}"
-                                        CommandParameter="{x:Static entities:PersonType.Both}"
-                                        Style="{StaticResource MaterialDesignOutlinedButton}"/>
-                            </StackPanel>
+                            </Button>
                         </StackPanel>
-                    </materialDesign:Card>
+                    </Grid>
+                </Expander>
+            </materialDesign:Card>
 
-                    <!-- Lista de Pessoas -->
-                    <materialDesign:Card>
-                        <DataGrid ItemsSource="{Binding Persons}"
-                                  SelectedItem="{Binding SelectedPerson}"
-                                  AutoGenerateColumns="False"
-                                  CanUserAddRows="False"
-                                  CanUserDeleteRows="False"
-                                  IsReadOnly="True"
-                                  SelectionMode="Single"
-                                  HeadersVisibility="Column"
-                                  GridLinesVisibility="Horizontal"
-                                  materialDesign:DataGridAssist.CellPadding="8"
-                                  materialDesign:DataGridAssist.ColumnHeaderPadding="8">
-                            
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Nome" 
-                                                    Binding="{Binding Name}"
-                                                    Width="*"
-                                                    MinWidth="200"/>
-                                
-                                <DataGridTextColumn Header="Tipo" 
-                                                    Binding="{Binding Type}"
-                                                    Width="120"/>
-                                
-                                <DataGridTextColumn Header="Email" 
-                                                    Binding="{Binding Email}"
-                                                    Width="200"/>
-                                
-                                <DataGridTextColumn Header="Telefone" 
-                                                    Binding="{Binding PhoneNumber}"
-                                                    Width="120"/>
-                                
-                                <DataGridTextColumn Header="Documento" 
-                                                    Binding="{Binding TaxId}"
-                                                    Width="150"/>
-                                
-                                <DataGridTemplateColumn Header="Status" Width="100">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Border Background="{Binding IsActive, Converter={StaticResource BooleanToBrushConverter}}"
-                                                    CornerRadius="10"
-                                                    Padding="8,4">
-                                                <TextBlock Text="{Binding IsActive, Converter={StaticResource BooleanToStatusConverter}}"
-                                                           Foreground="White"
-                                                           FontSize="11"
-                                                           FontWeight="Medium"
-                                                           HorizontalAlignment="Center"/>
-                                            </Border>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
+            <!-- Main Content: Persons List -->
+            <materialDesign:Card Grid.Row="2" Margin="16" Padding="0"
+                                 materialDesign:ElevationAssist.Elevation="Dp2">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                                <DataGridTemplateColumn Header="Ações" Width="150">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                <Button Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                        Style="{StaticResource MaterialDesignIconButton}"
-                                                        ToolTip="Editar"
-                                                        Margin="4,0">
-                                                    <materialDesign:PackIcon Kind="Pencil" Width="20" Height="20"/>
-                                                </Button>
-                                                
-                                                <Button Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                        Style="{StaticResource MaterialDesignIconButton}"
-                                                        ToolTip="Excluir"
-                                                        Foreground="#F44336"
-                                                        Margin="4,0">
-                                                    <materialDesign:PackIcon Kind="Delete" Width="20" Height="20"/>
-                                                </Button>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </materialDesign:Card>
+                    <!-- List Header -->
+                    <Border Grid.Row="0" Background="{DynamicResource MaterialDesignToolBarBackground}" Padding="16,12">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="FormatListBulleted" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="Pessoas Cadastradas" Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
+                                <materialDesign:Chip Margin="12,0,0,0" Content="{Binding TotalPersons}" 
+                                                     ToolTip="Total de registros"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
 
-                    <!-- Paginação -->
-                    <materialDesign:Card Margin="0,16,0,0" Padding="16">
+                    <!-- DataGrid -->
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Persons}"
+                              SelectedItem="{Binding SelectedPerson, Mode=TwoWay}"
+                              AutoGenerateColumns="False" CanUserAddRows="False"
+                              IsReadOnly="True" SelectionMode="Single"
+                              VerticalScrollBarVisibility="Auto"
+                              materialDesign:DataGridAssist.CellPadding="12 8"
+                              materialDesign:DataGridAssist.ColumnHeaderPadding="12 8">
+                        <DataGrid.Columns>
+                            <!-- Status Icon -->
+                            <DataGridTemplateColumn Header="Status" Width="70">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <materialDesign:PackIcon Width="24" Height="24" HorizontalAlignment="Center">
+                                            <materialDesign:PackIcon.Style>
+                                                <Style TargetType="materialDesign:PackIcon">
+                                                    <Setter Property="Kind" Value="CheckCircle"/>
+                                                    <Setter Property="Foreground" Value="Green"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                            <Setter Property="Kind" Value="CloseCircle"/>
+                                                            <Setter Property="Foreground" Value="Red"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </materialDesign:PackIcon.Style>
+                                        </materialDesign:PackIcon>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- Nome -->
+                            <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="*" MinWidth="200">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Tipo -->
+                            <DataGridTemplateColumn Header="Tipo" Width="140">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="10" Padding="8,4" HorizontalAlignment="Center">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#4CAF50"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Type}" Value="Supplier">
+                                                            <Setter Property="Background" Value="#FF9800"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Type}" Value="Employee">
+                                                            <Setter Property="Background" Value="#9C27B0"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Type}" Value="Both">
+                                                            <Setter Property="Background" Value="#2196F3"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding Type}" Foreground="White" FontSize="11" FontWeight="Medium"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- Email -->
+                            <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="220"/>
+
+                            <!-- Telefone -->
+                            <DataGridTextColumn Header="Telefone" Binding="{Binding PhoneNumber}" Width="120"/>
+
+                            <!-- Documento -->
+                            <DataGridTextColumn Header="NIF/CPF" Binding="{Binding TaxId}" Width="140"/>
+
+                            <!-- Cidade -->
+                            <DataGridTextColumn Header="Cidade" Binding="{Binding City}" Width="140"/>
+
+                            <!-- Ações -->
+                            <DataGridTemplateColumn Header="Ações" Width="100">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Button Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                    Style="{StaticResource MaterialDesignIconButton}"
+                                                    ToolTip="Editar"
+                                                    Width="32" Height="32">
+                                                <materialDesign:PackIcon Kind="Pencil" Width="18" Height="18"/>
+                                            </Button>
+
+                                            <Button Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                    Style="{StaticResource MaterialDesignIconButton}"
+                                                    ToolTip="Excluir"
+                                                    Foreground="#F44336"
+                                                    Width="32" Height="32">
+                                                <materialDesign:PackIcon Kind="Delete" Width="18" Height="18"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Pagination -->
+                    <Border Grid.Row="2" Background="{DynamicResource MaterialDesignToolBarBackground}" Padding="16,12">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -338,285 +313,53 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Informações da página -->
-                            <TextBlock Grid.Column="0"
-                                       Text="{Binding PageInfo}"
-                                       VerticalAlignment="Center"
-                                       FontSize="14"
-                                       Foreground="{DynamicResource MaterialDesignBody}"/>
+                            <!-- Page Info -->
+                            <TextBlock Grid.Column="0" VerticalAlignment="Center">
+                                <Run Text="Página"/>
+                                <Run Text="{Binding CurrentPage}" FontWeight="Bold"/>
+                                <Run Text="de"/>
+                                <Run Text="{Binding TotalPages}" FontWeight="Bold"/>
+                                <Run Text="•"/>
+                                <Run Text="{Binding TotalItems}"/>
+                                <Run Text="registros"/>
+                            </TextBlock>
 
-                            <!-- Controles de página -->
+                            <!-- Page Controls -->
                             <StackPanel Grid.Column="2" Orientation="Horizontal">
                                 <Button Command="{Binding FirstPageCommand}"
                                         Style="{StaticResource MaterialDesignIconButton}"
-                                        ToolTip="Primeira página"
-                                        Margin="4,0">
-                                    <materialDesign:PackIcon Kind="PageFirst" Width="20" Height="20"/>
+                                        ToolTip="Primeira página">
+                                    <materialDesign:PackIcon Kind="PageFirst"/>
                                 </Button>
-
                                 <Button Command="{Binding PreviousPageCommand}"
                                         Style="{StaticResource MaterialDesignIconButton}"
-                                        ToolTip="Página anterior"
-                                        Margin="4,0">
-                                    <materialDesign:PackIcon Kind="ChevronLeft" Width="20" Height="20"/>
+                                        ToolTip="Página anterior">
+                                    <materialDesign:PackIcon Kind="ChevronLeft"/>
                                 </Button>
-
-                                <TextBlock Text="{Binding CurrentPage}"
-                                           VerticalAlignment="Center"
-                                           FontSize="16"
-                                           FontWeight="Bold"
-                                           Margin="12,0"
-                                           MinWidth="30"
-                                           TextAlignment="Center"/>
-
+                                <Border Background="{DynamicResource PrimaryHueMidBrush}" 
+                                        CornerRadius="4" Padding="12,6" Margin="8,0">
+                                    <TextBlock Text="{Binding CurrentPage}" 
+                                               Foreground="White" 
+                                               FontWeight="Bold"
+                                               VerticalAlignment="Center"/>
+                                </Border>
                                 <Button Command="{Binding NextPageCommand}"
                                         Style="{StaticResource MaterialDesignIconButton}"
-                                        ToolTip="Próxima página"
-                                        Margin="4,0">
-                                    <materialDesign:PackIcon Kind="ChevronRight" Width="20" Height="20"/>
+                                        ToolTip="Próxima página">
+                                    <materialDesign:PackIcon Kind="ChevronRight"/>
                                 </Button>
-
                                 <Button Command="{Binding LastPageCommand}"
                                         Style="{StaticResource MaterialDesignIconButton}"
-                                        ToolTip="Última página"
-                                        Margin="4,0">
-                                    <materialDesign:PackIcon Kind="PageLast" Width="20" Height="20"/>
+                                        ToolTip="Última página">
+                                    <materialDesign:PackIcon Kind="PageLast"/>
                                 </Button>
                             </StackPanel>
                         </Grid>
-                    </materialDesign:Card>
-
-                </StackPanel>
-            </ScrollViewer>
-
-            <!-- Painel Lateral - Formulário -->
-            <Border Grid.Column="1"
-                    Width="450"
-                    BorderBrush="{DynamicResource MaterialDesignDivider}"
-                    BorderThickness="1,0,0,0"
-                    Background="{DynamicResource MaterialDesignPaper}"
-                    Visibility="{Binding ShowForm, Converter={StaticResource BoolToVis}}">
-                
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="16">
-                        
-                        <!-- Header do Formulário -->
-                        <Grid Margin="0,0,0,16">
-                            <TextBlock Text="{Binding IsEditMode, Converter={StaticResource BooleanToTextConverter}, ConverterParameter='Editar Pessoa|Nova Pessoa'}"
-                                       Style="{StaticResource MaterialDesignHeadline6TextBlock}"
-                                       FontWeight="Bold"/>
-                            
-                            <Button Command="{Binding CancelCommand}"
-                                    Style="{StaticResource MaterialDesignIconButton}"
-                                    HorizontalAlignment="Right"
-                                    ToolTip="Fechar">
-                                <materialDesign:PackIcon Kind="Close" Width="24" Height="24"/>
-                            </Button>
-                        </Grid>
-
-                        <!-- Formulário -->
-                        <StackPanel>
-                            
-                            <!-- Seção de Foto no formulário -->
-                            <StackPanel Margin="0,0,0,16">
-                                <TextBlock Text="Foto" 
-                                        Style="{StaticResource MaterialDesignBody1TextBlock}"
-                                        FontWeight="Medium"
-                                        Margin="0,0,0,8"/>
-                                
-                                <Border BorderBrush="{DynamicResource MaterialDesignDivider}"
-                                        BorderThickness="2"
-                                        CornerRadius="75"
-                                        Width="150" Height="150"
-                                        Margin="0,0,0,8"
-                                        Background="{DynamicResource MaterialDesignPaper}">
-                                    <Grid>
-                                        <!-- Imagem da pessoa -->
-                                        <Image Source="{Binding ProfileImageUrl}"
-                                               Stretch="UniformToFill"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center">
-                                            <Image.Clip>
-                                                <EllipseGeometry Center="75,75" RadiusX="75" RadiusY="75"/>
-                                            </Image.Clip>
-                                            <Image.Style>
-                                                <Style TargetType="Image">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding ProfileImageUrl}" Value="">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding ProfileImageUrl}" Value="{x:Null}">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Image.Style>
-                                        </Image>
-                                        
-                                        <!-- Ícone padrão quando não há foto -->
-                                        <materialDesign:PackIcon Kind="Account"
-                                                                Width="80" Height="80"
-                                                                HorizontalAlignment="Center"
-                                                                VerticalAlignment="Center"
-                                                                Foreground="{DynamicResource MaterialDesignBodyLight}">
-                                            <materialDesign:PackIcon.Style>
-                                                <Style TargetType="materialDesign:PackIcon">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding ProfileImageUrl, Converter={StaticResource NullToVisibilityConverter}}" Value="Visible">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </materialDesign:PackIcon.Style>
-                                        </materialDesign:PackIcon>
-                                    </Grid>
-                                </Border>
-                                
-                                <Button Command="{Binding UploadPhotoCommand}"
-                                        Style="{StaticResource MaterialDesignOutlinedButton}"
-                                        Content="SELECIONAR FOTO"
-                                        HorizontalAlignment="Left"/>
-                            </StackPanel>
-                            <!-- Tipo -->
-                            <ComboBox materialDesign:HintAssist.Hint="Tipo *"
-                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                      SelectedValue="{Binding Type}"
-                                      SelectedValuePath="Tag"
-                                      Margin="0,0,0,16">
-                                <ComboBoxItem Content="Cliente" Tag="{x:Static entities:PersonType.Customer}"/>
-                                <ComboBoxItem Content="Fornecedor" Tag="{x:Static entities:PersonType.Supplier}"/>
-                                <ComboBoxItem Content="Funcionário" Tag="{x:Static entities:PersonType.Employee}"/>
-                                <ComboBoxItem Content="Cliente e Fornecedor" Tag="{x:Static entities:PersonType.Both}"/>
-                            </ComboBox>
-
-                            <!-- Nome -->
-                            <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Nome Completo *"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     Margin="0,0,0,16"/>
-
-                            <!-- Documento Fiscal -->
-                            <TextBox Text="{Binding TaxId, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="NIF / CPF / CNPJ"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     Margin="0,0,0,16"/>
-
-                            <!-- Documento Identificação -->
-                            <TextBox Text="{Binding IdentificationNumber, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="BI / RG / Passaporte"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     Margin="0,0,0,16"/>
-
-                            <!-- Email -->
-                            <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Email"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     Margin="0,0,0,16"/>
-
-                            <!-- Telefone -->
-                            <TextBox Text="{Binding PhoneNumber, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Telefone"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     Margin="0,0,0,16"/>
-
-                            <!-- Celular -->
-                            <TextBox Text="{Binding MobileNumber, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Celular"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     Margin="0,0,0,16"/>
-
-                            <!-- Website -->
-                            <TextBox Text="{Binding Website, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Website"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     Margin="0,0,0,16"/>
-
-                            <!-- Endereço -->
-                            <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Endereço"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     Margin="0,0,0,16"/>
-
-                            <!-- Cidade -->
-                            <TextBox Text="{Binding City, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Cidade"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     Margin="0,0,0,16"/>
-
-                            <!-- Estado -->
-                            <TextBox Text="{Binding State, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Estado"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     Margin="0,0,0,16"/>
-
-                            <!-- CEP -->
-                            <TextBox Text="{Binding PostalCode, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="CEP / Código Postal"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     Margin="0,0,0,16"/>
-
-                            <!-- País -->
-                            <TextBox Text="{Binding Country, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="País"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     Margin="0,0,0,16"/>
-
-                            <!-- Pessoa de Contato -->
-                            <TextBox Text="{Binding ContactPerson, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Pessoa de Contato"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     Margin="0,0,0,16"/>
-
-                            <!-- Limite de Crédito -->
-                            <TextBox Text="{Binding CreditLimit, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Limite de Crédito"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     Margin="0,0,0,16"/>
-
-                            <!-- Observações -->
-                            <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Observações"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     AcceptsReturn="True"
-                                     TextWrapping="Wrap"
-                                     MinLines="3"
-                                     MaxLines="5"
-                                     VerticalScrollBarVisibility="Auto"
-                                     Margin="0,0,0,16"/>
-
-                            <!-- Ativo -->
-                            <CheckBox Content="Ativo"
-                                      IsChecked="{Binding IsActive}"
-                                      Margin="0,0,0,20"/>
-
-                            <!-- Botões -->
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <Button Grid.Column="0"
-                                        Content="CANCELAR"
-                                        Command="{Binding CancelCommand}"
-                                        Style="{StaticResource MaterialDesignOutlinedButton}"
-                                        Margin="0,0,8,0"/>
-
-                                <Button Grid.Column="1"
-                                        Content="SALVAR"
-                                        Command="{Binding SaveCommand}"
-                                        Style="{StaticResource MaterialDesignRaisedButton}"
-                                        Background="#4CAF50"
-                                        Margin="8,0,0,0"/>
-                            </Grid>
-
-                        </StackPanel>
-
-                    </StackPanel>
-                </ScrollViewer>
-            </Border>
+                    </Border>
+                </Grid>
+            </materialDesign:Card>
 
         </Grid>
     </Grid>
 </Page>
+

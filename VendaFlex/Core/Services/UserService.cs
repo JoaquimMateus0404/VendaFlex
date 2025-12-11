@@ -595,6 +595,29 @@ namespace VendaFlex.Core.Services
             }
         }
 
+        public async Task<OperationResult<UserDto>> GetByPersonIdAsync(int personId)
+        {
+            try
+            {
+                if (personId <= 0)
+                    return OperationResult<UserDto>.CreateFailure("PersonId inválido.");
+
+                var entity = await _userRepository.GetByPersonIdAsync(personId);
+
+                if (entity == null)
+                    return OperationResult<UserDto>.CreateFailure("Usuário não encontrado para esta pessoa.");
+
+                var dto = _mapper.Map<UserDto>(entity);
+                return OperationResult<UserDto>.CreateSuccess(dto, "Usuário encontrado com sucesso.");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<UserDto>.CreateFailure(
+                    "Erro ao buscar usuário por PersonId.",
+                    new[] { ex.Message });
+            }
+        }
+
         /// <summary>
         /// Retorna usuários ativos do sistema.
         /// </summary>

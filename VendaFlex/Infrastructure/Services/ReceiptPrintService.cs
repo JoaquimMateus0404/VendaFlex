@@ -615,247 +615,275 @@ namespace VendaFlex.Infrastructure.Services
 
         #endregion
 
-        #region Roll Format - Thermal Printer (80mm)
+       #region Roll Format - Thermal Printer (80mm) - Xprinter XP-80
 
-        private void GenerateRollReceipt(
-            CompanyConfigDto cfg,
-            InvoiceDto invoice,
-            IEnumerable<InvoiceProductDto> items,
-            Dictionary<int, ProductDto> productMap,
-            PersonDto? customer,
-            string filePath)
+private void GenerateRollReceipt(
+    CompanyConfigDto cfg,
+    InvoiceDto invoice,
+    IEnumerable<InvoiceProductDto> items,
+    Dictionary<int, ProductDto> productMap,
+    PersonDto? customer,
+    string filePath)
+{
+    Document.Create(container =>
+    {
+        container.Page(page =>
         {
-            Document.Create(container =>
+            // Largura ajustada: 72mm (273 pontos) para Xprinter XP-80
+            page.Size(new PageSize(273, 1000));
+            page.MarginVertical(8);
+            page.MarginHorizontal(5);
+            page.DefaultTextStyle(x => x.FontSize(8).FontFamily("Courier New"));
+
+            page.Content().Column(column =>
             {
-                container.Page(page =>
-                {
-                    // 80mm width
-                    page.Size(new PageSize(302, 1000));
-                    page.MarginVertical(10);
-                    page.MarginHorizontal(8);
-                    page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Courier New"));
-
-                    page.Content().Column(column =>
-                    {
-                        ComposeRollHeader(column, cfg, invoice);
-                        ComposeRollCustomer(column, customer);
-                        ComposeRollItems(column, items, productMap, cfg.CurrencySymbol);
-                        ComposeRollTotals(column, invoice, cfg.CurrencySymbol);
-                        ComposeRollFooter(column, cfg);
-                    });
-                });
-            }).GeneratePdf(filePath);
-        }
-
-        private void ComposeRollHeader(ColumnDescriptor column, CompanyConfigDto cfg, InvoiceDto invoice)
-        {
-            // Logo (se houver e couber)
-            if (!string.IsNullOrWhiteSpace(cfg.LogoUrl) && File.Exists(cfg.LogoUrl))
-            {
-                column.Item().AlignCenter().MaxHeight(60).Image(cfg.LogoUrl);
-                column.Item().PaddingBottom(5);
-            }
-
-            // Nome da empresa
-            column.Item().AlignCenter().Text(cfg.CompanyName)
-                .FontSize(12)
-                .Bold();
-
-            // NIF
-            column.Item().AlignCenter().Text($"NIF: {cfg.TaxId}")
-                .FontSize(8);
-
-            // Telefone
-            if (!string.IsNullOrWhiteSpace(cfg.PhoneNumber))
-            {
-                column.Item().AlignCenter().Text($"Tel: {cfg.PhoneNumber}")
-                    .FontSize(8);
-            }
-
-            // Separador
-            column.Item().PaddingVertical(8).Text(new string('=', 40))
-                .FontSize(8);
-
-            // Informações da fatura
-            column.Item().Text(text =>
-            {
-                text.Span("FATURA: ").Bold();
-                text.Span(invoice.InvoiceNumber);
+                ComposeRollHeader(column, cfg, invoice);
+                ComposeRollCustomer(column, customer);
+                ComposeRollItems(column, items, productMap, cfg.CurrencySymbol);
+                ComposeRollTotals(column, invoice, cfg.CurrencySymbol);
+                ComposeRollFooter(column, cfg);
             });
+        });
+    }).GeneratePdf(filePath);
+}
 
-            column.Item().Text($"Data: {invoice.Date:dd/MM/yyyy HH:mm}");
-            
-            if (invoice.DueDate.HasValue)
-            {
-                column.Item().Text($"Vencimento: {invoice.DueDate.Value:dd/MM/yyyy}");
-            }
+private void ComposeRollHeader(ColumnDescriptor column, CompanyConfigDto cfg, InvoiceDto invoice)
+{
+    // Logo (redimensionado para caber)
+    if (!string.IsNullOrWhiteSpace(cfg.LogoUrl) && File.Exists(cfg.LogoUrl))
+    {
+        column.Item().AlignCenter().MaxHeight(50).MaxWidth(100).Image(cfg.LogoUrl);
+        column.Item().PaddingBottom(4);
+    }
 
-            column.Item().Text(text =>
-            {
-                text.Span("Status: ").Bold();
-                text.Span(GetStatusText(invoice.Status));
-            });
+    // Nome da empresa
+    column.Item().AlignCenter().Text(cfg.CompanyName)
+        .FontSize(11)
+        .Bold();
 
-            column.Item().PaddingVertical(5).Text(new string('-', 40))
-                .FontSize(8);
+    // NIF
+    column.Item().AlignCenter().Text($"NIF: {cfg.TaxId}")
+        .FontSize(7);
+
+    // Telefone
+    if (!string.IsNullOrWhiteSpace(cfg.PhoneNumber))
+    {
+        column.Item().AlignCenter().Text($"Tel: {cfg.PhoneNumber}")
+            .FontSize(7);
+    }
+
+    // Separador (reduzido para 32 caracteres)
+    column.Item().PaddingVertical(6).Text(new string('=', 32))
+        .FontSize(7);
+
+    // Informações da fatura
+    column.Item().Text($"FATURA: {invoice.InvoiceNumber}")
+        .FontSize(8)
+        .Bold();
+
+    column.Item().Text($"Data: {invoice.Date:dd/MM/yyyy HH:mm}")
+        .FontSize(8);
+    
+    if (invoice.DueDate.HasValue)
+    {
+        column.Item().Text($"Venc.: {invoice.DueDate.Value:dd/MM/yyyy}")
+            .FontSize(8);
+    }
+
+    column.Item().Text($"Status: {GetStatusText(invoice.Status)}")
+        .FontSize(8);
+
+    column.Item().PaddingVertical(4).Text(new string('-', 32))
+        .FontSize(7);
+}
+
+private void ComposeRollCustomer(ColumnDescriptor column, PersonDto? customer)
+{
+    if (customer == null) return;
+
+    column.Item().Text("CLIENTE").Bold().FontSize(9);
+    
+    // Nome truncado se necessário
+    var customerName = customer.Name.Length > 32 
+        ? customer.Name.Substring(0, 32) 
+        : customer.Name;
+    column.Item().Text(customerName).FontSize(8);
+    
+    if (!string.IsNullOrWhiteSpace(customer.TaxId))
+        column.Item().Text($"NIF: {customer.TaxId}").FontSize(7);
+    
+    if (!string.IsNullOrWhiteSpace(customer.PhoneNumber))
+        column.Item().Text($"Tel: {customer.PhoneNumber}").FontSize(7);
+
+    column.Item().PaddingVertical(4).Text(new string('-', 32))
+        .FontSize(7);
+}
+
+private void ComposeRollItems(
+    ColumnDescriptor column,
+    IEnumerable<InvoiceProductDto> items,
+    Dictionary<int, ProductDto> productMap,
+    string currencySymbol)
+{
+    // Cabeçalho simplificado
+    column.Item().Text("ITEM                QTD   TOTAL")
+        .FontSize(8)
+        .Bold();
+
+    column.Item().Text(new string('-', 32)).FontSize(7);
+
+    foreach (var item in items)
+    {
+        var name = productMap.TryGetValue(item.ProductId, out var p) 
+            ? p.Name 
+            : $"Produto {item.ProductId}";
+
+        var lineTotal = item.UnitPrice * item.Quantity;
+        var discountAmount = lineTotal * (item.DiscountPercentage / 100m);
+        var finalTotal = lineTotal - discountAmount;
+
+        // Nome do produto (máx 18 caracteres)
+        var truncatedName = name.Length > 18 
+            ? name.Substring(0, 18) 
+            : name.PadRight(18);
+        
+        // Linha principal: Nome | Quantidade | Total
+        column.Item().Text($"{truncatedName} {item.Quantity,3:N0} {finalTotal,7:N2}")
+            .FontSize(7);
+
+        // Detalhes do preço unitário
+        column.Item().Text($"  {currencySymbol}{item.UnitPrice:N2} x {item.Quantity:N2}")
+            .FontSize(6)
+            .Italic();
+
+        // Desconto se houver
+        if (item.DiscountPercentage > 0)
+        {
+            column.Item().Text($"  Desc {item.DiscountPercentage:N1}% -{currencySymbol}{discountAmount:N2}")
+                .FontSize(6);
         }
 
-        private void ComposeRollCustomer(ColumnDescriptor column, PersonDto? customer)
+        column.Item().PaddingBottom(2);
+    }
+
+    column.Item().PaddingVertical(4).Text(new string('=', 32))
+        .FontSize(7);
+}
+
+private void ComposeRollTotals(ColumnDescriptor column, InvoiceDto invoice, string currencySymbol)
+{
+    // Subtotal
+    column.Item().Text($"Subtotal: {currencySymbol} {invoice.SubTotal:N2}")
+        .FontSize(8);
+
+    // Desconto
+    if (invoice.DiscountAmount > 0)
+    {
+        column.Item().Text($"Desconto: -{currencySymbol} {invoice.DiscountAmount:N2}")
+            .FontSize(8);
+    }
+
+    // Imposto
+    if (invoice.TaxAmount > 0)
+    {
+        column.Item().Text($"Imposto: {currencySymbol} {invoice.TaxAmount:N2}")
+            .FontSize(8);
+    }
+
+    column.Item().PaddingVertical(4).Text(new string('=', 32))
+        .FontSize(7);
+
+    // Total destacado
+    column.Item().Text($"TOTAL: {currencySymbol} {invoice.Total:N2}")
+        .FontSize(11)
+        .Bold();
+
+    if (invoice.PaidAmount > 0)
+    {
+        column.Item().PaddingTop(4);
+        
+        // Pago
+        column.Item().Text($"Pago: {currencySymbol} {invoice.PaidAmount:N2}")
+            .FontSize(9)
+            .Bold();
+
+        var balance = invoice.Total - invoice.PaidAmount;
+        if (balance < 0)
         {
-            if (customer == null) return;
-
-            column.Item().Text("CLIENTE").Bold().FontSize(10);
-            column.Item().Text(customer.Name).FontSize(9);
-            
-            if (!string.IsNullOrWhiteSpace(customer.TaxId))
-                column.Item().Text($"NIF: {customer.TaxId}").FontSize(8);
-            
-            if (!string.IsNullOrWhiteSpace(customer.PhoneNumber))
-                column.Item().Text($"Tel: {customer.PhoneNumber}").FontSize(8);
-
-            column.Item().PaddingVertical(5).Text(new string('-', 40))
-                .FontSize(8);
-        }
-
-        private void ComposeRollItems(
-            ColumnDescriptor column,
-            IEnumerable<InvoiceProductDto> items,
-            Dictionary<int, ProductDto> productMap,
-            string currencySymbol)
-        {
-            // Cabeçalho da tabela
-            column.Item().Text("QTD  PRODUTO              TOTAL")
+            column.Item().Text($"Troco: {currencySymbol} {Math.Abs(balance):N2}")
                 .FontSize(9)
                 .Bold();
-
-            column.Item().Text(new string('-', 40)).FontSize(8);
-
-            foreach (var item in items)
-            {
-                var name = productMap.TryGetValue(item.ProductId, out var p) 
-                    ? p.Name 
-                    : $"Produto {item.ProductId}";
-
-                var lineTotal = item.UnitPrice * item.Quantity;
-                var discountAmount = lineTotal * (item.DiscountPercentage / 100m);
-                var finalTotal = lineTotal - discountAmount;
-
-                // Nome do produto (quebrado se necessário)
-                var truncatedName = name.Length > 20 ? name.Substring(0, 20) : name.PadRight(20);
-                
-                column.Item().Text($"{item.Quantity,3:N0}  {truncatedName}  {finalTotal,8:N2}")
-                    .FontSize(8);
-
-                // Linha de detalhes
-                column.Item().Text($"     {currencySymbol} {item.UnitPrice:N2} x {item.Quantity:N2}")
-                    .FontSize(7)
-                    .Italic();
-
-                if (item.DiscountPercentage > 0)
-                {
-                    column.Item().Text($"     Desc: {item.DiscountPercentage:N1}% (-{currencySymbol} {discountAmount:N2})")
-                        .FontSize(7);
-                }
-            }
-
-            column.Item().PaddingVertical(5).Text(new string('=', 40))
-                .FontSize(8);
         }
-
-        private void ComposeRollTotals(ColumnDescriptor column, InvoiceDto invoice, string currencySymbol)
+        else if (balance > 0)
         {
-            column.Item().Row(row =>
-            {
-                row.RelativeItem().Text("Subtotal:");
-                row.AutoItem().Text($"{currencySymbol} {invoice.SubTotal:N2}");
-            });
-
-            if (invoice.DiscountAmount > 0)
-            {
-                column.Item().Row(row =>
-                {
-                    row.RelativeItem().Text("Desconto:");
-                    row.AutoItem().Text($"-{currencySymbol} {invoice.DiscountAmount:N2}");
-                });
-            }
-
-            if (invoice.TaxAmount > 0)
-            {
-                column.Item().Row(row =>
-                {
-                    row.RelativeItem().Text("Imposto:");
-                    row.AutoItem().Text($"{currencySymbol} {invoice.TaxAmount:N2}");
-                });
-            }
-
-            column.Item().PaddingVertical(5).Text(new string('=', 40))
-                .FontSize(8);
-
-            column.Item().Row(row =>
-            {
-                row.RelativeItem().Text("TOTAL:").Bold().FontSize(11);
-                row.AutoItem().Text($"{currencySymbol} {invoice.Total:N2}").Bold().FontSize(12);
-            });
-
-            if (invoice.PaidAmount > 0)
-            {
-                column.Item().PaddingTop(5);
-                
-                column.Item().Row(row =>
-                {
-                    row.RelativeItem().Text("Pago:");
-                    row.AutoItem().Text($"{currencySymbol} {invoice.PaidAmount:N2}").Bold();
-                });
-
-                var balance = invoice.Total - invoice.PaidAmount;
-                if (balance < 0)
-                {
-                    column.Item().Row(row =>
-                    {
-                        row.RelativeItem().Text("Troco:");
-                        row.AutoItem().Text($"{currencySymbol} {Math.Abs(balance):N2}").Bold();
-                    });
-                }
-                else if (balance > 0)
-                {
-                    column.Item().Row(row =>
-                    {
-                        row.RelativeItem().Text("Saldo:");
-                        row.AutoItem().Text(text =>
-                        {
-                            text.Span($"{currencySymbol} {balance:N2}").Bold();
-                        });
-                    });
-                }
-            }
-
-            column.Item().PaddingVertical(5).Text(new string('=', 40))
-                .FontSize(8);
+            column.Item().Text($"Saldo: {currencySymbol} {balance:N2}")
+                .FontSize(9)
+                .Bold();
         }
+    }
 
-        private void ComposeRollFooter(ColumnDescriptor column, CompanyConfigDto cfg)
+    column.Item().PaddingVertical(4).Text(new string('=', 32))
+        .FontSize(7);
+}
+
+private void ComposeRollFooter(ColumnDescriptor column, CompanyConfigDto cfg)
+{
+    if (!string.IsNullOrWhiteSpace(cfg.InvoiceFooterText))
+    {
+        // Footer text com quebra de linha se necessário
+        var footerLines = SplitTextToFit(cfg.InvoiceFooterText, 32);
+        foreach (var line in footerLines)
         {
-            if (!string.IsNullOrWhiteSpace(cfg.InvoiceFooterText))
-            {
-                column.Item().PaddingTop(10).AlignCenter()
-                    .Text(cfg.InvoiceFooterText)
-                    .FontSize(7)
-                    .Italic();
-            }
-
-            column.Item().PaddingTop(10).AlignCenter()
-                .Text(DateTime.Now.ToString("dd/MM/yyyy HH:mm"))
-                .FontSize(7);
-
-            column.Item().AlignCenter()
-                .Text("VendaFlex - Sistema de Gestão")
-                .FontSize(6);
-
-            // Espaço para corte
-            column.Item().PaddingTop(20);
+            column.Item().AlignLeft()
+                .Text(line)
+                .FontSize(6)
+                .Italic();
         }
+        column.Item().PaddingBottom(6);
+    }
 
-        #endregion
+    column.Item().AlignLeft()
+        .Text(DateTime.Now.ToString("dd/MM/yyyy HH:mm"))
+        .FontSize(6);
+
+    column.Item().AlignLeft()
+        .Text("VendaFlex")
+        .FontSize(6);
+
+    // Espaço extra para corte
+    column.Item().PaddingTop(15);
+}
+
+// Método auxiliar para quebrar texto longo
+private List<string> SplitTextToFit(string text, int maxLength)
+{
+    var lines = new List<string>();
+    var words = text.Split(' ');
+    var currentLine = "";
+
+    foreach (var word in words)
+    {
+        if ((currentLine + " " + word).Length <= maxLength)
+        {
+            currentLine = string.IsNullOrEmpty(currentLine) 
+                ? word 
+                : currentLine + " " + word;
+        }
+        else
+        {
+            if (!string.IsNullOrEmpty(currentLine))
+                lines.Add(currentLine);
+            currentLine = word;
+        }
+    }
+
+    if (!string.IsNullOrEmpty(currentLine))
+        lines.Add(currentLine);
+
+    return lines;
+}
+
+#endregion
 
         #region Helper Methods
 

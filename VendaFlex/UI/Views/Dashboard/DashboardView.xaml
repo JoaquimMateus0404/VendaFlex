@@ -170,9 +170,15 @@
 
         <!-- SIDEBAR -->
         <Border Grid.Column="0" Background="{StaticResource ModernGradient}" BorderBrush="#E8EBF0" BorderThickness="0,0,1,0">
-            <StackPanel Orientation="Vertical">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
                 <!-- Header Logo -->
-                <Border Padding="20,24,20,20" BorderBrush="#E8EBF0" BorderThickness="0,0,0,1">
+                <Border Grid.Row="0" Padding="20,24,20,20" BorderBrush="#E8EBF0" BorderThickness="0,0,0,1">
                     <StackPanel Orientation="Horizontal">
                         <Viewbox Width="40" Height="40" Margin="0,0,12,0">
                             <Grid>
@@ -192,7 +198,7 @@
                 </Border>
 
                 <!-- Navigation Menu -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,20,0,0">
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,20,0,0">
                     <StackPanel Orientation="Vertical">
                         <!-- Dashboard -->
                         <Button Style="{StaticResource SidebarButtonActiveStyle}">
@@ -215,6 +221,14 @@
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="FileDocumentEdit" Width="24" Height="24" Margin="0,0,12,0"/>
                                 <TextBlock Text="Gestão de Faturas" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        
+                        <!-- Gestao de Despesas -->
+                        <Button Style="{StaticResource SidebarButtonStyle}" Click="ExpenseManagementButton_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="CreditCardMinus" Width="24" Height="24" Margin="0,0,12,0"/>
+                                <TextBlock Text="Gestão de Despesas" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
 
@@ -271,15 +285,13 @@
                 </ScrollViewer>
 
                 <!-- Footer -->
-                <StackPanel VerticalAlignment="Bottom" Margin="0,20,0,0">
-                    <Border BorderBrush="#E8EBF0" BorderThickness="0,1,0,0" Padding="0,16,0,0">
-                        <StackPanel>
-                            <TextBlock Text="v1.0.0" FontSize="11" Foreground="#9CA3AF" TextAlignment="Center"/>
-                            <TextBlock Text="© 2025 VendaFlex" FontSize="10" Foreground="#D1D5DB" TextAlignment="Center" Margin="0,4,0,0"/>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </StackPanel>
+                <Border Grid.Row="2" BorderBrush="#E8EBF0" BorderThickness="0,1,0,0" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="v1.0.0" FontSize="11" Foreground="#9CA3AF" TextAlignment="Center"/>
+                        <TextBlock Text="© 2025 VendaFlex" FontSize="10" Foreground="#D1D5DB" TextAlignment="Center" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
         </Border>
 
         <!-- MAIN CONTENT -->
@@ -484,7 +496,7 @@
 
                                             <Button Style="{DynamicResource MaterialDesignFlatButton}"
        Height="40" HorizontalContentAlignment="Left"
-       Padding="12,0">
+       Padding="12,0" Click="HelpButton_Click">
                                                 <StackPanel Orientation="Horizontal">
                                                     <materialDesign:PackIcon Kind="HelpCircle" 
                                Width="20" Height="20" 

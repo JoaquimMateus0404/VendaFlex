@@ -131,4 +131,46 @@ namespace VendaFlex.Infrastructure.Converters
         private static bool IsHidden(object parameter)
             => parameter is string s && s.IndexOf("hidden", StringComparison.OrdinalIgnoreCase) >= 0;
     }
+
+    /// <summary>
+    /// Converts a numeric value to boolean by comparing if it's greater than a threshold.
+    /// Parameter: the threshold value to compare against (default: 0)
+    /// </summary>
+    public class GreaterThanConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value == null) return false;
+
+            var threshold = 0.0;
+            if (parameter != null)
+            {
+                if (parameter is int intParam)
+                    threshold = intParam;
+                else if (parameter is double doubleParam)
+                    threshold = doubleParam;
+                else if (parameter is string strParam && double.TryParse(strParam, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed))
+                    threshold = parsed;
+            }
+
+            double valueAsDouble = 0;
+            if (value is int intValue)
+                valueAsDouble = intValue;
+            else if (value is double doubleValue)
+                valueAsDouble = doubleValue;
+            else if (value is long longValue)
+                valueAsDouble = longValue;
+            else if (value is decimal decimalValue)
+                valueAsDouble = (double)decimalValue;
+            else if (value is float floatValue)
+                valueAsDouble = floatValue;
+            else if (value is string strValue && double.TryParse(strValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsedValue))
+                valueAsDouble = parsedValue;
+
+            return valueAsDouble > threshold;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => Binding.DoNothing;
+    }
 }
