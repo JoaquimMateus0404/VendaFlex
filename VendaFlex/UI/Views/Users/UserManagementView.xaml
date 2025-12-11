@@ -1,17 +1,1026 @@
-﻿<Page x:Class="VendaFlex.UI.Views.Users.UserManagementView"
+<Page x:Class="VendaFlex.UI.Views.Users.UserManagementView"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+      xmlns:converters="clr-namespace:VendaFlex.Infrastructure.Converters"
+      xmlns:entities="clr-namespace:VendaFlex.Data.Entities"
       mc:Ignorable="d" 
-      d:DesignHeight="900" d:DesignWidth="1400"
+      d:DesignHeight="900" d:DesignWidth="1440"
       Background="{DynamicResource MaterialDesignPaper}">
 
-   
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:BooleanToBrushConverter x:Key="BooleanToBrushConverter"/>
+        <converters:BooleanToStatusConverter x:Key="BooleanToStatusConverter"/>
+
+        <!-- Status Color Converter -->
+        <Style x:Key="StatusBadgeStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="Inactive">
+                    <Setter Property="Background" Value="#9E9E9E"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Suspended">
+                    <Setter Property="Background" Value="#FF9800"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="PendingActivation">
+                    <Setter Property="Background" Value="#2196F3"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Page.Resources>
 
     <Grid>
-        
+        <!-- Loading Overlay -->
+        <Grid Background="#AA000000" 
+              Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"
+              Panel.ZIndex="1000">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                             IsIndeterminate="True" Width="60" Height="60"/>
+                <TextBlock Text="Carregando usuários..." Foreground="White" Margin="0,16,0,0"
+                           Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- User Details Modal -->
+        <Grid Background="#DD000000"
+              Visibility="{Binding IsDetailsModalOpen, Converter={StaticResource BooleanToVisibilityConverter}}"
+              Panel.ZIndex="999">
+            <materialDesign:Card Width="1200" MaxHeight="800" VerticalAlignment="Center" Margin="40"
+                                 materialDesign:ElevationAssist.Elevation="Dp8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Modal Header -->
+                    <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryMid" Padding="24,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="AccountDetails" Width="32" Height="32" 
+                                                         VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Detalhes do Usuário" 
+                                               Style="{StaticResource MaterialDesignHeadline6TextBlock}"/>
+                                    <TextBlock Text="{Binding SelectedUser.Username}" 
+                                               Style="{StaticResource MaterialDesignCaptionTextBlock}" 
+                                               Opacity="0.8"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Button Grid.Column="1" 
+                                    Command="{Binding CloseDetailsCommand}"
+                                    Style="{StaticResource MaterialDesignIconButton}"
+                                    ToolTip="Fechar">
+                                <materialDesign:PackIcon Kind="Close" Width="24" Height="24"/>
+                            </Button>
+                        </Grid>
+                    </materialDesign:ColorZone>
+
+                    <!-- Modal Content with Tabs -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <TabControl Margin="0" Style="{StaticResource MaterialDesignNavigationRailTabControl}"
+                                    SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
+                            
+                            <!-- Tab 1: Informações Gerais -->
+                            <TabItem Header="Geral">
+                                <TabItem.HeaderTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <materialDesign:PackIcon Kind="Information" Width="24" Height="24" 
+                                                                     HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Geral" Margin="0,4,0,0" FontSize="11"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </TabItem.HeaderTemplate>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <StackPanel Margin="24" MaxWidth="800">
+                                        <!-- User Info -->
+                                        <TextBlock Text="Informações do Usuário" 
+                                                   Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                                                   Margin="0,0,0,16"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="16"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Username -->
+                                            <TextBox Grid.Row="0" Grid.Column="0" Margin="0,0,0,16"
+                                                     Text="{Binding Username, Mode=TwoWay}"
+                                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                     materialDesign:HintAssist.Hint="Nome de Usuário"
+                                                     IsEnabled="{Binding IsEditMode}"/>
+
+                                            <!-- Person -->
+                                            <ComboBox Grid.Row="0" Grid.Column="2" Margin="0,0,0,16"
+                                                      ItemsSource="{Binding Persons}"
+                                                      SelectedItem="{Binding SelectedPerson, Mode=TwoWay}"
+                                                      DisplayMemberPath="Name"
+                                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                                      materialDesign:HintAssist.Hint="Pessoa Associada"
+                                                      IsEnabled="{Binding IsEditMode}"/>
+
+                                            <!-- Status -->
+                                            <ComboBox Grid.Row="1" Grid.Column="0" Margin="0,0,0,16"
+                                                      SelectedValue="{Binding Status, Mode=TwoWay}"
+                                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                                      materialDesign:HintAssist.Hint="Status"
+                                                      IsEnabled="{Binding IsEditMode}">
+                                                <ComboBoxItem Content="Ativo" Tag="{x:Static entities:LoginStatus.Active}"/>
+                                                <ComboBoxItem Content="Inativo" Tag="{x:Static entities:LoginStatus.Inactive}"/>
+                                                <ComboBoxItem Content="Suspenso" Tag="{x:Static entities:LoginStatus.Suspended}"/>
+                                                <ComboBoxItem Content="Pendente Ativação" Tag="{x:Static entities:LoginStatus.PendingActivation}"/>
+                                            </ComboBox>
+
+                                            <!-- Last Login -->
+                                            <TextBox Grid.Row="1" Grid.Column="2" Margin="0,0,0,16"
+                                                     Text="{Binding SelectedUser.LastLoginAt, StringFormat='dd/MM/yyyy HH:mm'}"
+                                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                     materialDesign:HintAssist.Hint="Último Login"
+                                                     IsReadOnly="True"/>
+
+                                            <!-- Failed Attempts -->
+                                            <TextBox Grid.Row="2" Grid.Column="0" Margin="0,0,0,16"
+                                                     Text="{Binding FailedLoginAttempts, Mode=TwoWay}"
+                                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                     materialDesign:HintAssist.Hint="Tentativas Falhadas"
+                                                     IsReadOnly="True"/>
+
+                                            <!-- Locked Until -->
+                                            <TextBox Grid.Row="2" Grid.Column="2" Margin="0,0,0,16"
+                                                     Text="{Binding LockedUntil, StringFormat='dd/MM/yyyy HH:mm'}"
+                                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                     materialDesign:HintAssist.Hint="Bloqueado Até"
+                                                     IsReadOnly="True"/>
+
+                                            <!-- Notes -->
+                                            <TextBox Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,16"
+                                                     Text="{Binding Notes, Mode=TwoWay}"
+                                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                     materialDesign:HintAssist.Hint="Notas (Admin)"
+                                                     MinLines="3" MaxLines="5"
+                                                     TextWrapping="Wrap" AcceptsReturn="True"
+                                                     VerticalScrollBarVisibility="Auto"
+                                                     IsEnabled="{Binding IsEditMode}"/>
+                                        </Grid>
+
+                                        <!-- Security Options -->
+                                        <TextBlock Text="Opções de Segurança" 
+                                                   Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                                                   Margin="0,16,0,16"/>
+
+                                        <CheckBox Content="Requer mudança de senha no próximo login"
+                                                  IsChecked="{Binding RequirePasswordChange, Mode=TwoWay}"
+                                                  Margin="0,0,0,8"
+                                                  IsEnabled="{Binding IsEditMode}"/>
+
+                                        <CheckBox Content="Autenticação de dois fatores (2FA)"
+                                                  IsChecked="{Binding TwoFactorEnabled, Mode=TwoWay}"
+                                                  Margin="0,0,0,16"
+                                                  IsEnabled="{Binding IsEditMode}"/>
+
+                                        <!-- Action Buttons -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                            <Button Command="{Binding EditCommand}"
+                                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                                    Margin="0,0,8,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="Pencil" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="Editar"/>
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding SaveCommand}"
+                                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                                    Margin="0,0,8,0"
+                                                    Visibility="{Binding IsEditMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="Salvar"/>
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding CancelCommand}"
+                                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                                    Margin="0,0,8,0"
+                                                    Visibility="{Binding IsEditMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="Cancel" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="Cancelar"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </TabItem>
+
+                            <!-- Tab 2: Privilégios -->
+                            <TabItem Header="Privilégios">
+                                <TabItem.HeaderTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <materialDesign:PackIcon Kind="ShieldAccount" Width="24" Height="24" 
+                                                                     HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Privilégios" Margin="0,4,0,0" FontSize="11"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </TabItem.HeaderTemplate>
+                                <Grid Margin="24">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Available Privileges -->
+                                    <materialDesign:Card Grid.Column="0" Padding="16">
+                                        <StackPanel>
+                                            <TextBlock Text="Privilégios Disponíveis" 
+                                                       Style="{StaticResource MaterialDesignSubtitle1TextBlock}" 
+                                                       Margin="0,0,0,8"/>
+                                            
+                                            <TextBox Text="{Binding PrivilegeSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                     materialDesign:HintAssist.Hint="Buscar privilégio..."
+                                                     materialDesign:TextFieldAssist.HasLeadingIcon="True"
+                                                     materialDesign:TextFieldAssist.LeadingIcon="Magnify"
+                                                     Margin="0,0,0,12"/>
+
+                                            <ListBox ItemsSource="{Binding AvailablePrivileges}"
+                                                     SelectedItem="{Binding SelectedAvailablePrivilege, Mode=TwoWay}"
+                                                     Height="400">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Margin="8">
+                                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="{Binding Description}" 
+                                                                       Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                        </StackPanel>
+                                    </materialDesign:Card>
+
+                                    <!-- Transfer Buttons -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                                        <Button Command="{Binding GrantPrivilegeCommand}"
+                                                Style="{StaticResource MaterialDesignFloatingActionButton}"
+                                                ToolTip="Conceder privilégio"
+                                                Margin="0,0,0,16">
+                                            <materialDesign:PackIcon Kind="ChevronRight" Width="24" Height="24"/>
+                                        </Button>
+
+                                        <Button Command="{Binding RevokePrivilegeCommand}"
+                                                Style="{StaticResource MaterialDesignFloatingActionButton}"
+                                                ToolTip="Revogar privilégio">
+                                            <materialDesign:PackIcon Kind="ChevronLeft" Width="24" Height="24"/>
+                                        </Button>
+                                    </StackPanel>
+
+                                    <!-- Granted Privileges -->
+                                    <materialDesign:Card Grid.Column="2" Padding="16">
+                                        <StackPanel>
+                                            <TextBlock Text="Privilégios Concedidos" 
+                                                       Style="{StaticResource MaterialDesignSubtitle1TextBlock}" 
+                                                       Margin="0,0,0,16"/>
+
+                                            <ListBox ItemsSource="{Binding GrantedPrivileges}"
+                                                     SelectedItem="{Binding SelectedGrantedPrivilege, Mode=TwoWay}"
+                                                     Height="450">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Margin="8">
+                                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="{Binding Description}" 
+                                                                       Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                        </StackPanel>
+                                    </materialDesign:Card>
+                                </Grid>
+                            </TabItem>
+
+                            <!-- Tab 3: Segurança & Auditoria -->
+                            <TabItem Header="Segurança">
+                                <TabItem.HeaderTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <materialDesign:PackIcon Kind="Security" Width="24" Height="24" 
+                                                                     HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Segurança" Margin="0,4,0,0" FontSize="11"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </TabItem.HeaderTemplate>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <StackPanel Margin="24">
+                                        <!-- Security Score -->
+                                        <materialDesign:Card Padding="16" Margin="0,0,0,16">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <materialDesign:PackIcon Grid.Column="0" Kind="ShieldCheck" 
+                                                                         Width="48" Height="48" 
+                                                                         VerticalAlignment="Center" 
+                                                                         Margin="0,0,16,0">
+                                                    <materialDesign:PackIcon.Style>
+                                                        <Style TargetType="materialDesign:PackIcon">
+                                                            <Setter Property="Foreground" Value="#F44336"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding SecurityScore}" Value="100">
+                                                                    <Setter Property="Foreground" Value="#4CAF50"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </materialDesign:PackIcon.Style>
+                                                </materialDesign:PackIcon>
+
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock Text="Pontuação de Segurança" 
+                                                               Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
+                                                    <ProgressBar Value="{Binding SecurityScore}" 
+                                                                 Maximum="100" Height="8" Margin="0,8,0,4"/>
+                                                    <TextBlock>
+                                                        <Run Text="{Binding SecurityScore}"/>
+                                                        <Run Text="/ 100"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Grid>
+                                        </materialDesign:Card>
+
+                                        <!-- Password Management -->
+                                        <TextBlock Text="Gerenciamento de Senha" 
+                                                   Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                                                   Margin="0,0,0,16"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="16"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <PasswordBox Grid.Row="0" Grid.Column="0" Margin="0,0,0,16"
+                                                         Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                                         materialDesign:HintAssist.Hint="Nova Senha"
+                                                         materialDesign:PasswordBoxAssist.Password="{Binding NewPassword, Mode=TwoWay}"/>
+
+                                            <PasswordBox Grid.Row="0" Grid.Column="2" Margin="0,0,0,16"
+                                                         Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                                         materialDesign:HintAssist.Hint="Confirmar Nova Senha"
+                                                         materialDesign:PasswordBoxAssist.Password="{Binding ConfirmNewPassword, Mode=TwoWay}"/>
+
+                                            <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" 
+                                                    Command="{Binding ChangePasswordCommand}"
+                                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                                    HorizontalAlignment="Left" Margin="0,0,0,16">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="Key" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="Alterar Senha"/>
+                                                </StackPanel>
+                                            </Button>
+
+                                            <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
+                                                <Run Text="Última alteração:"/>
+                                                <Run Text="{Binding LastPasswordChange}" FontWeight="SemiBold"/>
+                                            </TextBlock>
+                                        </Grid>
+
+                                        <!-- Recent IP Addresses -->
+                                        <TextBlock Text="Endereços IP Recentes" 
+                                                   Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                                                   Margin="0,24,0,16"/>
+
+                                        <ItemsControl ItemsSource="{Binding RecentIpAddresses}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <materialDesign:Chip Margin="0,0,8,8">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="Ip" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="{Binding}"/>
+                                                        </StackPanel>
+                                                    </materialDesign:Chip>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                        </ItemsControl>
+
+                                        <!-- Security Actions -->
+                                        <TextBlock Text="Ações de Segurança" 
+                                                   Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                                                   Margin="0,24,0,16"/>
+
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Command="{Binding UnlockUserCommand}"
+                                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                                    Margin="0,0,8,0"
+                                                    Background="#4CAF50">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="LockOpenVariant" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="Desbloquear"/>
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding ResetFailedAttemptsCommand}"
+                                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                                    Margin="0,0,8,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="Refresh" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="Resetar Tentativas"/>
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding ForceLogoutCommand}"
+                                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                                    Margin="0,0,8,0"
+                                                    Background="#FF9800">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="Logout" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="Forçar Logout"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </TabItem>
+
+                            <!-- Tab 4: Atividades -->
+                            <TabItem Header="Atividades">
+                                <TabItem.HeaderTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <materialDesign:PackIcon Kind="History" Width="24" Height="24" 
+                                                                     HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Atividades" Margin="0,4,0,0" FontSize="11"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </TabItem.HeaderTemplate>
+                                <Grid Margin="24">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Histórico de Atividades" 
+                                               Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                                               Margin="0,0,0,16"/>
+
+                                    <DataGrid Grid.Row="1" ItemsSource="{Binding UserActivityLog}"
+                                              AutoGenerateColumns="False" CanUserAddRows="False"
+                                              IsReadOnly="True" SelectionMode="Single"
+                                              VerticalScrollBarVisibility="Auto"
+                                              materialDesign:DataGridAssist.CellPadding="12 8"
+                                              materialDesign:DataGridAssist.ColumnHeaderPadding="12 8">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Data/Hora" 
+                                                                Binding="{Binding Timestamp, StringFormat='dd/MM/yyyy HH:mm:ss'}" 
+                                                                Width="150"/>
+                                            <DataGridTextColumn Header="Ação" Binding="{Binding Action}" Width="200"/>
+                                            <DataGridTextColumn Header="Detalhes" Binding="{Binding Details}" Width="*"/>
+                                            <DataGridTextColumn Header="IP" Binding="{Binding IpAddress}" Width="120"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+                            </TabItem>
+
+                            <!-- Tab 5: Configurações -->
+                            <TabItem Header="Config">
+                                <TabItem.HeaderTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <materialDesign:PackIcon Kind="Cog" Width="24" Height="24" 
+                                                                     HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Config" Margin="0,4,0,0" FontSize="11"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </TabItem.HeaderTemplate>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <StackPanel Margin="24" MaxWidth="600">
+                                        <TextBlock Text="Configurações Avançadas" 
+                                                   Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                                                   Margin="0,0,0,16"/>
+
+                                        <!-- Status Actions -->
+                                        <TextBlock Text="Status do Usuário" 
+                                                   Style="{StaticResource MaterialDesignSubtitle1TextBlock}" 
+                                                   Margin="0,0,0,12"/>
+
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+                                            <Button Command="{Binding ActivateUserCommand}"
+                                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                                    Margin="0,0,8,0"
+                                                    Background="#4CAF50">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="CheckCircle" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="Ativar"/>
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding DeactivateUserCommand}"
+                                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                                    Margin="0,0,8,0"
+                                                    Background="#9E9E9E">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="Cancel" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="Desativar"/>
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding SuspendUserCommand}"
+                                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                                    Background="#FF9800">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="Pause" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="Suspender"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+
+                                        <!-- Danger Zone -->
+                                        <Border BorderBrush="#F44336" BorderThickness="2" 
+                                                CornerRadius="4" Padding="16" Margin="0,16,0,0">
+                                            <StackPanel>
+                                                <TextBlock Text="Zona de Perigo" 
+                                                           Foreground="#F44336" 
+                                                           Style="{StaticResource MaterialDesignSubtitle1TextBlock}" 
+                                                           Margin="0,0,0,12"/>
+
+                                                <Button Command="{Binding DeleteUserCommand}"
+                                                        Style="{StaticResource MaterialDesignRaisedButton}"
+                                                        Background="#F44336"
+                                                        HorizontalAlignment="Left">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <materialDesign:PackIcon Kind="DeleteForever" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="Excluir Usuário"/>
+                                                    </StackPanel>
+                                                </Button>
+
+                                                <TextBlock Text="Esta ação não pode ser desfeita!" 
+                                                           Foreground="#F44336" 
+                                                           Margin="0,8,0,0"
+                                                           FontSize="12"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </TabItem>
+                        </TabControl>
+                    </ScrollViewer>
+
+                    <!-- Modal Footer -->
+                    <Border Grid.Row="2" Background="{DynamicResource MaterialDesignToolBarBackground}" 
+                            Padding="24,12">
+                        <Grid>
+                            <TextBlock VerticalAlignment="Center">
+                                <Run Text="ID:"/>
+                                <Run Text="{Binding SelectedUser.UserId}" FontWeight="Bold"/>
+                                <Run Text=" • Criado em:"/>
+                                <Run Text="{Binding SelectedUser.CreatedAt, StringFormat='dd/MM/yyyy'}"/>
+                            </TextBlock>
+
+                            <Button Command="{Binding CloseDetailsCommand}"
+                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                    HorizontalAlignment="Right">
+                                Fechar
+                            </Button>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </materialDesign:Card>
+        </Grid>
+
+        <!-- Main Content -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryMid" Padding="24,16"
+                                      materialDesign:ElevationAssist.Elevation="Dp4">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="AccountGroup" Width="36" Height="36" 
+                                                 VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Gestão de Usuários" 
+                                       Style="{StaticResource MaterialDesignHeadline5TextBlock}"/>
+                            <TextBlock Text="Controle de acessos, privilégios e segurança" 
+                                       Style="{StaticResource MaterialDesignCaptionTextBlock}" Opacity="0.8"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Quick Stats -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <materialDesign:Chip Margin="0,0,8,0" IconBackground="#4CAF50">
+                            <materialDesign:Chip.Icon>
+                                <TextBlock Text="{Binding TotalActiveUsers}" FontWeight="Bold" 
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </materialDesign:Chip.Icon>
+                            <TextBlock Text="Ativos"/>
+                        </materialDesign:Chip>
+                        <materialDesign:Chip Margin="0,0,8,0" IconBackground="#9E9E9E">
+                            <materialDesign:Chip.Icon>
+                                <TextBlock Text="{Binding TotalInactiveUsers}" FontWeight="Bold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </materialDesign:Chip.Icon>
+                            <TextBlock Text="Inativos"/>
+                        </materialDesign:Chip>
+                        <materialDesign:Chip Margin="0,0,8,0" IconBackground="#FF9800">
+                            <materialDesign:Chip.Icon>
+                                <TextBlock Text="{Binding TotalSuspendedUsers}" FontWeight="Bold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </materialDesign:Chip.Icon>
+                            <TextBlock Text="Suspensos"/>
+                        </materialDesign:Chip>
+                        <materialDesign:Chip Margin="0,0,16,0" IconBackground="#2196F3">
+                            <materialDesign:Chip.Icon>
+                                <TextBlock Text="{Binding ActiveSessionsCount}" FontWeight="Bold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </materialDesign:Chip.Icon>
+                            <TextBlock Text="Online"/>
+                        </materialDesign:Chip>
+
+                        <Button Style="{StaticResource MaterialDesignFloatingActionMiniButton}"
+                                Command="{Binding LoadDataCommand}" ToolTip="Atualizar" Margin="0,0,8,0">
+                            <materialDesign:PackIcon Kind="Refresh"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </materialDesign:ColorZone>
+
+            <!-- Filters Panel -->
+            <materialDesign:Card Grid.Row="1" Margin="16,16,16,0" Padding="16"
+                                 materialDesign:ElevationAssist.Elevation="Dp2">
+                <Expander Header="Filtros de Busca" IsExpanded="True"
+                          materialDesign:ExpanderAssist.HorizontalHeaderPadding="0">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="FilterVariant" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="{Binding}" Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </Expander.HeaderTemplate>
+                    <Grid Margin="0,16,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Row 1: Text Filters -->
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Grid.Column="0" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Buscar por username, pessoa, email..."
+                                     materialDesign:TextFieldAssist.HasLeadingIcon="True"
+                                     materialDesign:TextFieldAssist.LeadingIcon="Magnify"
+                                     materialDesign:TextFieldAssist.HasClearButton="True">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
+                                </TextBox.InputBindings>
+                            </TextBox>
+
+                            <ComboBox Grid.Column="2" SelectedValue="{Binding SelectedStatusFilter, Mode=TwoWay}"
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                      materialDesign:HintAssist.Hint="Status"
+                                      materialDesign:TextFieldAssist.HasClearButton="True">
+                                <ComboBoxItem Content="Todos" Tag="{x:Null}"/>
+                                <ComboBoxItem Content="Ativos" Tag="{x:Static entities:LoginStatus.Active}"/>
+                                <ComboBoxItem Content="Inativos" Tag="{x:Static entities:LoginStatus.Inactive}"/>
+                                <ComboBoxItem Content="Suspensos" Tag="{x:Static entities:LoginStatus.Suspended}"/>
+                                <ComboBoxItem Content="Pendente Ativação" Tag="{x:Static entities:LoginStatus.PendingActivation}"/>
+                            </ComboBox>
+
+                            <TextBox Grid.Column="4" Text="{Binding FilterByPrivilege, Mode=TwoWay}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Filtrar por privilégio"
+                                     materialDesign:TextFieldAssist.HasClearButton="True"/>
+                        </Grid>
+
+                        <!-- Row 2: Date & Special Filters -->
+                        <Grid Grid.Row="1" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <DatePicker Grid.Column="0" SelectedDate="{Binding FilterDateFrom, Mode=TwoWay}"
+                                        Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                                        materialDesign:HintAssist.Hint="Data inicial"/>
+
+                            <DatePicker Grid.Column="2" SelectedDate="{Binding FilterDateTo, Mode=TwoWay}"
+                                        Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                                        materialDesign:HintAssist.Hint="Data final"/>
+
+                            <StackPanel Grid.Column="4" Orientation="Vertical">
+                                <CheckBox Content="Apenas usuários online"
+                                          IsChecked="{Binding ShowOnlyOnlineUsers, Mode=TwoWay}"
+                                          Margin="0,0,0,4"/>
+                                <CheckBox Content="Com tentativas falhadas"
+                                          IsChecked="{Binding ShowOnlyWithFailedAttempts, Mode=TwoWay}"
+                                          Margin="0,0,0,4"/>
+                                <CheckBox Content="Apenas bloqueados"
+                                          IsChecked="{Binding ShowOnlyLockedUsers, Mode=TwoWay}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Row 3: Actions -->
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Command="{Binding ClearFilterCommand}"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                    Margin="0,0,12,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="FilterRemove" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Limpar Filtros"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding SearchCommand}"
+                                    Style="{StaticResource MaterialDesignRaisedButton}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Magnify" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Buscar"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Expander>
+            </materialDesign:Card>
+
+            <!-- Main Content: Users List -->
+            <materialDesign:Card Grid.Row="2" Margin="16" Padding="0"
+                                 materialDesign:ElevationAssist.Elevation="Dp2">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- List Header -->
+                    <Border Grid.Row="0" Background="{DynamicResource MaterialDesignToolBarBackground}" Padding="16,12">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="FormatListBulleted" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="Usuários Cadastrados" Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
+                                <materialDesign:Chip Margin="12,0,0,0" Content="{Binding TotalUsers}" 
+                                                     ToolTip="Total de registros"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- DataGrid -->
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Users}"
+                              SelectedItem="{Binding SelectedUser, Mode=TwoWay}"
+                              AutoGenerateColumns="False" CanUserAddRows="False"
+                              IsReadOnly="True" SelectionMode="Single"
+                              VerticalScrollBarVisibility="Auto"
+                              materialDesign:DataGridAssist.CellPadding="12 8"
+                              materialDesign:DataGridAssist.ColumnHeaderPadding="12 8">
+                        <DataGrid.Columns>
+                            <!-- Status Icon -->
+                            <DataGridTemplateColumn Header="Status" Width="70">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <materialDesign:PackIcon Width="24" Height="24" HorizontalAlignment="Center">
+                                            <materialDesign:PackIcon.Style>
+                                                <Style TargetType="materialDesign:PackIcon">
+                                                    <Setter Property="Kind" Value="CheckCircle"/>
+                                                    <Setter Property="Foreground" Value="#4CAF50"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Inactive">
+                                                            <Setter Property="Kind" Value="CloseCircle"/>
+                                                            <Setter Property="Foreground" Value="#9E9E9E"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Suspended">
+                                                            <Setter Property="Kind" Value="Pause"/>
+                                                            <Setter Property="Foreground" Value="#FF9800"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="PendingActivation">
+                                                            <Setter Property="Kind" Value="ClockOutline"/>
+                                                            <Setter Property="Foreground" Value="#2196F3"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </materialDesign:PackIcon.Style>
+                                        </materialDesign:PackIcon>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- Username -->
+                            <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="180">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Person Name -->
+                            <DataGridTextColumn Header="Pessoa" Binding="{Binding PersonName}" Width="*" MinWidth="200"/>
+
+                            <!-- Status Badge -->
+                            <DataGridTemplateColumn Header="Status" Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource StatusBadgeStyle}">
+                                            <TextBlock Text="{Binding Status}" Foreground="White" 
+                                                       FontSize="11" FontWeight="Medium"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- Last Login -->
+                            <DataGridTextColumn Header="Último Login" 
+                                                Binding="{Binding LastLoginAt, StringFormat='dd/MM/yyyy HH:mm'}" 
+                                                Width="140"/>
+
+                            <!-- Active Session -->
+                            <DataGridTemplateColumn Header="Sessão" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <materialDesign:PackIcon Width="20" Height="20" 
+                                                                 HorizontalAlignment="Center"
+                                                                 Kind="Circle"
+                                                                 ToolTip="{Binding IsSessionActive, Converter={StaticResource BooleanToStatusConverter}}">
+                                            <materialDesign:PackIcon.Style>
+                                                <Style TargetType="materialDesign:PackIcon">
+                                                    <Setter Property="Foreground" Value="#9E9E9E"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSessionActive}" Value="True">
+                                                            <Setter Property="Foreground" Value="#4CAF50"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </materialDesign:PackIcon.Style>
+                                        </materialDesign:PackIcon>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- Privileges Count -->
+                            <DataGridTextColumn Header="Privilégios" Binding="{Binding PrivilegeCount}" Width="100">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Failed Attempts -->
+                            <DataGridTextColumn Header="Falhas" Binding="{Binding FailedLoginAttempts}" Width="80">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="Foreground" Value="#666"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding FailedLoginAttempts}" Value="0">
+                                                <Setter Property="Foreground" Value="#999"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Ações -->
+                            <DataGridTemplateColumn Header="Ações" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Command="{Binding DataContext.OpenDetailsCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource MaterialDesignIconButton}"
+                                                ToolTip="Ver Detalhes"
+                                                Width="32" Height="32">
+                                            <materialDesign:PackIcon Kind="DotsVertical" Width="20" Height="20"/>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Pagination -->
+                    <Border Grid.Row="2" Background="{DynamicResource MaterialDesignToolBarBackground}" Padding="16,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Page Info -->
+                            <TextBlock Grid.Column="0" VerticalAlignment="Center">
+                                <Run Text="Página"/>
+                                <Run Text="{Binding CurrentPage}" FontWeight="Bold"/>
+                                <Run Text="de"/>
+                                <Run Text="{Binding TotalPages}" FontWeight="Bold"/>
+                                <Run Text="•"/>
+                                <Run Text="{Binding TotalItems}"/>
+                                <Run Text="registros"/>
+                            </TextBlock>
+
+                            <!-- Page Controls -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                <ComboBox SelectedItem="{Binding PageSize, Mode=TwoWay}"
+                                          ItemsSource="{Binding PageSizeOptions}"
+                                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                          Width="80" Margin="0,0,16,0"
+                                          materialDesign:HintAssist.Hint="Items"/>
+
+                                <Button Command="{Binding FirstPageCommand}"
+                                        Style="{StaticResource MaterialDesignIconButton}"
+                                        ToolTip="Primeira página">
+                                    <materialDesign:PackIcon Kind="PageFirst"/>
+                                </Button>
+                                <Button Command="{Binding PreviousPageCommand}"
+                                        Style="{StaticResource MaterialDesignIconButton}"
+                                        ToolTip="Página anterior">
+                                    <materialDesign:PackIcon Kind="ChevronLeft"/>
+                                </Button>
+                                <Border Background="{DynamicResource PrimaryHueMidBrush}" 
+                                        CornerRadius="4" Padding="12,6" Margin="8,0">
+                                    <TextBlock Text="{Binding CurrentPage}" 
+                                               Foreground="White" 
+                                               FontWeight="Bold"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                                <Button Command="{Binding NextPageCommand}"
+                                        Style="{StaticResource MaterialDesignIconButton}"
+                                        ToolTip="Próxima página">
+                                    <materialDesign:PackIcon Kind="ChevronRight"/>
+                                </Button>
+                                <Button Command="{Binding LastPageCommand}"
+                                        Style="{StaticResource MaterialDesignIconButton}"
+                                        ToolTip="Última página">
+                                    <materialDesign:PackIcon Kind="PageLast"/>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </materialDesign:Card>
+
+        </Grid>
     </Grid>
 </Page>
 
