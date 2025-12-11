@@ -312,7 +312,13 @@ namespace VendaFlex.ViewModels.Users
         public bool IsEditMode
         {
             get => _isEditMode;
-            set => Set(ref _isEditMode, value);
+            set
+            {
+                if (Set(ref _isEditMode, value))
+                {
+                    RefreshCanExecute();
+                }
+            }
         }
 
         public bool ShowForm
@@ -856,11 +862,14 @@ namespace VendaFlex.ViewModels.Users
         }
 
         public bool IsCurrentUser => SelectedUser?.UserId == _sessionService.CurrentUser?.UserId;
-        public bool CanModifyCurrentUser => !IsCurrentUser || _sessionService.CurrentUser?.UserId != SelectedUser?.UserId;
+        public bool CanModifyCurrentUser => !IsCurrentUser;
 
         #endregion
 
         #region Commands
+
+        // Lista interna para rastrear AsyncCommands que precisam de atualização
+        private readonly List<AsyncCommand> _asyncCommands = new();
 
         // Basic CRUD
         public ICommand LoadDataCommand { get; private set; } = null!;
@@ -939,13 +948,13 @@ namespace VendaFlex.ViewModels.Users
         private void InitializeCommands()
         {
             // Basic CRUD
-            LoadDataCommand = new AsyncCommand(LoadDataAsync);
+            LoadDataCommand = new AsyncCommand(() => LoadDataAsync(false));
             LoadPersonsCommand = new AsyncCommand(LoadPersonsAsync);
             SearchCommand = new AsyncCommand(SearchAsync);
             AddCommand = new RelayCommand(_ => ShowAddForm());
             EditCommand = new RelayCommand(param => ShowEditForm(param), param => param != null || SelectedUser != null);
-            DeleteCommand = new AsyncCommand(DeleteUserAsync, () => SelectedUser != null && CanModifyCurrentUser);
-            SaveCommand = new AsyncCommand(SaveUserAsync, CanSave);
+            DeleteCommand = RegisterAsyncCommand(new AsyncCommand(DeleteUserAsync, () => SelectedUser != null && CanModifyCurrentUser));
+            SaveCommand = RegisterAsyncCommand(new AsyncCommand(SaveUserAsync, CanSave));
             CancelCommand = new RelayCommand(_ => CancelForm());
 
             // Filters
@@ -955,15 +964,15 @@ namespace VendaFlex.ViewModels.Users
             ApplyAdvancedFiltersCommand = new AsyncCommand(ApplyFiltersAsync);
 
             // User Management
-            LockUserCommand = new AsyncCommand(LockUserAsync, () => SelectedUser != null && CanModifyCurrentUser);
-            UnlockUserCommand = new AsyncCommand(UnlockUserAsync, () => SelectedUser != null);
-            ActivateUserCommand = new AsyncCommand(ActivateUserAsync, () => SelectedUser != null);
-            DeactivateUserCommand = new AsyncCommand(DeactivateUserAsync, () => SelectedUser != null && CanModifyCurrentUser);
-            ResetPasswordCommand = new AsyncCommand(ResetPasswordAsync, () => SelectedUser != null);
-            ChangePasswordCommand = new AsyncCommand(ChangePasswordAsync, CanChangePassword);
+            LockUserCommand = RegisterAsyncCommand(new AsyncCommand(LockUserAsync, () => SelectedUser != null && CanModifyCurrentUser));
+            UnlockUserCommand = RegisterAsyncCommand(new AsyncCommand(UnlockUserAsync, () => SelectedUser != null));
+            ActivateUserCommand = RegisterAsyncCommand(new AsyncCommand(ActivateUserAsync, () => SelectedUser != null));
+            DeactivateUserCommand = RegisterAsyncCommand(new AsyncCommand(DeactivateUserAsync, () => SelectedUser != null && CanModifyCurrentUser));
+            ResetPasswordCommand = RegisterAsyncCommand(new AsyncCommand(ResetPasswordAsync, () => SelectedUser != null));
+            ChangePasswordCommand = RegisterAsyncCommand(new AsyncCommand(ChangePasswordAsync, CanChangePassword));
             TogglePasswordFieldsCommand = new RelayCommand(_ => ShowPasswordFields = !ShowPasswordFields);
-            ForcePasswordChangeCommand = new AsyncCommand(ForcePasswordChangeAsync, () => SelectedUser != null);
-            Toggle2FACommand = new AsyncCommand(Toggle2FAAsync, () => SelectedUser != null);
+            ForcePasswordChangeCommand = RegisterAsyncCommand(new AsyncCommand(ForcePasswordChangeAsync, () => SelectedUser != null));
+            Toggle2FACommand = RegisterAsyncCommand(new AsyncCommand(Toggle2FAAsync, () => SelectedUser != null));
 
             // Pagination
             FirstPageCommand = new RelayCommand(_ => GoToFirstPage(), _ => CanGoToPreviousPage());
@@ -975,38 +984,55 @@ namespace VendaFlex.ViewModels.Users
             // Privileges
             LoadPrivilegesCommand = new AsyncCommand(LoadPrivilegesAsync);
             SearchPrivilegesCommand = new AsyncCommand(SearchPrivilegesAsync);
-            GrantPrivilegeCommand = new AsyncCommand(param => GrantPrivilegeAsync(param), () => SelectedUser != null);
-            RevokePrivilegeCommand = new AsyncCommand(param => RevokePrivilegeAsync(param), () => SelectedUser != null);
-            GrantAllPrivilegesCommand = new AsyncCommand(GrantAllPrivilegesAsync, () => SelectedUser != null);
-            RevokeAllPrivilegesCommand = new AsyncCommand(RevokeAllPrivilegesAsync, () => SelectedUser != null);
+            GrantPrivilegeCommand = RegisterAsyncCommand(new AsyncCommand(param => GrantPrivilegeAsync(param), () => SelectedUser != null));
+            RevokePrivilegeCommand = RegisterAsyncCommand(new AsyncCommand(param => RevokePrivilegeAsync(param), () => SelectedUser != null));
+            GrantAllPrivilegesCommand = RegisterAsyncCommand(new AsyncCommand(GrantAllPrivilegesAsync, () => SelectedUser != null));
+            RevokeAllPrivilegesCommand = RegisterAsyncCommand(new AsyncCommand(RevokeAllPrivilegesAsync, () => SelectedUser != null));
             CopyPrivilegesCommand = new AsyncCommand(CopyPrivilegesAsync);
 
             // Bulk Operations
             ToggleBulkModeCommand = new RelayCommand(_ => IsBulkMode = !IsBulkMode);
             SelectAllUsersCommand = new RelayCommand(_ => SelectAllUsers());
             DeselectAllUsersCommand = new RelayCommand(_ => DeselectAllUsers());
-            BulkActivateCommand = new AsyncCommand(BulkActivateAsync, () => BulkSelectedCount > 0);
-            BulkDeactivateCommand = new AsyncCommand(BulkDeactivateAsync, () => BulkSelectedCount > 0);
-            BulkLockCommand = new AsyncCommand(BulkLockAsync, () => BulkSelectedCount > 0);
-            BulkDeleteCommand = new AsyncCommand(BulkDeleteAsync, () => BulkSelectedCount > 0);
+            BulkActivateCommand = RegisterAsyncCommand(new AsyncCommand(BulkActivateAsync, () => BulkSelectedCount > 0));
+            BulkDeactivateCommand = RegisterAsyncCommand(new AsyncCommand(BulkDeactivateAsync, () => BulkSelectedCount > 0));
+            BulkLockCommand = RegisterAsyncCommand(new AsyncCommand(BulkLockAsync, () => BulkSelectedCount > 0));
+            BulkDeleteCommand = RegisterAsyncCommand(new AsyncCommand(BulkDeleteAsync, () => BulkSelectedCount > 0));
             BulkGrantPrivilegeCommand = new AsyncCommand(BulkGrantPrivilegeAsync);
 
             // Analytics & Reports
             RefreshAnalyticsCommand = new AsyncCommand(RefreshAnalyticsAsync);
             ExportUsersCommand = new AsyncCommand(ExportUsersAsync);
-            ExportAuditLogCommand = new AsyncCommand(ExportAuditLogAsync, () => SelectedUser != null);
+            ExportAuditLogCommand = RegisterAsyncCommand(new AsyncCommand(ExportAuditLogAsync, () => SelectedUser != null));
             GenerateSecurityReportCommand = new AsyncCommand(GenerateSecurityReportAsync);
-            ViewUserActivityCommand = new AsyncCommand(ViewUserActivityAsync, () => SelectedUser != null);
+            ViewUserActivityCommand = RegisterAsyncCommand(new AsyncCommand(ViewUserActivityAsync, () => SelectedUser != null));
 
             // Advanced Features
             ToggleAutoRefreshCommand = new RelayCommand(_ => AutoRefreshEnabled = !AutoRefreshEnabled);
-            RefreshCommand = new AsyncCommand(LoadDataAsync);
-            CloneUserCommand = new AsyncCommand(CloneUserAsync, () => SelectedUser != null);
-            SendNotificationCommand = new AsyncCommand(SendNotificationAsync, () => SelectedUser != null);
-            ImpersonateUserCommand = new AsyncCommand(ImpersonateUserAsync, () => SelectedUser != null && CanModifyCurrentUser);
+            RefreshCommand = new AsyncCommand(() => LoadDataAsync(true));
+            CloneUserCommand = RegisterAsyncCommand(new AsyncCommand(CloneUserAsync, () => SelectedUser != null));
+            SendNotificationCommand = RegisterAsyncCommand(new AsyncCommand(SendNotificationAsync, () => SelectedUser != null));
+            ImpersonateUserCommand = RegisterAsyncCommand(new AsyncCommand(ImpersonateUserAsync, () => SelectedUser != null && CanModifyCurrentUser));
 
             // Modal controls
-            CloseDetailsCommand = new RelayCommand(_ => IsDetailsModalOpen = false);
+            CloseDetailsCommand = new RelayCommand(_ => CloseDetailsModal());
+        }
+
+        /// <summary>
+        /// Registra um AsyncCommand na lista interna para que possa ser atualizado via RefreshCanExecute
+        /// </summary>
+        private AsyncCommand RegisterAsyncCommand(AsyncCommand command)
+        {
+            _asyncCommands.Add(command);
+            return command;
+        }
+
+        private void CloseDetailsModal()
+        {
+            IsDetailsModalOpen = false;
+            IsEditMode = false;
+            // Recarregar dados após fechar o modal para garantir que estão atualizados
+            _ = LoadDataAsync(false); // Modal já está fechado
         }
 
         private void InitializeData()
@@ -1014,7 +1040,7 @@ namespace VendaFlex.ViewModels.Users
             // Execute sequentially to avoid DbContext concurrency issues
             _ = Task.Run(async () =>
             {
-                await LoadDataAsync();
+                await LoadDataAsync(false);
                 await LoadPersonsAsync();
                 await LoadPrivilegesAsync();
             });
@@ -1025,8 +1051,15 @@ namespace VendaFlex.ViewModels.Users
 
         #region Data Loading
 
-        private async Task LoadDataAsync()
+        private async Task LoadDataAsync(bool forceReload = false)
         {
+            // Não atualizar se o modal de detalhes estiver aberto para evitar perda de dados
+            // A menos que seja forçado (após operações como Delete, Lock, etc.)
+            if (IsDetailsModalOpen && !forceReload)
+            {
+                return;
+            }
+
             try
             {
                 IsLoading = true;
@@ -1112,6 +1145,12 @@ namespace VendaFlex.ViewModels.Users
 
         private async Task SearchAsync()
         {
+            // Não buscar se o modal de detalhes estiver aberto para evitar perda de dados
+            if (IsDetailsModalOpen)
+            {
+                return;
+            }
+
             try
             {
                 IsLoading = true;
@@ -1119,7 +1158,7 @@ namespace VendaFlex.ViewModels.Users
 
                 if (string.IsNullOrWhiteSpace(SearchText) && !SelectedStatusFilter.HasValue)
                 {
-                    await LoadDataAsync();
+                    await LoadDataAsync(false);
                     return;
                 }
 
@@ -1265,6 +1304,9 @@ namespace VendaFlex.ViewModels.Users
             ShowPasswordFields = false;
             SelectedTabIndex = 0; // Start on Info tab
             IsDetailsModalOpen = true; // open overlay modal
+            
+            // Force refresh of all command states
+            RefreshCanExecute();
         }
 
         private async Task DeleteUserAsync()
@@ -1383,8 +1425,14 @@ namespace VendaFlex.ViewModels.Users
 
                 await CalculateStatisticsAsync();
                 ShowForm = false;
+                IsEditMode = false;
+                IsDetailsModalOpen = false; // Fechar modal antes de recarregar
                 ClearForm();
                 SelectedTabIndex = 0;
+                
+                // Recarregar dados para garantir sincronização
+                await LoadDataAsync(false); // Não precisa forçar, modal já está fechado
+                RefreshCanExecute();
             }
             catch (Exception ex)
             {
@@ -1438,7 +1486,8 @@ namespace VendaFlex.ViewModels.Users
                 if (result.Success)
                 {
                     ShowSuccessMessage("Usuário bloqueado com sucesso!");
-                    await LoadDataAsync();
+                    await LoadDataAsync(true); // Forçar reload
+                    RefreshCanExecute();
                 }
                 else
                 {
@@ -1463,7 +1512,8 @@ namespace VendaFlex.ViewModels.Users
                 if (result.Success)
                 {
                     ShowSuccessMessage("Usuário desbloqueado com sucesso!");
-                    await LoadDataAsync();
+                    await LoadDataAsync(true); // Forçar reload
+                    RefreshCanExecute();
                 }
                 else
                 {
@@ -1489,7 +1539,8 @@ namespace VendaFlex.ViewModels.Users
                 if (result.Success)
                 {
                     ShowSuccessMessage("Usuário ativado com sucesso!");
-                    await LoadDataAsync();
+                    await LoadDataAsync(true); // Forçar reload
+                    RefreshCanExecute();
                 }
                 else
                 {
@@ -1515,7 +1566,8 @@ namespace VendaFlex.ViewModels.Users
                 if (result.Success)
                 {
                     ShowSuccessMessage("Usuário desativado com sucesso!");
-                    await LoadDataAsync();
+                    await LoadDataAsync(true); // Forçar reload
+                    RefreshCanExecute();
                 }
                 else
                 {
@@ -1765,9 +1817,10 @@ namespace VendaFlex.ViewModels.Users
                     user.Status = LoginStatus.Active;
                     await _userService.UpdateAsync(user);
                 }
-                await LoadDataAsync();
+                await LoadDataAsync(true); // Forçar reload
                 ShowSuccessMessage($"{BulkSelectedCount} usuários ativados!");
                 DeselectAllUsers();
+                RefreshCanExecute();
             }
             catch (Exception ex)
             {
@@ -1785,9 +1838,10 @@ namespace VendaFlex.ViewModels.Users
                     user.Status = LoginStatus.Inactive;
                     await _userService.UpdateAsync(user);
                 }
-                await LoadDataAsync();
+                await LoadDataAsync(true); // Forçar reload
                 ShowSuccessMessage($"{BulkSelectedCount} usuários desativados!");
                 DeselectAllUsers();
+                RefreshCanExecute();
             }
             catch (Exception ex)
             {
@@ -1804,9 +1858,10 @@ namespace VendaFlex.ViewModels.Users
                     if (user.UserId == _sessionService.CurrentUser?.UserId) continue;
                     await _userService.LockUserAsync(user.UserId);
                 }
-                await LoadDataAsync();
+                await LoadDataAsync(true); // Forçar reload
                 ShowSuccessMessage($"{BulkSelectedCount} usuários bloqueados!");
                 DeselectAllUsers();
+                RefreshCanExecute();
             }
             catch (Exception ex)
             {
@@ -1823,9 +1878,10 @@ namespace VendaFlex.ViewModels.Users
                 {
                     await _userService.DeleteAsync(user.UserId);
                 }
-                await LoadDataAsync();
+                await LoadDataAsync(true); // Forçar reload
                 ShowSuccessMessage($"{toDelete.Count} usuários excluídos!");
                 DeselectAllUsers();
+                RefreshCanExecute();
             }
             catch (Exception ex)
             {
@@ -1993,7 +2049,7 @@ namespace VendaFlex.ViewModels.Users
             if (AutoRefreshEnabled && AutoRefreshInterval > 0)
             {
                 _refreshTimer = new System.Threading.Timer(
-                    async _ => await LoadDataAsync(),
+                    async _ => await LoadDataAsync(false),
                     null,
                     TimeSpan.FromSeconds(AutoRefreshInterval),
                     TimeSpan.FromSeconds(AutoRefreshInterval));
@@ -2158,7 +2214,14 @@ namespace VendaFlex.ViewModels.Users
 
         private void RefreshCanExecute()
         {
+            // Atualiza os RelayCommands via CommandManager
             System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+            
+            // Atualiza os AsyncCommands explicitamente
+            foreach (var command in _asyncCommands)
+            {
+                command.RaiseCanExecuteChanged();
+            }
         }
 
         #endregion

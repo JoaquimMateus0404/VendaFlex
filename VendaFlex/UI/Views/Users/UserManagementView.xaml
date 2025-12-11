@@ -144,6 +144,7 @@
 
                                             <!-- Status -->
                                             <ComboBox Grid.Row="1" Grid.Column="0" Margin="0,0,0,16"
+                                                      SelectedValuePath="Tag"
                                                       SelectedValue="{Binding Status, Mode=TwoWay}"
                                                       Style="{StaticResource MaterialDesignOutlinedComboBox}"
                                                       materialDesign:HintAssist.Hint="Status"
@@ -203,7 +204,7 @@
 
                                         <!-- Action Buttons -->
                                         <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
-                                            <Button Command="{Binding EditCommand}"
+                                            <Button Click="EnableEditMode_Click"
                                                     Style="{StaticResource MaterialDesignRaisedButton}"
                                                     Margin="0,0,8,0">
                                                 <StackPanel Orientation="Horizontal">
@@ -222,7 +223,7 @@
                                                 </StackPanel>
                                             </Button>
 
-                                            <Button Command="{Binding CancelCommand}"
+                                            <Button Click="CancelEditMode_Click"
                                                     Style="{StaticResource MaterialDesignOutlinedButton}"
                                                     Margin="0,0,8,0"
                                                     Visibility="{Binding IsEditMode, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -459,22 +460,22 @@
                                                 </StackPanel>
                                             </Button>
 
-                                            <Button Command="{Binding ResetFailedAttemptsCommand}"
+                                            <Button Command="{Binding LockUserCommand}"
                                                     Style="{StaticResource MaterialDesignRaisedButton}"
-                                                    Margin="0,0,8,0">
+                                                    Margin="0,0,8,0"
+                                                    Background="#F44336">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon Kind="Refresh" Margin="0,0,8,0"/>
-                                                    <TextBlock Text="Resetar Tentativas"/>
+                                                    <materialDesign:PackIcon Kind="Lock" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="Bloquear"/>
                                                 </StackPanel>
                                             </Button>
 
-                                            <Button Command="{Binding ForceLogoutCommand}"
+                                            <Button Command="{Binding ResetPasswordCommand}"
                                                     Style="{StaticResource MaterialDesignRaisedButton}"
-                                                    Margin="0,0,8,0"
-                                                    Background="#FF9800">
+                                                    Margin="0,0,8,0">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon Kind="Logout" Margin="0,0,8,0"/>
-                                                    <TextBlock Text="Forçar Logout"/>
+                                                    <materialDesign:PackIcon Kind="KeyVariant" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="Resetar Senha"/>
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -563,15 +564,6 @@
                                                     <TextBlock Text="Desativar"/>
                                                 </StackPanel>
                                             </Button>
-
-                                            <Button Command="{Binding SuspendUserCommand}"
-                                                    Style="{StaticResource MaterialDesignRaisedButton}"
-                                                    Background="#FF9800">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon Kind="Pause" Margin="0,0,8,0"/>
-                                                    <TextBlock Text="Suspender"/>
-                                                </StackPanel>
-                                            </Button>
                                         </StackPanel>
 
                                         <!-- Danger Zone -->
@@ -583,7 +575,7 @@
                                                            Style="{StaticResource MaterialDesignSubtitle1TextBlock}" 
                                                            Margin="0,0,0,12"/>
 
-                                                <Button Command="{Binding DeleteUserCommand}"
+                                                <Button Command="{Binding DeleteCommand}"
                                                         Style="{StaticResource MaterialDesignRaisedButton}"
                                                         Background="#F44336"
                                                         HorizontalAlignment="Left">
@@ -612,8 +604,8 @@
                             <TextBlock VerticalAlignment="Center">
                                 <Run Text="ID:"/>
                                 <Run Text="{Binding SelectedUser.UserId}" FontWeight="Bold"/>
-                                <Run Text=" • Criado em:"/>
-                                <Run Text="{Binding SelectedUser.CreatedAt, StringFormat='dd/MM/yyyy'}"/>
+                                <Run Text=" • Username:"/>
+                                <Run Text="{Binding SelectedUser.Username}" FontWeight="SemiBold"/>
                             </TextBlock>
 
                             <Button Command="{Binding CloseDetailsCommand}"
@@ -735,7 +727,9 @@
                                 </TextBox.InputBindings>
                             </TextBox>
 
-                            <ComboBox Grid.Column="2" SelectedValue="{Binding SelectedStatusFilter, Mode=TwoWay}"
+                            <ComboBox Grid.Column="2" 
+                                      SelectedValuePath="Tag"
+                                      SelectedValue="{Binding SelectedStatusFilter, Mode=TwoWay}"
                                       Style="{StaticResource MaterialDesignOutlinedComboBox}"
                                       materialDesign:HintAssist.Hint="Status"
                                       materialDesign:TextFieldAssist.HasClearButton="True">
@@ -875,11 +869,18 @@
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
 
-                            <!-- Person Name -->
-                            <DataGridTextColumn Header="Pessoa" Binding="{Binding PersonName}" Width="*" MinWidth="200"/>
+                            <!-- Person ID -->
+                            <DataGridTextColumn Header="Person ID" Binding="{Binding PersonId}" Width="100">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
 
                             <!-- Status Badge -->
-                            <DataGridTemplateColumn Header="Status" Width="120">
+                            <DataGridTemplateColumn Header="Status" Width="140">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Border Style="{StaticResource StatusBadgeStyle}">
@@ -893,39 +894,10 @@
                             <!-- Last Login -->
                             <DataGridTextColumn Header="Último Login" 
                                                 Binding="{Binding LastLoginAt, StringFormat='dd/MM/yyyy HH:mm'}" 
-                                                Width="140"/>
+                                                Width="*" MinWidth="140"/>
 
-                            <!-- Active Session -->
-                            <DataGridTemplateColumn Header="Sessão" Width="80">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <materialDesign:PackIcon Width="20" Height="20" 
-                                                                 HorizontalAlignment="Center"
-                                                                 Kind="Circle"
-                                                                 ToolTip="{Binding IsSessionActive, Converter={StaticResource BooleanToStatusConverter}}">
-                                            <materialDesign:PackIcon.Style>
-                                                <Style TargetType="materialDesign:PackIcon">
-                                                    <Setter Property="Foreground" Value="#9E9E9E"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsSessionActive}" Value="True">
-                                                            <Setter Property="Foreground" Value="#4CAF50"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </materialDesign:PackIcon.Style>
-                                        </materialDesign:PackIcon>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-
-                            <!-- Privileges Count -->
-                            <DataGridTextColumn Header="Privilégios" Binding="{Binding PrivilegeCount}" Width="100">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
+                            <!-- Last IP -->
+                            <DataGridTextColumn Header="Último IP" Binding="{Binding LastLoginIp}" Width="130"/>
 
                             <!-- Failed Attempts -->
                             <DataGridTextColumn Header="Falhas" Binding="{Binding FailedLoginAttempts}" Width="80">
@@ -943,16 +915,25 @@
                             </DataGridTextColumn>
 
                             <!-- Ações -->
-                            <DataGridTemplateColumn Header="Ações" Width="80">
+                            <DataGridTemplateColumn Header="Ações" Width="100">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Command="{Binding DataContext.OpenDetailsCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                CommandParameter="{Binding}"
-                                                Style="{StaticResource MaterialDesignIconButton}"
-                                                ToolTip="Ver Detalhes"
-                                                Width="32" Height="32">
-                                            <materialDesign:PackIcon Kind="DotsVertical" Width="20" Height="20"/>
-                                        </Button>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Button Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                    Style="{StaticResource MaterialDesignIconButton}"
+                                                    ToolTip="Editar"
+                                                    Width="32" Height="32">
+                                                <materialDesign:PackIcon Kind="Pencil" Width="18" Height="18"/>
+                                            </Button>
+
+                                            <Button Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                    Style="{StaticResource MaterialDesignIconButton}"
+                                                    ToolTip="Excluir"
+                                                    Foreground="#F44336"
+                                                    Width="32" Height="32">
+                                                <materialDesign:PackIcon Kind="Delete" Width="18" Height="18"/>
+                                            </Button>
+                                        </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
