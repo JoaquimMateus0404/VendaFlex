@@ -7,9 +7,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
 using VendaFlex.Core.DTOs;
 using VendaFlex.Core.Interfaces;
+using VendaFlex.Data;
 using VendaFlex.Data.Entities;
 using VendaFlex.Infrastructure.Interfaces;
 using VendaFlex.ViewModels.Base;
@@ -25,6 +27,7 @@ namespace VendaFlex.ViewModels.Products
     {
         #region Services
 
+         private readonly ApplicationDbContext _context;
         private readonly IProductService _productService;
         private readonly ICategoryService _categoryService;
         private readonly IStockService _stockService;
@@ -34,6 +37,7 @@ namespace VendaFlex.ViewModels.Products
         private readonly IPersonService _personService;
         private readonly ICurrentUserContext _currentUserContext;
         private readonly IFileStorageService _fileStorageService;
+        private readonly IProductExcelService _productExcelService;
         private readonly DispatcherTimer _statusMessageTimer;
 
         #endregion
@@ -49,7 +53,9 @@ namespace VendaFlex.ViewModels.Products
             IStockMovementService stockMovementService,
             IPersonService personService,
             ICurrentUserContext currentUserContext,
-            IFileStorageService fileStorageService)
+            IFileStorageService fileStorageService,
+            IProductExcelService productExcelService,
+            ApplicationDbContext context)
         {
             _productService = productService ?? throw new ArgumentNullException(nameof(productService));
             _categoryService = categoryService ?? throw new ArgumentNullException(nameof(categoryService));
@@ -60,6 +66,8 @@ namespace VendaFlex.ViewModels.Products
             _personService = personService ?? throw new ArgumentNullException(nameof(personService));
             _currentUserContext = currentUserContext ?? throw new ArgumentNullException(nameof(currentUserContext));
             _fileStorageService = fileStorageService ?? throw new ArgumentNullException(nameof(fileStorageService));
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _productExcelService = productExcelService ?? throw new ArgumentNullException(nameof(productExcelService));
 
             // Initialize timer for status messages
             _statusMessageTimer = new DispatcherTimer
@@ -75,6 +83,7 @@ namespace VendaFlex.ViewModels.Products
             InitializeCommands();
             InitializeCollections();
             _ = LoadDataAsync();
+
         }
 
         #endregion
@@ -841,6 +850,8 @@ namespace VendaFlex.ViewModels.Products
         
         // Export Commands
         public ICommand ExportProductsCommand { get; private set; } = null!;
+        public ICommand ImportProductsCommand { get; private set; } = null!;
+        public ICommand DownloadTemplateCommand { get; private set; } = null!;
         
         // Pagination Commands
         public ICommand FirstPageCommand { get; private set; } = null!;
@@ -892,6 +903,8 @@ namespace VendaFlex.ViewModels.Products
             
             // Export Commands
             ExportProductsCommand = new RelayCommand(async _ => await ExportProductsAsync(), _ => FilteredProducts.Any());
+            ImportProductsCommand = new RelayCommand(async _ => await ImportProductsAsync());
+            DownloadTemplateCommand = new RelayCommand(async _ => await DownloadTemplateAsync());
             
             // Pagination Commands
             FirstPageCommand = new RelayCommand(_ => CurrentPage = 1, _ => CurrentPage > 1);
@@ -1344,37 +1357,15 @@ namespace VendaFlex.ViewModels.Products
         {
             try
             {
-                var dialog = new Microsoft.Win32.SaveFileDialog
-                {
-                    Filter = "Arquivo CSV|*.csv|Arquivo Excel|*.xlsx",
-                    Title = "Exportar Produtos",
-                    FileName = $"Produtos_{DateTime.Now:yyyyMMdd_HHmmss}"
-                };
-
-                if (dialog.ShowDialog() != true) return;
 
                 IsLoading = true;
 
-                var filePath = dialog.FileName;
-                var extension = System.IO.Path.GetExtension(filePath).ToLower();
 
-                if (extension == ".csv")
-                {
-                    await ExportToCsvAsync(filePath);
-                }
-                else if (extension == ".xlsx")
-                {
-                    await ExportToExcelAsync(filePath);
-                }
-
-                ShowStatusMessage($"Dados exportados com sucesso para: {filePath}", false);
+                    await ExportToExcelAsync();
                 
-                // Abrir o arquivo após exportação
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = filePath,
-                    UseShellExecute = true
-                });
+
+                ShowStatusMessage($"Dados exportados com sucesso!", false);
+
             }
             catch (Exception ex)
             {
@@ -1407,27 +1398,214 @@ namespace VendaFlex.ViewModels.Products
             });
         }
 
-        private async Task ExportToExcelAsync(string filePath)
+        private async Task ExportToExcelAsync()
         {
-            await Task.Run(() =>
+             try
             {
-                // Simulação básica de exportação Excel usando CSV
-                // Para uma solução completa, use a biblioteca EPPlus ou ClosedXML
-                using var writer = new System.IO.StreamWriter(filePath, false, System.Text.Encoding.UTF8);
-                
-                // Cabeçalho
-                writer.WriteLine("Código\tNome\tCategoria\tSKU\tCódigo de Barras\tPreço Custo\tPreço Venda\tEstoque Atual\tStatus");
-
-                // Dados
-                foreach (var product in FilteredProducts)
+                // Configurar SaveFileDialog
+                var dialog = new Microsoft.Win32.SaveFileDialog
                 {
-                    var line = $"{product.Code}\t{product.Name}\t{product.CategoryName}\t" +
-                              $"{product.SKU}\t{product.Barcode}\t" +
-                              $"{product.CostPrice:F2}\t{product.SalePrice:F2}\t" +
-                              $"{product.CurrentStock}\t{product.Status}";
-                    writer.WriteLine(line);
+                    Filter = "Arquivo Excel|*.xlsx",
+                    Title = "Exportar Produtos",
+                    FileName = $"Produtos_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
+                };
+
+                // IMPORTANTE: Mostrar o diálogo para o usuário escolher onde salvar
+                if (dialog.ShowDialog() != true)
+                    return;
+
+                StatusMessage = "Exportando produtos...";
+
+                // Buscar produtos com todas as relações
+                var products = await _context.Set<Product>()
+                    .Include(p => p.Category)
+                    .Include(p => p.Supplier)
+                    .Include(p => p.Stock)
+                    .ToListAsync();
+
+                // Gerar arquivo Excel
+                var fileBytes = await _productExcelService.ExportProductsToExcelAsync(products);
+                
+                // Salvar arquivo
+                await File.WriteAllBytesAsync(dialog.FileName, fileBytes);
+
+                ShowStatusMessage($"✅ Exportação concluída com sucesso!", false);
+                
+                // Perguntar se deseja abrir o arquivo
+                var result = MessageBox.Show(
+                    $"Exportação concluída!\n{products.Count} produtos exportados.\n\nArquivo salvo em:\n{dialog.FileName}\n\nDeseja abrir o arquivo agora?",
+                    "Exportação Concluída",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = dialog.FileName,
+                        UseShellExecute = true
+                    });
                 }
-            });
+            }
+            catch (Exception ex)
+            {
+                ShowStatusMessage($"Erro ao exportar: {ex.Message}", true);
+            }
+        }
+
+        private async Task ImportProductsAsync()
+        {
+            try
+            {
+                // Configurar OpenFileDialog
+                var dialog = new OpenFileDialog
+                {
+                    Filter = "Excel Files (*.xlsx)|*.xlsx",
+                    DefaultExt = ".xlsx",
+                    Title = "Importar Produtos"
+                };
+
+                if (dialog.ShowDialog() != true)
+                    return;
+
+                IsLoading = true;
+                StatusMessage = "Importando produtos...";
+
+                // Ler arquivo
+                using var fileStream = File.OpenRead(dialog.FileName);
+                
+                // Obter UserId
+                var userId = _currentUserContext.UserId ?? throw new InvalidOperationException("Usuário não autenticado.");
+                
+                // Importar produtos usando o serviço
+                var result = await _productExcelService.ImportProductsFromExcelAsync(fileStream, userId);
+
+                if (result.Success)
+                {
+                    // Mostrar mensagem completa com debug info
+                    var message = result.Message;
+                    
+                    // Criar caixa de diálogo com rolagem para mostrar todos os detalhes
+                    MessageBox.Show(
+                        message,
+                        "Importação Concluída com Sucesso",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    
+                    ShowStatusMessage($"✅ Importação concluída com sucesso!", false);
+                    
+                    // Recarregar dados
+                    await LoadDataAsync();
+                }
+                else
+                {
+                    // Combinar mensagem principal com erros detalhados
+                    var errorMessage = result.Message;
+                    if (result.Errors != null && result.Errors.Any())
+                    {
+                        errorMessage += "\n\n=== DETALHES ===\n" + string.Join("\n", result.Errors);
+                    }
+                    
+                    // Salvar log em arquivo na pasta "Documentos" do usuário para análise
+                    var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                    var logPath = Path.Combine(documentsPath, $"VendaFlex_Import_Error_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
+                    File.WriteAllText(logPath, errorMessage);
+                    
+                    // Mostrar mensagem com opção de ver detalhes
+                    var mbResult = MessageBox.Show(
+                        $"{result.Message}\n\nDeseja visualizar os detalhes completos?\n(Log salvo em: {logPath})",
+                        "Erro na Importação",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+                    
+                    if (mbResult == MessageBoxResult.Yes)
+                    {
+                        // Abrir o arquivo de log
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = logPath,
+                            UseShellExecute = true
+                        });
+                    }
+                    
+                    ShowStatusMessage($"❌ Erro na importação. Veja os detalhes no log.", true);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowStatusMessage($"Erro ao importar: {ex.Message}", true);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task DownloadTemplateAsync()
+        {
+            try
+            {
+                // Configurar SaveFileDialog
+                var dialog = new SaveFileDialog
+                {
+                    Filter = "Excel Files (*.xlsx)|*.xlsx",
+                    DefaultExt = ".xlsx",
+                    FileName = $"Template_Produtos.xlsx",
+                    Title = "Download Template"
+                };
+
+                if (dialog.ShowDialog() != true)
+                    return;
+
+                IsLoading = true;
+                StatusMessage = "Gerando template...";
+
+                // Criar workbook com template
+                using var workbook = new ClosedXML.Excel.XLWorkbook();
+                var worksheet = workbook.Worksheets.Add("Produtos");
+
+                // Criar cabeçalhos
+                _productExcelService.CreateHeaders(worksheet);
+
+                // Criar abas de referência (categorias e fornecedores)
+                await _productExcelService.CreateCategoriesReferenceSheet(workbook);
+                await _productExcelService.CreateSuppliersReferenceSheet(workbook);
+
+                // Criar aba de instruções
+                _productExcelService.CreateInstructionsSheet(workbook);
+
+                // Aplicar formatação
+                _productExcelService.ApplyFormatting(worksheet, 1);
+
+                // Salvar arquivo
+                workbook.SaveAs(dialog.FileName);
+
+                ShowStatusMessage("Template gerado com sucesso!", false);
+
+                // Perguntar se deseja abrir o arquivo
+                var result = MessageBox.Show(
+                    "Template gerado com sucesso!\nDeseja abrir o arquivo agora?",
+                    "Download Template",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = dialog.FileName,
+                        UseShellExecute = true
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowStatusMessage($"Erro ao gerar template: {ex.Message}", true);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         #endregion

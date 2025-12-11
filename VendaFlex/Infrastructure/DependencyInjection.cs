@@ -60,6 +60,7 @@ namespace VendaFlex.Infrastructure
             services.AddSingleton<IFileStorageService, FileStorageService>();
             services.AddScoped<IReceiptPrintService, ReceiptPrintService>();
             services.AddScoped<IPdfGeneratorService, PdfGeneratorService>();
+            services.AddScoped<IProductExcelService, ProductExcelService>();
 
             // Repositórios
             services.AddScoped<UserRepository>();
